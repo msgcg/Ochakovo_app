@@ -1,0 +1,51 @@
+{
+  "name": "Очаково: Мастерская Натурального Вкуса",
+  "short_name": "Очаково Работа",
+  "description": "Интерактивный симулятор пищевого гиганта Очаково и оплачиваемые стажировки для молодёжи",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#12161A",
+  "theme_color": "#D50032",
+  "lang": "ru-RU",
+  "dir": "ltr",
+  "categories": ["business", "education", "games"],
+  "icons": [
+    {
+      "src": "/static/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/img/ochakovo_emblem.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Симулятор завода",
+      "short_name": "Играть",
+      "description": "Пройди смену в цеху брожения или на роботизированной линии",
+      "url": "/game/",
+      "icons": [{ "src": "/static/img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Сезонные вакансии",
+      "short_name": "Вакансии",
+      "description": "Оплачиваемая практика и работа в пик сезона",
+      "url": "/vacancies/",
+      "icons": [{ "src": "/static/img/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

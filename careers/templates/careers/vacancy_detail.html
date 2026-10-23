@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ vacancy.title }} | Очаково ({{ vacancy.city }}){% endblock %}
+{% block description %}{{ vacancy.title }} в компании «Очаково»: {{ vacancy.salary_text }}. Официальное оформление с первого дня, общежитие в Москве, питание.{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org JobPosting Structured Data for SEO / Yandex / Google Jobs -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "JobPosting",
+  "title": "{{ vacancy.title|escapejs }}",
+  "description": "{{ vacancy.description|striptags|escapejs }}",
+  "identifier": {
+    "@type": "PropertyValue",
+    "name": "Очаково",
+    "value": "{{ vacancy.slug }}"
+  },
+  "datePosted": "{{ vacancy.created_at|date:'Y-m-d' }}",
+  "validThrough": "2026-10-31",
+  "employmentType": "FULL_TIME",
+  "hiringOrganization": {
+    "@type": "Organization",
+    "name": "Очаково",
+    "sameAs": "https://ochakovo.ru",
+    "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'img/ochakovo_emblem.svg' %}"
+  },
+  "jobLocation": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "{{ vacancy.address|escapejs }}",
+      "addressLocality": "{{ vacancy.city|escapejs }}",
+      "addressCountry": "RU"
+    }
+  },
+  "baseSalary": {
+    "@type": "MonetaryAmount",
+    "currency": "RUB",
+    "value": {
+      "@type": "QuantitativeValue",
+      "minValue": {{ vacancy.salary_min }},
+      "maxValue": {{ vacancy.salary_max }},
+      "unitText": "MONTH"
+    }
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section style="padding: 2.5rem 0 4rem;">
+  <div class="container">
+    
+    <div style="margin-bottom: 1.5rem;">
+      <a href="{% url 'careers:vacancies_list' %}" style="display: inline-flex; align-items: center; gap: 0.4rem; color: var(--och-text-dim); text-decoration: none; font-size: 0.88rem; font-weight: 600;">
+        <i data-lucide="arrow-left" style="width: 15px; height: 15px;"></i>
+        <span>Назад ко всем вакансиям</span>
+      </a>
+    </div>
+
+    <!-- Адаптивная двухколоночная сетка (на мобильных становится 1 колонкой) -->
+    <div class="och-vacancy-detail-layout">
+      
+      <!-- Левая колонка: описание вакансии -->
+      <div>
+        <div class="och-vac-top" style="margin-bottom: 0.75rem;">
+          <h1 style="font-size: clamp(1.4rem, 4.5vw, 2.15rem); font-weight: 900; color: var(--och-text-heading); line-height: 1.2; word-break: normal; overflow-wrap: break-word;">
+            {{ vacancy.title }}
+          </h1>
+        </div>
+
+        <div style="font-size: clamp(1.25rem, 4vw, 1.65rem); font-weight: 900; color: var(--och-green); margin-bottom: 1.25rem;">
+          {{ vacancy.salary_text }}
+        </div>
+
+        <div class="och-vac-meta" style="margin-bottom: 1.75rem;">
+          <span class="och-vac-tag" style="color: var(--och-text-heading); font-weight: 700; background: #FFFFFF; border: 1px solid var(--och-border-strong);">
+            <i data-lucide="map-pin" style="width: 13px; height: 13px; display: inline-block; vertical-align: middle; color: var(--och-red);"></i>
+            {{ vacancy.city }}
+          </span>
+          <span class="och-vac-tag">{{ vacancy.schedule }}</span>
+          <span class="och-vac-tag">{{ vacancy.experience_level }}</span>
+          {% if vacancy.has_dormitory %}
+          <span class="och-vac-tag" style="color: #047857; background: #ECFDF5; border-color: rgba(16,185,129,0.3);">Бесплатное общежитие в Москве</span>
+          {% endif %}
+          {% if vacancy.is_student_friendly %}
+          <span class="och-vac-tag" style="color: var(--och-gold-light); background: #FFFBEB; border-color: rgba(245,158,11,0.3);">Договор практики с ВУЗом</span>
+          {% endif %}
+        </div>
+
+        <!-- Баннер игрового сценария для вакансии -->
+        {% if vacancy.matched_scenario %}
+        <div style="background: linear-gradient(135deg, rgba(213,0,50,0.06) 0%, rgba(217,119,6,0.06) 100%); border: 1.5px solid var(--och-gold); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem; position: relative;">
+          <div style="display: flex; gap: 1.25rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+            <div style="max-width: 600px;">
+              <div style="display: inline-flex; align-items: center; gap: 0.4rem; color: var(--och-red); font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;">
+                <i data-lucide="gamepad-2" style="width: 16px; height: 16px;"></i>
+                <span>Интерактивный симулятор завода Очаково</span>
+              </div>
+              <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 0.35rem;">
+                {{ vacancy.matched_scenario.scenario_title }}
+              </h3>
+              <p style="font-size: 0.88rem; color: var(--och-text-muted); margin: 0; line-height: 1.45;">
+                Пройдите испытание со сменным наставником <strong>{{ vacancy.matched_scenario.mentor_name }}</strong> ({{ vacancy.matched_scenario.mentor_role }}). Ваш результат и баллы мастерства автоматически прикрепятся к отклику!
+              </p>
+            </div>
+            <a href="{% url 'careers:game_play' scenario_slug=vacancy.matched_scenario.scenario_slug %}" class="och-btn-primary" style="padding: 0.75rem 1.15rem; font-size: 0.9rem;">
+              <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+              <span>{{ vacancy.matched_scenario.btn_text }}</span>
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+        <div style="background: #FFFFFF; border: 1px solid var(--och-border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
+          <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 1rem;">О роли и задачах</h3>
+          <p style="font-size: 0.98rem; line-height: 1.6; color: var(--och-text-muted); margin-bottom: 1.75rem;">
+            {{ vacancy.description }}
+          </p>
+
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 1rem;">Чем предстоит заниматься:</h3>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.75rem;">
+            {% for r in vacancy.get_responsibilities_list %}
+            <li style="display: flex; align-items: flex-start; gap: 0.65rem; font-size: 0.94rem; color: var(--och-text); line-height: 1.45;">
+              <i data-lucide="check" style="width: 16px; height: 16px; color: var(--och-red); flex-shrink: 0; margin-top: 3px;"></i>
+              <span>{{ r }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 1rem;">Что мы ждем от кандидата:</h3>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.75rem;">
+            {% for req in vacancy.get_requirements_list %}
+            <li style="display: flex; align-items: flex-start; gap: 0.65rem; font-size: 0.94rem; color: var(--och-text); line-height: 1.45;">
+              <i data-lucide="arrow-right-circle" style="width: 16px; height: 16px; color: var(--och-cyan); flex-shrink: 0; margin-top: 3px;"></i>
+              <span>{{ req }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 1rem;">Условия и гарантии Очаково:</h3>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.65rem;">
+            {% for b in vacancy.get_benefits_list %}
+            <li style="display: flex; align-items: flex-start; gap: 0.65rem; font-size: 0.94rem; color: var(--och-text); line-height: 1.45;">
+              <i data-lucide="shield-check" style="width: 16px; height: 16px; color: var(--och-green); flex-shrink: 0; margin-top: 3px;"></i>
+              <span>{{ b }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <!-- Связанный симулятор -->
+        {% if related_scenarios %}
+        <div style="background: rgba(213,0,50,0.05); border: 1.5px solid var(--och-red); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <i data-lucide="gamepad-2" style="width: 24px; height: 24px; color: var(--och-red); flex-shrink: 0;"></i>
+            <h4 style="font-size: 1.15rem; font-weight: 800; color: var(--och-text-heading); margin: 0;">Проверь себя на этой позиции прямо сейчас!</h4>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--och-text-muted); line-height: 1.5; margin-bottom: 1.25rem;">
+            Пройди 2-минутную смену в виртуальном цеху. При успешном решении производственного инцидента твоя анкета автоматически пойдет с пометкой «Рекомендован наставником».
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+            {% for r_sc in related_scenarios %}
+            <a href="{% url 'careers:game_play' scenario_slug=r_sc.slug %}" class="och-btn-primary" style="display: flex; width: 100%; box-sizing: border-box; text-align: left; align-items: center; white-space: normal; word-break: break-word; line-height: 1.35; padding: 0.85rem 1.15rem; gap: 0.65rem;">
+              <i data-lucide="play" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+              <span>Пройти симуляцию: {{ r_sc.title }}</span>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+
+      <!-- Правая колонка: форма отклика и контакты -->
+      <div class="och-vacancy-detail-sidebar">
+        <div style="background: #FFFFFF; border: 1px solid var(--och-border-strong); border-radius: var(--radius-md); padding: 1.75rem; box-shadow: var(--shadow-md);">
+          <h3 style="font-size: 1.3rem; font-weight: 900; margin-bottom: 0.5rem; color: var(--och-text-heading);">Откликнуться на вакансию</h3>
+          <p style="font-size: 0.85rem; color: var(--och-text-muted); line-height: 1.45; margin-bottom: 1.5rem;">
+            Заполни короткую форму — HR-служба свяжется с тобой в течение рабочего дня.
+          </p>
+
+          <form id="och-vac-apply-form" onsubmit="window.submitFastApplication(event, 'och-vac-apply-form')" style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+            <input type="hidden" name="vacancy_slug" value="{{ vacancy.slug }}">
+
+            <div style="width: 100%;">
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--och-text-muted); display: block; margin-bottom: 0.35rem;">ФИО</label>
+              <input type="text" name="full_name" required placeholder="Иван Иванов" class="och-text-input" style="width: 100%; box-sizing: border-box;">
+            </div>
+
+            <div style="width: 100%;">
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--och-text-muted); display: block; margin-bottom: 0.35rem;">Телефон</label>
+              <input type="tel" name="phone" required placeholder="+7 (999) 000-00-00" class="och-text-input" style="width: 100%; box-sizing: border-box;">
+            </div>
+
+            <div style="width: 100%;">
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--och-text-muted); display: block; margin-bottom: 0.35rem;">Email</label>
+              <input type="email" name="email" placeholder="example@mail.ru" class="och-text-input" style="width: 100%; box-sizing: border-box;">
+            </div>
+
+            <div style="width: 100%;">
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--och-text-muted); display: block; margin-bottom: 0.35rem;">ВУЗ / Колледж</label>
+              <input type="text" name="university" placeholder="МГУ, Бауманка, РОСБИОТЕХ, МИРЭА..." class="och-text-input" style="width: 100%; box-sizing: border-box;">
+            </div>
+
+            <div style="width: 100%;">
+              <label style="font-size: 0.78rem; font-weight: 700; color: var(--och-text-muted); display: block; margin-bottom: 0.35rem;">Курс / статус</label>
+              <select name="course_or_status" class="och-text-input" style="width: 100%; box-sizing: border-box; cursor: pointer;">
+                <option value="1-2 курс">1-2 курс (ознакомительная практика)</option>
+                <option value="3-4 курс" selected>3-4 курс (производственная практика)</option>
+                <option value="Магистратура">Магистратура</option>
+                <option value="Выпускник">Выпускник (постоянная работа)</option>
+              </select>
+            </div>
+
+            <button type="submit" class="och-btn-primary" style="justify-content: center; padding: 0.95rem; margin-top: 0.5rem; width: 100%;">
+              <i data-lucide="send" style="width: 16px; height: 16px;"></i>
+              <span>Отправить отклик</span>
+            </button>
+          </form>
+
+          <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--och-border); font-size: 0.82rem; color: var(--och-text-dim);">
+            <div style="margin-bottom: 0.5rem; color: var(--och-text-heading); font-weight: 800;">Прямой контакт отдела кадров:</div>
+            <div>Телефон: <a href="tel:{{ contacts.phone }}" style="color: var(--och-red); text-decoration: none; font-weight: 700;">{{ contacts.phone }}</a></div>
+            <div>Почта: <a href="mailto:{{ contacts.email }}" style="color: var(--och-cyan); text-decoration: none; font-weight: 600;">{{ contacts.email }}</a></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+{% endblock %}

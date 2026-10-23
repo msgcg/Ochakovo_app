@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Автономный режим | Очаково{% endblock %}
+
+{% block content %}
+<section style="padding: 6rem 0; text-align: center;">
+  <div class="container" style="max-width: 600px;">
+    <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(245, 158, 11, 0.15); border: 1px solid var(--och-gold); color: var(--och-gold-light); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+      <i data-lucide="wifi-off" style="width: 40px; height: 40px;"></i>
+    </div>
+    
+    <h1 style="font-size: 2.2rem; font-weight: 900; margin-bottom: 1rem; color: #ffffff;">
+      Нет подключения к сети
+    </h1>
+    
+    <p style="color: var(--och-text-muted); font-size: 1.05rem; line-height: 1.6; margin-bottom: 2rem;">
+      Вы находитесь в автономном режиме PWA. Ранее сохраненные разделы сайта и симулятор продолжают работать в кэше устройства. Как только связь восстановится, мы автоматически синхронизируем данные.
+    </p>
+
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+      <a href="{% url 'careers:home' %}" class="och-btn-primary">
+        <i data-lucide="rotate-cw" style="width: 16px; height: 16px;"></i>
+        <span>Обновить страницу</span>
+      </a>
+      <a href="{% url 'careers:game_select' %}" class="och-btn-secondary">
+        <span>Открыть симулятор</span>
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,42 @@
+.venv
+venv
+ENV
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.git
+.gitignore
+.vscode
+.idea
+
+# Конфигурационные файлы с ключами (защита от попадания секретов в контейнер)
+.env
+.env.*
+.env.local
+.env.production
+*.env
+!.env.example
+
+# SQLite базы данных (образ собирает чистую БД самостоятельно при сборке)
+db.sqlite3
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Логи и временные файлы
+*.log
+*.tmp
+*.bak
+media/
+staticfiles/
+
+# Windows-специфичные бинарники whisper/vulkan и runtime-папки
+bin/whisper_vulkan/
+bin/whisper_vulkan/*.exe
+bin/whisper_vulkan/*.dll
+bin/whisper_vulkan/tmp/
+bin/whisper_vulkan/models/
+models/
+careers/static/careers/audio/tts_cache/

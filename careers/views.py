@@ -1,0 +1,945 @@
+import json
+import uuid
+import re
+from django.conf import settings
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_GET
+from django.urls import reverse
+from django.db.models import Q
+from .models import (
+    InternshipTrack,
+    Vacancy,
+    GameScenario,
+    ScenarioNode,
+    ScenarioChoice,
+    GameSession,
+    JobApplication,
+    StoryMilestone,
+    CompanyPerk,
+)
+from .services.sber_service import OchakovoAIService
+from .services.vacancy_crawler import sync_vacancies_to_database, fetch_official_vacancies
+from .services.scenario_matcher import match_game_scenario
+
+
+def home_view(request):
+    """Главная посадочная страница бренда работодателя «Очаково»"""
+    tracks = InternshipTrack.objects.all().order_by('order')
+    featured_vacancies = Vacancy.objects.filter(is_active=True).order_by('order')[:6]
+    scenarios = GameScenario.objects.all().order_by('order')[:3]
+    milestones = StoryMilestone.objects.all().order_by('order')
+    perks = CompanyPerk.objects.all().order_by('order')
+
+    context = {
+        'tracks': tracks,
+        'featured_vacancies': featured_vacancies,
+        'scenarios': scenarios,
+        'milestones': milestones,
+        'perks': perks,
+    }
+    return render(request, 'careers/home.html', context)
+
+
+def game_select_view(request):
+    """Выбор производственного сценария / роли в цеху"""
+    scenarios = GameScenario.objects.select_related('track', 'target_vacancy').all().order_by('order')
+    return render(request, 'careers/game_select.html', {'scenarios': scenarios})
+
+
+def game_play_view(request, scenario_slug):
+    """Интерактивный симулятор завода Очаково: HUD, стойка оборудования, диалог с наставником"""
+    SLUG_ALIASES = {
+        'bottling_jam': 'krones-robot-tilt',
+        'bottling-jam': 'krones-robot-tilt',
+        'lab_purity': 'okroshka-detective',
+        'lab-purity': 'okroshka-detective',
+        'brewing_emergency': 'brew-yeast-flex',
+        'brewing-emergency': 'brew-yeast-flex',
+        'brew_yeast_flex': 'brew-yeast-flex',
+        'krones_robot_tilt': 'krones-robot-tilt',
+        'okroshka_detective': 'okroshka-detective',
+        'warehouse_drift': 'warehouse-drift',
+        'secret_drop_1978': 'secret-drop-1978',
+    }
+    resolved_slug = SLUG_ALIASES.get(scenario_slug, scenario_slug)
+    scenario = GameScenario.objects.filter(slug=resolved_slug).first()
+    if not scenario:
+        scenario = GameScenario.objects.filter(slug=resolved_slug.replace('_', '-')).first()
+    if not scenario:
+        scenario = GameScenario.objects.filter(slug=resolved_slug.replace('-', '_')).first()
+    if not scenario:
+        scenario = GameScenario.objects.first()
+    if not scenario:
+        raise Http404("Сценарии симулятора не найдены.")
+    
+    # Инициализация или продолжение сессии в куки/запросе
+    session_id = request.GET.get('session')
+    session = None
+    if session_id:
+        try:
+            session = GameSession.objects.get(session_uuid=session_id, scenario=scenario)
+        except (GameSession.DoesNotExist, ValueError):
+            session = None
+
+    if not session or session.status != 'active':
+        session = GameSession.objects.create(
+            scenario=scenario,
+            current_node_id='start',
+            score=50,
+            temperature=scenario.initial_temperature,
+            brix=scenario.initial_brix,
+            line_speed=scenario.initial_line_speed,
+            purity=scenario.initial_purity,
+            balance=scenario.initial_balance,
+            dialogue_history=[]
+        )
+
+    # Получаем текущий узел графа
+    current_node = ScenarioNode.objects.filter(scenario=scenario, node_id=session.current_node_id).first()
+    if not current_node:
+        current_node = ScenarioNode.objects.filter(scenario=scenario, node_id='start').first()
+
+    choices = current_node.choices.all().order_by('order') if current_node else []
+
+    # Список сценариев для карусели цехов
+    all_scenarios = list(GameScenario.objects.all().order_by('order', 'id'))
+    current_idx = 0
+    for idx, sc in enumerate(all_scenarios):
+        if sc.id == scenario.id:
+            current_idx = idx
+            break
+    prev_scenario = all_scenarios[current_idx - 1] if current_idx > 0 else all_scenarios[-1]
+    next_scenario = all_scenarios[(current_idx + 1) % len(all_scenarios)] if all_scenarios else None
+
+    session_creds = request.session.get('sber_credentials', {})
+    has_custom_gigachat = bool(session_creds.get('client_id') and session_creds.get('client_secret')) or bool(session_creds.get('auth_key'))
+    has_env_gigachat = bool(getattr(settings, 'GIGACHAT_CLIENT_ID', '')) or bool(getattr(settings, 'GIGACHAT_AUTH_KEY', ''))
+    force_offline = request.session.get('force_offline_ai', False)
+
+    ai_mode = 'offline' if force_offline else ('gigachat' if (has_custom_gigachat or has_env_gigachat) else 'offline')
+
+    context = {
+        'scenario': scenario,
+        'session': session,
+        'current_node': current_node,
+        'choices': choices,
+        'all_scenarios': all_scenarios,
+        'prev_scenario': prev_scenario,
+        'next_scenario': next_scenario,
+        'carousel_position': f"{current_idx + 1} / {len(all_scenarios)}" if all_scenarios else "1 / 1",
+        'ai_mode': ai_mode,
+        'has_custom_gigachat': has_custom_gigachat,
+        'has_gigachat_credentials': has_custom_gigachat or has_env_gigachat,
+    }
+    return render(request, 'careers/game_play.html', context)
+
+
+@csrf_exempt
+@require_POST
+def game_action_api(request):
+    """
+    AJAX API: обработка шага в симуляторе завода Очаково
+    Принимает выбор кнопки, свободный текст (или транскрипт голоса) или применение оборудования.
+    """
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        data = request.POST
+
+    session_uuid = data.get('session_id')
+    choice_id = data.get('choice_id')
+    user_text = (data.get('user_text') or '').strip()
+    equipment_code = (data.get('equipment_code') or '').strip()
+    is_recommended_choice = bool(choice_id or data.get('is_recommended_choice'))
+
+    session = get_object_or_404(GameSession, session_uuid=session_uuid)
+    scenario = session.scenario
+
+    reply_text = ""
+    feedback_text = ""
+    verdict = "success"
+    temp_delta = 0.0
+    brix_delta = 0.0
+    line_delta = 0
+    purity_delta = 0
+    balance_delta = 0
+    score_delta = 15
+    is_completed = False
+    is_failed = False
+    next_node_id = session.current_node_id
+
+    ai_res = {}
+
+    # 1. Если был выбран готовый вариант действия
+    if choice_id:
+        try:
+            choice = ScenarioChoice.objects.get(id=choice_id)
+            score_delta = choice.score_delta
+            temp_delta = choice.temp_delta
+            brix_delta = choice.brix_delta
+            line_delta = choice.line_speed_delta
+            purity_delta = choice.purity_delta
+            balance_delta = choice.balance_delta
+            next_node_id = choice.next_node_id
+
+            target_node = ScenarioNode.objects.filter(scenario=scenario, node_id=next_node_id).first()
+            mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
+
+            # Проверяем, верен ли выбор действия:
+            # верный = положительный прирост баллов и не ведёт в узел срыва/провала
+            is_choice_correct = (score_delta > 0) and (next_node_id != 'fail_spoiled') and (not (target_node and target_node.is_terminal and not target_node.is_success))
+
+            if is_choice_correct:
+                # Если выбран вариант ответа из рекомендуемых и он сразу верный - сразу помечаем смену успешной!
+                is_completed = True
+                is_failed = False
+                verdict = "success"
+                score_delta = max(35, score_delta)
+                reply_text = choice.mentor_quick_reaction or (target_node.dialogue_text if target_node else f"Отличный выбор! {mentor_name} одобряет: технологический регламент выполнен безупречно!")
+                feedback_text = (target_node.narrative_context if target_node else None) or choice.tactical_hint or "Производственный норматив комбината «Очаково» выдержан на 100%."
+            else:
+                # Если же вариант неверный — НЕ проваливаем смену сразу! Переводим в диалог с наставником:
+                # "общение нужно только если вариант выбран неверный"
+                is_completed = False
+                is_failed = False
+                verdict = "warning"
+                score_delta = max(-15, score_delta)
+                # Корректируем прирост температуры так, чтобы не пробить аварийный порог до начала диалога
+                temp_delta = min(0.8, max(-0.5, temp_delta))
+                if session.temperature + temp_delta >= 29.5:
+                    temp_delta = max(0.0, round(29.4 - session.temperature, 1))
+                if session.purity + purity_delta <= 45:
+                    purity_delta = -5
+                reply_text = (
+                    f"Так, внимание! Наставник {mentor_name} предостерегает: «Ты что творишь?! "
+                    f"Действие „{choice.choice_text}“ здесь недопустимо — так мы партию запорем или сорвем график! "
+                    "Включай голову: посмотри на панель датчиков цеха. Напиши мне в рацию или выбери правильное действие, пока есть время!»"
+                )
+                feedback_text = choice.tactical_hint or "Неверный выбор действия. Наставник сделал предупреждение и дал шанс исправить ситуацию через диалог."
+        except ScenarioChoice.DoesNotExist:
+            pass
+
+    # 2. Если отправлен свободный текст или перетащено оборудование цеха
+    if not choice_id and (user_text or equipment_code):
+        session_creds = request.session.get('sber_credentials', {})
+        force_offline = request.session.get('force_offline_ai', False)
+        ai_res = OchakovoAIService.process_turn(
+            scenario=scenario,
+            session=session,
+            user_message=user_text,
+            equipment_code=equipment_code,
+            dialogue_history=session.dialogue_history,
+            custom_auth_key=session_creds.get('auth_key'),
+            custom_client_id=session_creds.get('client_id'),
+            custom_client_secret=session_creds.get('client_secret'),
+            force_offline=force_offline,
+            is_recommended_choice=is_recommended_choice
+        )
+        verdict = ai_res.get('verdict', 'success')
+        reply_text = OchakovoAIService._clean_mentor_reply(ai_res.get('mentor_reply', 'Указание принято.'))
+        feedback_text = ai_res.get('feedback', '')
+        temp_delta = ai_res.get('temp_delta', 0.0)
+        brix_delta = ai_res.get('brix_delta', 0.0)
+        line_delta = ai_res.get('line_speed_delta', 0)
+        purity_delta = ai_res.get('purity_delta', 0)
+        balance_delta = ai_res.get('balance_delta', 0)
+        score_delta = ai_res.get('score_delta', 15)
+        is_completed = ai_res.get('is_completed', False)
+        is_failed = ai_res.get('is_failed', False)
+        if ai_res.get('score') is not None and (is_completed or is_failed):
+            session.score = ai_res['score']
+
+    # Обновляем состояние сессии
+    if ai_res.get('score') is None:
+        session.score = max(0, min(100, session.score + score_delta))
+    session.temperature = round(session.temperature + temp_delta, 1)
+    session.brix = round(max(0.0, session.brix + brix_delta), 1)
+    session.line_speed = max(0, session.line_speed + line_delta)
+    session.purity = max(0, min(100, session.purity + purity_delta))
+    session.balance = max(0, min(100, session.balance + balance_delta))
+    session.turns_count += 1
+
+    # Строгий производственный регламент комбината «Очаково»:
+    # Если температура превышает критический порог или чистота падает до антисанитарии - смена срывается!
+    if not is_completed:
+        if session.temperature >= 29.8:
+            is_failed = True
+            feedback_text = feedback_text or "Температура сусла превысила критические 29.8°C: термическая гибель закваски, затор скис."
+            verdict = "critical_fail"
+            mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
+            if not any(w in reply_text.lower() for w in ["сорвана", "дождались", "отстранил", "скис"]):
+                reply_text = f"Тревога! Аварийный датчик ЦКТ зафиксировал {session.temperature:.1f}°C! Сусло перегрелось и скисло. Наставник {mentor_name} останавливает смену!"
+        elif session.purity <= 42:
+            is_failed = True
+            feedback_text = feedback_text or "Чистота контура CIP упала ниже 42%: критическая угроза микробиологической чистоты напитка."
+            verdict = "critical_fail"
+        elif session.score <= 15:
+            is_failed = True
+            feedback_text = feedback_text or "Критическое количество технологических ошибок: наставник отстранил стажёра от смены."
+            verdict = "critical_fail"
+
+    if is_completed:
+        session.status = 'completed'
+        session.current_node_id = 'success_shift'
+        session.score = max(session.score, 90)
+        session.feedback_text = feedback_text or "Смена успешно закрыта: технологический регламент комбината «Очаково» выдержан на 100%!"
+    elif is_failed:
+        session.status = 'failed'
+        session.current_node_id = 'fail_spoiled'
+        session.score = min(session.score, 35)
+        session.feedback_text = feedback_text or "Смена сорвана: нарушение технологического регламента производства."
+    else:
+        session.current_node_id = next_node_id
+
+    # Запись в историю реплик
+    history = session.dialogue_history or []
+    if user_text or equipment_code:
+        action_label = f"[{equipment_code}] " if equipment_code else ""
+        history.append({
+            'role': 'candidate',
+            'text': f"{action_label}{user_text}".strip(),
+            'turn': session.turns_count
+        })
+
+    history.append({
+        'role': 'mentor',
+        'text': reply_text,
+        'verdict': verdict,
+        'turn': session.turns_count
+    })
+    session.dialogue_history = history
+    session.save()
+
+    # Загружаем доступные варианты для следующего узла
+    choices_data = []
+    if not (is_completed or is_failed):
+        # 1. Если ИИ вернул тактические подсказки / рекомендуемые действия (offer_hints)
+        if ai_res and ai_res.get('suggested_actions'):
+            for act in ai_res['suggested_actions']:
+                if isinstance(act, dict):
+                    choices_data.append({
+                        'id': None,
+                        'choice_text': act.get('text', ''),
+                        'tactical_hint': act.get('hint', ''),
+                        'equipment_code': act.get('equipment_code', '')
+                    })
+                elif isinstance(act, str):
+                    choices_data.append({
+                        'id': None,
+                        'choice_text': act,
+                        'tactical_hint': 'Совет наставника',
+                        'equipment_code': ''
+                    })
+
+        # 2. Если вариантов от ИИ нет, подгружаем узловые действия из БД
+        if not choices_data:
+            next_node = ScenarioNode.objects.filter(scenario=scenario, node_id=session.current_node_id).first()
+            if next_node:
+                for ch in next_node.choices.all().order_by('order'):
+                    choices_data.append({
+                        'id': ch.id,
+                        'choice_text': ch.choice_text,
+                        'tactical_hint': ch.tactical_hint,
+                        'equipment_code': ch.equipment_code
+                    })
+
+        # 3. Дефолтные кнопки цеха, если список всё ещё пуст
+        if not choices_data:
+            for act in OchakovoAIService._get_default_scenario_actions(scenario, session):
+                choices_data.append({
+                    'id': None,
+                    'choice_text': act.get('text', ''),
+                    'tactical_hint': act.get('hint', ''),
+                    'equipment_code': act.get('equipment_code', '')
+                })
+
+    return JsonResponse({
+        'ok': True,
+        'status': session.status,
+        'score': session.score,
+        'temperature': session.temperature,
+        'brix': session.brix,
+        'line_speed': session.line_speed,
+        'purity': session.purity,
+        'balance': session.balance,
+        'mentor_reply': reply_text,
+        'feedback': feedback_text,
+        'verdict': verdict,
+        'choices': choices_data,
+        'is_completed': is_completed,
+        'is_failed': is_failed,
+        'target_vacancy': {
+            'title': scenario.target_vacancy.title if scenario.target_vacancy else scenario.title,
+            'salary': scenario.target_vacancy.salary_text if scenario.target_vacancy else 'от 85 000 ₽',
+            'slug': scenario.target_vacancy.slug if scenario.target_vacancy else ''
+        }
+    })
+
+
+@csrf_exempt
+@require_POST
+def game_credentials_api(request):
+    """
+    API управления учетными данными GigaChat и переключения режима ИИ:
+    - 'set_gigachat': проверка и сохранение Client ID и Client Secret в сессии
+    - 'set_offline': принудительное переключение на локальный биохимический движок
+    - 'clear': сброс сохраненных ключей
+    - 'get_status': получение текущего режима
+    """
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        data = request.POST
+
+    action = data.get('action', 'set_gigachat')
+
+    if action == 'set_gigachat':
+        client_id = (data.get('client_id') or '').strip()
+        client_secret = (data.get('client_secret') or '').strip()
+        auth_key = (data.get('auth_key') or '').strip()
+
+        if not auth_key and not (client_id and client_secret):
+            return JsonResponse({
+                'ok': False,
+                'status': 'error',
+                'message': 'Необходимо указать Client ID и Client Secret (или готовый Auth Key в Base64).'
+            }, status=400)
+
+        # Проверяем доступность токена GigaChat через Sber API
+        token = OchakovoAIService.get_gigachat_token(auth_key=auth_key, client_id=client_id, client_secret=client_secret)
+        if not token:
+            return JsonResponse({
+                'ok': False,
+                'status': 'error',
+                'message': 'Не удалось авторизоваться в GigaChat API. Проверьте правильность Client ID и Client Secret или доступ к ngw.devices.sberbank.ru.'
+            }, status=401)
+
+        request.session['sber_credentials'] = {
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'auth_key': auth_key
+        }
+        request.session['force_offline_ai'] = False
+        request.session.modified = True
+
+        return JsonResponse({
+            'ok': True,
+            'status': 'ok',
+            'mode': 'gigachat',
+            'message': 'Авторизация в Сбер GigaChat прошла успешно! Активирован режим онлайн-нейросети с Function Calling.'
+        })
+
+    elif action == 'set_offline':
+        request.session['force_offline_ai'] = True
+        request.session.modified = True
+        return JsonResponse({
+            'ok': True,
+            'status': 'ok',
+            'mode': 'offline',
+            'message': 'Активирован интеллектуальный локальный движок комбината «Очаково» (Smart Heuristic Engine).'
+        })
+
+    elif action == 'clear':
+        if 'sber_credentials' in request.session:
+            del request.session['sber_credentials']
+        request.session['force_offline_ai'] = False
+        request.session.modified = True
+        return JsonResponse({
+            'ok': True,
+            'status': 'ok',
+            'mode': 'offline',
+            'message': 'Учетные данные GigaChat сброшены.'
+        })
+
+    elif action == 'get_status':
+        session_creds = request.session.get('sber_credentials', {})
+        has_custom = bool(session_creds.get('client_id') and session_creds.get('client_secret')) or bool(session_creds.get('auth_key'))
+        has_env = bool(getattr(settings, 'GIGACHAT_CLIENT_ID', '')) or bool(getattr(settings, 'GIGACHAT_AUTH_KEY', ''))
+        force_offline = request.session.get('force_offline_ai', False)
+        mode = 'offline' if force_offline else ('gigachat' if (has_custom or has_env) else 'offline')
+
+        return JsonResponse({
+            'ok': True,
+            'mode': mode,
+            'has_credentials': has_custom or has_env,
+            'force_offline': force_offline
+        })
+
+    return JsonResponse({'ok': False, 'status': 'error', 'message': 'Неизвестное действие.'}, status=400)
+
+
+@require_GET
+def game_tts_api(request):
+    """Генерация аудио реплики наставника через Edge-TTS"""
+    text = request.GET.get('text', '').strip()
+    voice = request.GET.get('voice', 'male')
+    if not text:
+        return HttpResponse(b'', content_type='audio/mpeg')
+
+    audio_bytes, content_type = OchakovoAIService.synthesize_speech(text, voice_type=voice)
+    if audio_bytes:
+        resp = HttpResponse(audio_bytes, content_type=content_type)
+        resp['Cache-Control'] = 'public, max-age=86400'
+        return resp
+
+    return HttpResponse(b'', status=204)
+
+
+@csrf_exempt
+@require_POST
+def game_stt_api(request):
+    """
+    Распознавание речи кандидата (STT) через локальный Whisper Vulkan GPU.
+    Принимает аудиозапись с микрофона (multipart/form-data или raw audio stream).
+    """
+    audio_data = None
+    if request.FILES.get('audio'):
+        audio_data = request.FILES['audio'].read()
+    elif request.body:
+        audio_data = request.body
+
+    if not audio_data:
+        return JsonResponse({'ok': False, 'error': 'Аудиоданные не получены'}, status=400)
+
+    from .services.whisper_service import WhisperVulkanService
+    result = WhisperVulkanService.transcribe(audio_data)
+    return JsonResponse(result)
+
+
+def candidate_progress_view(request):
+    """
+    Раздел личного прогресса и карьерных достижений стажёра завода «Очаково».
+    Позволяет отслеживать баллы по всем цехам, победный стрик,
+    квалификационный разряд и сформировать производственный сертификат для hh.ru.
+    """
+    scenarios = GameScenario.objects.all().order_by('order', 'id')
+    vacancies = Vacancy.objects.filter(is_active=True, hh_url__isnull=False).exclude(hh_url='').order_by('-salary_max')[:8]
+    if not vacancies.exists():
+        vacancies = Vacancy.objects.filter(is_active=True).order_by('-salary_max')[:8]
+    tracks = InternshipTrack.objects.all().order_by('order')
+
+    context = {
+        'scenarios': scenarios,
+        'vacancies': vacancies,
+        'tracks': tracks,
+        'page_title': 'Мой прогресс стажировки | Очаково 2026',
+    }
+    return render(request, 'careers/progress.html', context)
+
+
+@require_POST
+def candidate_progress_api(request):
+    """
+    API синхронизации прогресса стажёра между клиентом (localStorage) и сервером.
+    """
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        data = request.POST
+
+    total_score = int(data.get('total_score', 0))
+    cases = data.get('completed_cases', [])
+
+    total_cases = GameScenario.objects.count()
+    max_score = total_cases * 100
+    rank1 = int(max_score * 0.25)
+    rank2 = int(max_score * 0.50)
+    rank3 = int(max_score * 0.75)
+
+    if total_score >= rank3:
+        rank_title = "Шеф-наставник комбината"
+        next_threshold = max_score
+    elif total_score >= rank2:
+        rank_title = "Инженер-технолог смены"
+        next_threshold = rank3
+    elif total_score >= rank1:
+        rank_title = "Младший сменный мастер"
+        next_threshold = rank2
+    else:
+        rank_title = "Кандидат-практикант"
+        next_threshold = rank1
+
+    return JsonResponse({
+        'ok': True,
+        'total_score': total_score,
+        'rank_title': rank_title,
+        'next_threshold': next_threshold,
+        'cases_count': len(cases),
+        'total_cases_count': total_cases
+    })
+
+
+@require_POST
+def apply_candidate_api(request):
+    """
+    Быстрая подача заявки студента на практику или вакансию
+    с прикреплением подтверждённого сертификата пройденных цеховых кейсов
+    и автоматическим перенаправлением на страницу отклика hh.ru.
+    """
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        data = request.POST
+
+    full_name = data.get('full_name', '').strip()
+    phone = data.get('phone', '').strip()
+    email = data.get('email', '').strip()
+    telegram = data.get('telegram', '').strip()
+    university = data.get('university', '').strip()
+    study_field = data.get('study_field', '').strip()
+    course_or_status = data.get('course_or_status', 'Студент / Выпускник').strip()
+    session_id = data.get('session_id')
+    vacancy_slug = data.get('vacancy_slug')
+    vacancy_id = data.get('vacancy_id')
+
+    if not full_name or not phone:
+        return JsonResponse({'ok': False, 'error': 'Пожалуйста, укажите ваше имя и контактный телефон.'}, status=400)
+
+    target_vacancy = None
+    target_track = None
+    if vacancy_slug:
+        target_vacancy = Vacancy.objects.filter(slug=vacancy_slug).first()
+    elif vacancy_id:
+        target_vacancy = Vacancy.objects.filter(id=vacancy_id).first()
+
+    if target_vacancy:
+        target_track = target_vacancy.track
+
+    session = None
+    game_score = None
+    if session_id:
+        try:
+            session = GameSession.objects.get(session_uuid=session_id)
+            game_score = session.score
+            if not target_vacancy and session.scenario.target_vacancy:
+                target_vacancy = session.scenario.target_vacancy
+                target_track = target_vacancy.track
+        except Exception:
+            pass
+
+    # Разбор переданных кейсов из локального прогресса соискателя
+    completed_cases_raw = data.get('completed_cases')
+    completed_cases = []
+    if isinstance(completed_cases_raw, str):
+        try:
+            completed_cases = json.loads(completed_cases_raw)
+        except Exception:
+            completed_cases = []
+    elif isinstance(completed_cases_raw, list):
+        completed_cases = completed_cases_raw
+
+    # Если передан session_id, но нет массива кейсов — фиксируем текущий
+    if session and not completed_cases:
+        completed_cases.append({
+            'slug': session.scenario.slug,
+            'title': session.scenario.title,
+            'workshop': session.scenario.workshop_name,
+            'mentor': session.scenario.mentor_name,
+            'score': session.score,
+            'status': session.status
+        })
+
+    # Расчет суммарного рейтинга и квалификационного разряда
+    total_score = sum(int(c.get('score', 0)) for c in completed_cases) if completed_cases else (game_score or 50)
+
+    if total_score >= 270:
+        rank_title = "Шеф-наставник комбината"
+    elif total_score >= 180:
+        rank_title = "Инженер-технолог смены"
+    elif total_score >= 90:
+        rank_title = "Младший сменный мастер"
+    else:
+        rank_title = "Кандидат-практикант"
+
+    # Формируем официальный производственный сертификат стажёра для hh.ru
+    vac_name = target_vacancy.title if target_vacancy else "Оплачиваемая практика в АО «Очаково»"
+    cert_lines = [
+        "===========================================================",
+        "ПРОИЗВОДСТВЕННЫЙ СЕРТИФИКАТ СТАЖЁРА КОМБИНАТА «ОЧАКОВО» (2026)",
+        f"Вакансия: {vac_name}",
+        f"Соискатель: {full_name} | Тел: {phone} | Email: {email or 'не указан'}",
+        f"Учебное заведение: {university or 'ВУЗ / Колледж'} ({study_field or 'Техническая специальность'}, {course_or_status})",
+        f"Итоговый карьерный рейтинг: {total_score} баллов | Разряд: {rank_title}",
+        "-----------------------------------------------------------",
+        "ПОДТВЕРЖДЁННЫЕ ПРАКТИЧЕСКИЕ КЕЙСЫ НА СИМУЛЯТОРЕ ЗАВОДА:"
+    ]
+    if completed_cases:
+        for idx, c in enumerate(completed_cases, 1):
+            c_title = c.get('title') or c.get('name') or 'Смена'
+            c_workshop = c.get('workshop') or 'Производственный цех'
+            c_score = c.get('score', 95)
+            c_mentor = c.get('mentor') or 'Сменный наставник'
+            cert_lines.append(f"{idx}. {c_title} [{c_workshop}] — {c_score}/100 баллов (Наставник: {c_mentor})")
+    elif session:
+        cert_lines.append(f"1. {session.scenario.title} [{session.scenario.workshop_name}] — {session.score}/100 баллов (Наставник: {session.scenario.mentor_name})")
+    else:
+        cert_lines.append("• Базовый квалификационный профиль стажёра пищевого производства.")
+
+    cert_lines.extend([
+        "-----------------------------------------------------------",
+        "ПОДТВЕРЖДЁННЫЕ ПРОИЗВОДСТВЕННЫЕ НАВЫКИ:",
+        "• Терморегуляция рубашки охлаждения ЦКТ (-3°C гликоль) по стандарту 1978 года;",
+        "• Диагностика и устранение блокировок упаковочных роботов Krones (35 000+ банок/час);",
+        "• Контроль параметров плотности затора рефрактометром Brix и титруемой кислотности pH;",
+        "• Работа с терминалом WMS и регламентом скоростного паллетирования продукции.",
+        "==========================================================="
+    ])
+
+    user_comment = data.get('comment', '').strip()
+    if user_comment:
+        cert_lines.append("\nМотивация соискателя:")
+        cert_lines.append(user_comment)
+
+    full_cover_letter = "\n".join(cert_lines)
+
+    # Определение реального URL вакансии на hh.ru
+    # Официальный каталог вакансий Очаково на hh.ru: https://hh.ru/vacancies/ochakovo
+    official_company_hh_url = "https://hh.ru/vacancies/ochakovo"
+    target_hh_url = official_company_hh_url
+    hh_vacancy_id = None
+
+    if target_vacancy:
+        if target_vacancy.hh_url and target_vacancy.hh_url.strip():
+            target_hh_url = target_vacancy.hh_url.strip()
+            m = re.search(r'vacancy/(\d+)', target_hh_url)
+            if m:
+                hh_vacancy_id = m.group(1)
+        elif target_vacancy.slug.startswith('hh-'):
+            hh_vacancy_id = target_vacancy.slug.replace('hh-', '')
+            target_hh_url = f"https://hh.ru/vacancy/{hh_vacancy_id}"
+        elif target_vacancy.track:
+            fallback_vac = Vacancy.objects.filter(
+                track=target_vacancy.track, 
+                hh_url__isnull=False
+            ).exclude(hh_url='').first()
+            if fallback_vac and fallback_vac.hh_url:
+                target_hh_url = fallback_vac.hh_url
+                m = re.search(r'vacancy/(\d+)', target_hh_url)
+                if m:
+                    hh_vacancy_id = m.group(1)
+
+    # Канонический URL вакансии на hh.ru гарантированно открывается у любых пользователей
+    if hh_vacancy_id:
+        hh_response_url = f"https://hh.ru/vacancy/{hh_vacancy_id}"
+    else:
+        hh_response_url = target_hh_url
+
+    app = JobApplication.objects.create(
+        full_name=full_name,
+        phone=phone,
+        email=email,
+        telegram=telegram,
+        university=university or "ВУЗ / Колледж",
+        study_field=study_field or "Техническая специальность",
+        course_or_status=course_or_status,
+        target_track=target_track,
+        target_vacancy=target_vacancy,
+        game_session=session,
+        game_score=game_score or total_score,
+        completed_cases=completed_cases,
+        hh_response_url=hh_response_url,
+        cover_letter=full_cover_letter
+    )
+
+    return JsonResponse({
+        'ok': True,
+        'application_id': app.id,
+        'hh_url': hh_response_url,
+        'hh_vacancy_id': hh_vacancy_id,
+        'cover_letter': full_cover_letter,
+        'total_score': total_score,
+        'rank_title': rank_title,
+        'cases_count': len(completed_cases),
+        'message': f'Отлично, {full_name}! Ваша заявка зарегистрирована в HR «Очаково», а сертификат с {total_score} баллами скопирован в буфер обмена для отклика на hh.ru!'
+    })
+
+
+def vacancies_list_view(request):
+    """Каталог сезонных вакансий и программ оплачиваемой практики с онлайн-актуализацией"""
+    # Если в базе мало вакансий (первый запуск), подтягиваем официальные позиции с ochakovo.ru
+    if Vacancy.objects.count() < 10:
+        try:
+            sync_vacancies_to_database(force_refresh=False)
+        except Exception:
+            pass
+
+    city = request.GET.get('city', '').strip()
+    track_slug = request.GET.get('track', '').strip()
+    q = request.GET.get('q', '').strip()
+    has_game = request.GET.get('has_game', '').strip() in ('1', 'true', 'yes')
+
+    qs = Vacancy.objects.filter(is_active=True).select_related('track')
+
+    if city:
+        qs = qs.filter(city=city)
+    if track_slug:
+        qs = qs.filter(track__slug=track_slug)
+    if q:
+        qs = qs.filter(
+            Q(title__icontains=q) |
+            Q(description__icontains=q) |
+            Q(department__icontains=q) |
+            Q(responsibilities__icontains=q)
+        )
+
+    vacancies = list(qs)
+    if has_game:
+        vacancies = [v for v in vacancies if v.matched_scenario]
+
+    tracks = InternshipTrack.objects.all().order_by('order')
+    
+    # Города: Москва всегда первая, остальные по алфавиту
+    raw_cities = set(Vacancy.objects.values_list('city', flat=True).distinct())
+    cities = []
+    if 'Москва' in raw_cities:
+        cities.append('Москва')
+        raw_cities.remove('Москва')
+    cities.extend(sorted(list(raw_cities)))
+
+    # Считаем, сколько вакансий имеют игровой симулятор
+    total_with_simulator = sum(1 for v in Vacancy.objects.filter(is_active=True) if v.matched_scenario)
+
+    context = {
+        'vacancies': vacancies,
+        'tracks': tracks,
+        'cities': cities,
+        'current_city': city,
+        'current_track': track_slug,
+        'search_query': q,
+        'has_game': has_game,
+        'total_vacancies_count': Vacancy.objects.filter(is_active=True).count(),
+        'total_with_simulator': total_with_simulator,
+    }
+    return render(request, 'careers/vacancies_list.html', context)
+
+
+@require_GET
+def vacancies_search_api(request):
+    """
+    Интерактивный AJAX API для мгновенного поиска и фильтрации вакансий без перезагрузки страницы.
+    Возвращает актуальный список с regex-сопоставлением с игровым симулятором завода.
+    """
+    q = request.GET.get('q', '').strip()
+    city = request.GET.get('city', '').strip()
+    track_slug = request.GET.get('track', '').strip()
+    has_game = request.GET.get('has_game', '').strip() in ('1', 'true', 'yes')
+
+    qs = Vacancy.objects.filter(is_active=True).select_related('track')
+
+    if city:
+        qs = qs.filter(city=city)
+    if track_slug:
+        qs = qs.filter(track__slug=track_slug)
+    if q:
+        qs = qs.filter(
+            Q(title__icontains=q) |
+            Q(description__icontains=q) |
+            Q(department__icontains=q) |
+            Q(responsibilities__icontains=q)
+        )
+
+    results = []
+    for vac in qs:
+        scenario = vac.matched_scenario
+        if has_game and not scenario:
+            continue
+
+        results.append({
+            'id': vac.id,
+            'slug': vac.slug,
+            'title': vac.title,
+            'city': vac.city,
+            'track_slug': vac.track.slug if vac.track else '',
+            'track_name': vac.track.title if vac.track else 'Производство',
+            'track_color': vac.track.accent_color if vac.track else '#D50032',
+            'salary_text': vac.salary_text,
+            'schedule': vac.schedule,
+            'experience_level': vac.experience_level,
+            'is_seasonal_peak': vac.is_seasonal_peak,
+            'is_student_friendly': vac.is_student_friendly,
+            'has_dormitory': vac.has_dormitory,
+            'description_snippet': vac.description[:160] + ('...' if len(vac.description) > 160 else ''),
+            'hh_url': vac.hh_url,
+            'detail_url': reverse('careers:vacancy_detail', kwargs={'slug': vac.slug}),
+            'matched_scenario': scenario,
+            'game_url': reverse('careers:game_play', kwargs={'scenario_slug': scenario['scenario_slug']}) if scenario else None
+        })
+
+    return JsonResponse({
+        'ok': True,
+        'count': len(results),
+        'total_in_db': Vacancy.objects.filter(is_active=True).count(),
+        'items': results
+    })
+
+
+@csrf_exempt
+@require_POST
+def vacancies_sync_api(request):
+    """
+    Принудительная синхронизация актуальных вакансий с официального сайта ochakovo.ru
+    """
+    try:
+        res = sync_vacancies_to_database(force_refresh=True)
+        return JsonResponse({
+            'ok': True,
+            'message': f"Синхронизировано {res['total_fetched']} вакансий с официального сайта «Очаково»!",
+            'data': res
+        })
+    except Exception as e:
+        return JsonResponse({
+            'ok': False,
+            'error': str(e)
+        }, status=500)
+
+
+def vacancy_detail_view(request, slug):
+    """Карточка вакансии с Schema.org разметкой JobPosting"""
+    vacancy = get_object_or_404(Vacancy, slug=slug, is_active=True)
+    related_scenarios = GameScenario.objects.filter(
+        Q(target_vacancy=vacancy) | Q(track=vacancy.track)
+    ).order_by('order')[:2]
+
+    context = {
+        'vacancy': vacancy,
+        'related_scenarios': related_scenarios,
+    }
+    return render(request, 'careers/vacancy_detail.html', context)
+
+
+def story_view(request):
+    """История комбината «Очаково», технологии и ценности"""
+    milestones = StoryMilestone.objects.all().order_by('order')
+    perks = CompanyPerk.objects.all().order_by('order')
+    return render(request, 'careers/story.html', {'milestones': milestones, 'perks': perks})
+
+
+def offline_view(request):
+    """Офлайн-страница для PWA"""
+    return render(request, 'careers/offline.html')
+
+
+def manifest_view(request):
+    """Выдача PWA Web App Manifest с корректным Content-Type"""
+    manifest_path = settings.BASE_DIR / 'static' / 'manifest.json'
+    try:
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='application/manifest+json; charset=utf-8')
+    except Exception:
+        return JsonResponse({'error': 'manifest not found'}, status=404)
+
+
+def service_worker_view(request):
+    """Выдача Service Worker с корня домена с корректным Service-Worker-Allowed header"""
+    sw_path = settings.BASE_DIR / 'static' / 'sw.js'
+    try:
+        with open(sw_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        resp = HttpResponse(content, content_type='application/javascript; charset=utf-8')
+        resp['Service-Worker-Allowed'] = '/'
+        return resp
+    except Exception:
+        return HttpResponse('console.log("sw not found");', content_type='application/javascript')

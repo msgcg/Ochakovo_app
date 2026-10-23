@@ -1,0 +1,43 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - WHISPER_MODELS=base
+    container_name: ochakovo_career_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ochakovo_media:/app/media
+      - ochakovo_static:/app/staticfiles
+      - ochakovo_whisper_models:/opt/whisper/models
+    environment:
+      - DJANGO_SETTINGS_MODULE=ochakovo_project.settings
+      - PYTHONUNBUFFERED=1
+      - WHISPER_BIN_PATH=/usr/local/bin/whisper-cli
+      - WHISPER_MODEL_PATH=/opt/whisper/models/ggml-base.bin
+      - GGML_ACCELERATION=auto
+      - GGML_VULKAN_FALLBACK_CPU=True
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video,graphics
+      - GIGACHAT_CLIENT_ID=
+      - GIGACHAT_CLIENT_SECRET=
+      - GIGACHAT_AUTH_KEY=
+    dns:
+      - 77.88.8.8
+      - 8.8.8.8
+      - 1.1.1.1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  ochakovo_media:
+  ochakovo_static:
+  ochakovo_whisper_models:

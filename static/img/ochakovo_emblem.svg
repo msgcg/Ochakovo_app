@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D50032"/>
+      <stop offset="100%" stop-color="#8B001F"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <circle cx="256" cy="256" r="200" stroke="rgba(255,255,255,0.15)" stroke-width="8"/>
+  <circle cx="256" cy="256" r="184" stroke="url(#goldGrad)" stroke-width="4" stroke-dasharray="16 10"/>
+  <!-- Malt Hops Motif -->
+  <path d="M256 110c-35 50-25 110 0 160 25-50 35-110 0-160z" fill="url(#goldGrad)"/>
+  <path d="M210 160c-40 40-30 90 0 130 20-40 25-90 0-130z" fill="url(#goldGrad)" opacity="0.85"/>
+  <path d="M302 160c40 40 30 90 0 130-20-40-25-90 0-130z" fill="url(#goldGrad)" opacity="0.85"/>
+  <!-- Central Letter O / Barrel Ring -->
+  <circle cx="256" cy="300" r="72" fill="#ffffff"/>
+  <circle cx="256" cy="300" r="46" fill="#D50032"/>
+  <!-- 1978 Star -->
+  <polygon points="256,282 260,294 272,294 262,301 266,312 256,305 246,312 250,301 240,294 252,294" fill="url(#goldGrad)"/>
+  <text x="256" y="420" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="34" fill="#ffffff" letter-spacing="6">ОЧАКОВО</text>
+  <text x="256" y="448" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="16" fill="url(#goldGrad)" letter-spacing="4">МОСПРОМ 2026</text>
+</svg>

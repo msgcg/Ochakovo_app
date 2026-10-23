@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Вакансии и оплачиваемая практика в «Очаково» — Пик сезона 2026{% endblock %}
+
+{% block content %}
+<section style="padding: 3.5rem 0;">
+  <div class="container">
+    
+    <div class="och-section-head">
+      <h1 class="och-section-title">Сезонные вакансии и практика</h1>
+      <p class="och-section-subtitle">
+        С марта по сентябрь на комбинатах «Очаково» (Москва, Краснодар, Пенза, Тюмень) открыты сотни оплачиваемых рабочих мест:
+        оформление по ТК РФ, общежитие в Москве рядом с производством и корпоративное питание.
+      </p>
+    </div>
+
+    <!-- Индикатор онлайн-синхронизации с официальным сайтом ochakovo.ru -->
+    <div class="och-live-sync-bar">
+      <div class="och-sync-indicator">
+        <span class="och-sync-pulse"></span>
+        <span>
+          <strong>Официальные вакансии «Очаково»:</strong> 
+          актуализировано с <a href="https://ochakovo.ru/rabota/" target="_blank" rel="noopener" style="color: var(--och-gold-light); text-decoration: underline;">ochakovo.ru/rabota/</a>
+        </span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <span id="sync-status-msg" style="color: var(--och-text-dim); font-size: 0.8rem;">
+          База активна
+        </span>
+        <button id="btn-sync-vacancies" type="button" class="och-btn-sync" title="Проверить появление новых вакансий на официальном сайте">
+          <i data-lucide="refresh-cw" id="sync-icon" style="width: 14px; height: 14px;"></i>
+          <span>Синхронизировать</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Интерактивное меню поиска и фильтрации -->
+    <div class="och-search-wrapper">
+      <div id="search-form-grid">
+        
+        <!-- Текстовый поиск с живым откликом -->
+        <div style="position: relative;">
+          <input 
+            type="text" 
+            id="filter-q" 
+            value="{{ search_query }}" 
+            placeholder="Поиск по названию: технолог, наладчик, химик..." 
+            class="och-text-input" 
+            style="width: 100%; padding-left: 2.5rem;"
+            autocomplete="off"
+          >
+          <i data-lucide="search" style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--och-text-dim);"></i>
+        </div>
+
+        <!-- Город -->
+        <div>
+          <select id="filter-city" class="och-text-input" style="width: 100%; cursor: pointer;">
+            <option value="">Все города</option>
+            {% for c in cities %}
+            <option value="{{ c }}" {% if current_city == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Направление -->
+        <div>
+          <select id="filter-track" class="och-text-input" style="width: 100%; cursor: pointer;">
+            <option value="">Все направления</option>
+            {% for t in tracks %}
+            <option value="{{ t.slug }}" {% if current_track == t.slug %}selected{% endif %}>{{ t.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Кнопка-тумблер: только с игровым симулятором -->
+        <div>
+          <button 
+            type="button" 
+            id="btn-toggle-game" 
+            class="och-filter-switch-btn {% if has_game %}active{% endif %}"
+            title="Показать только вакансии, для которых разработан симулятор смены с наставником"
+          >
+            <i data-lucide="gamepad-2" style="width: 18px; height: 18px;"></i>
+            <span>С симулятором</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Строка состояния фильтров и счетчик -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--och-border); font-size: 0.85rem; color: var(--och-text-dim); flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          Показано вакансий: <strong id="results-count" style="color: var(--och-text-heading); font-size: 0.95rem;">{{ vacancies|length }}</strong> 
+          из <span id="total-count-label">{{ total_vacancies_count }}</span>
+          <span style="margin: 0 0.5rem;">•</span>
+          С игровым тестом: <strong id="simulator-count-label" style="color: var(--och-gold-light);">{{ total_with_simulator }}</strong>
+        </div>
+
+        <button type="button" id="btn-reset-filters" style="background: none; border: none; color: var(--och-text-dim); text-decoration: underline; cursor: pointer; font-size: 0.82rem;">
+          Сбросить все фильтры
+        </button>
+      </div>
+    </div>
+
+    <!-- Сетка вакансий (живое обновление) -->
+    <div class="och-vacancies-grid" id="vacancies-container">
+      {% for vac in vacancies %}
+      <div class="och-vacancy-card" data-slug="{{ vac.slug }}">
+        <div>
+          <div class="och-vac-top">
+            <h3 class="och-vac-title">
+              <a href="{% url 'careers:vacancy_detail' slug=vac.slug %}" style="color: inherit; text-decoration: none;">
+                {{ vac.title }}
+              </a>
+            </h3>
+          </div>
+          
+          <div class="och-vac-salary">{{ vac.salary_text }}</div>
+          
+          <div class="och-vac-meta">
+            <span class="och-vac-tag" style="color: var(--och-text-heading); font-weight: 700; background: #FFFFFF; border: 1px solid var(--och-border-strong);">
+              <i data-lucide="map-pin" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle; color: var(--och-red);"></i>
+              {{ vac.city }}
+            </span>
+            <span class="och-vac-tag">{{ vac.schedule }}</span>
+            {% if vac.has_dormitory %}
+            <span class="och-vac-tag" style="color: #6ee7b7; border-color: rgba(16,185,129,0.3);">Общежитие</span>
+            {% endif %}
+            {% if vac.is_student_friendly %}
+            <span class="och-vac-tag" style="color: var(--och-gold-light); border-color: rgba(245,158,11,0.3);">Практика для ВУЗа</span>
+            {% endif %}
+          </div>
+
+          <p style="font-size: 0.88rem; color: var(--och-text-muted); line-height: 1.45; margin-bottom: 1rem;">
+            {{ vac.description|truncatewords:22 }}
+          </p>
+
+          <!-- Кнопка перехода в интерактивный симулятор завода (если сценарий предусмотрен через regex) -->
+          {% if vac.matched_scenario %}
+          <div class="och-scenario-prompt-box">
+            <div class="och-scenario-prompt-header">
+              <i data-lucide="zap" style="width: 14px; height: 14px;"></i>
+              <span>Симулятор с наставником: {{ vac.matched_scenario.mentor_name }}</span>
+            </div>
+            <a href="{% url 'careers:game_play' scenario_slug=vac.matched_scenario.scenario_slug %}" class="och-btn-simulator-direct">
+              <i data-lucide="gamepad-2" style="width: 15px; height: 15px;"></i>
+              <span>{{ vac.matched_scenario.btn_text }}</span>
+            </a>
+          </div>
+          {% endif %}
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--och-border); margin-top: auto;">
+          <span style="font-size: 0.8rem; color: var(--och-text-dim);">{{ vac.experience_level }}</span>
+          
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            {% if vac.hh_url %}
+            <a href="{{ vac.hh_url }}" target="_blank" rel="noopener" style="font-size: 0.78rem; color: var(--och-text-dim); text-decoration: none;" title="Открыть на hh.ru">
+              hh.ru ↗
+            </a>
+            {% endif %}
+            <a href="{% url 'careers:vacancy_detail' slug=vac.slug %}" style="color: var(--och-red); font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none;">
+              <span>Отклик</span>
+              <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div id="no-results-box" style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; background: var(--och-dark-surface); border-radius: var(--radius-lg); border: 1px solid var(--och-border);">
+        <i data-lucide="inbox" style="width: 48px; height: 48px; color: var(--och-text-dim); margin-bottom: 1rem;"></i>
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem;">Вакансий по вашему запросу не найдено</h3>
+        <p style="color: var(--och-text-muted); margin-bottom: 1.5rem;">Попробуйте смягчить критерии поиска или проверьте соседние города.</p>
+        <button type="button" class="och-btn-secondary" onclick="document.getElementById('btn-reset-filters').click();">Сбросить фильтры</button>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const filterQ = document.getElementById('filter-q');
+  const filterCity = document.getElementById('filter-city');
+  const filterTrack = document.getElementById('filter-track');
+  const btnToggleGame = document.getElementById('btn-toggle-game');
+  const btnReset = document.getElementById('btn-reset-filters');
+  const btnSync = document.getElementById('btn-sync-vacancies');
+  const syncIcon = document.getElementById('sync-icon');
+  const syncMsg = document.getElementById('sync-status-msg');
+  
+  const container = document.getElementById('vacancies-container');
+  const resultsCount = document.getElementById('results-count');
+  const totalCountLabel = document.getElementById('total-count-label');
+
+  let hasGameFilter = btnToggleGame.classList.contains('active');
+  let debounceTimeout = null;
+
+  // Функция интерактивного поиска через API
+  async function performLiveSearch() {
+    const q = filterQ.value.trim();
+    const city = filterCity.value;
+    const track = filterTrack.value;
+
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (city) params.set('city', city);
+    if (track) params.set('track', track);
+    if (hasGameFilter) params.set('has_game', '1');
+
+    try {
+      container.style.opacity = '0.6';
+      const resp = await fetch(`/api/vacancies/search/?${params.toString()}`);
+      if (!resp.ok) throw new Error('Search failed');
+      const data = await resp.json();
+
+      renderVacancies(data.items);
+      resultsCount.textContent = data.count;
+      if (data.total_in_db && totalCountLabel) {
+        totalCountLabel.textContent = data.total_in_db;
+      }
+    } catch (err) {
+      console.warn('Live search error:', err);
+    } finally {
+      container.style.opacity = '1';
+    }
+  }
+
+  // Отрисовка карточек вакансий
+  function renderVacancies(items) {
+    if (!items || items.length === 0) {
+      let funnyTip = 'Попробуйте выбрать другой город, направление или сбросить фильтры.';
+      const queryVal = filterQ.value.toLowerCase().trim();
+      if (queryVal.includes('космонавт') || queryVal.includes('пират') || queryVal.includes('блогер') || queryVal.includes('диван')) {
+        funnyTip = `Вакансия «${filterQ.value}» пока занята, но управление варочным порядком на 500 тонн — почти то же самое, только гравитация стабильная! Попробуйте «технолог» или «инженер».`;
+      } else if (queryVal.includes('дегустатор') || queryVal.includes('пиво') || queryVal.includes('бармен')) {
+        funnyTip = 'Дегустатором у нас мечтает быть каждый, но сначала нужно сдать смену в лаборатории ОТК! Попробуйте «лаборант» или «квасовар».';
+      } else if (queryVal.includes('кефир')) {
+        funnyTip = 'По запросу «кефир» ничего не найдено. И неудивительно — в «Очаково» окрошка и напитки признаются только на натуральном квасе! 😉';
+      }
+
+      container.innerHTML = `
+        <div id="no-results-box" style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: #FFFFFF; border-radius: var(--radius-md); border: 1px solid var(--och-border); box-shadow: var(--shadow-sm);">
+          <i data-lucide="inbox" style="width: 48px; height: 48px; color: var(--och-text-dim); margin-bottom: 1rem;"></i>
+          <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 0.5rem;">Вакансий по вашему запросу не найдено</h3>
+          <p style="color: var(--och-gold-light); font-size: 0.95rem; margin-bottom: 1.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+            ${funnyTip}
+          </p>
+          <button type="button" class="och-btn-secondary" id="btn-empty-reset">Сбросить фильтры</button>
+        </div>
+      `;
+      document.getElementById('btn-empty-reset')?.addEventListener('click', resetAllFilters);
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+
+    container.innerHTML = items.map(vac => {
+      const dormHtml = vac.has_dormitory 
+        ? `<span class="och-vac-tag" style="color: #6ee7b7; border-color: rgba(16,185,129,0.3);">Общежитие</span>` 
+        : '';
+      const studentHtml = vac.is_student_friendly 
+        ? `<span class="och-vac-tag" style="color: var(--och-gold-light); border-color: rgba(245,158,11,0.3);">Практика для ВУЗа</span>` 
+        : '';
+      // Кнопка симулятора при сопоставлении через regex
+      let scenarioHtml = '';
+      if (vac.matched_scenario) {
+        scenarioHtml = `
+          <div class="och-scenario-prompt-box">
+            <div class="och-scenario-prompt-header">
+              <i data-lucide="zap" style="width: 14px; height: 14px;"></i>
+              <span>Симулятор с наставником: ${vac.matched_scenario.mentor_name}</span>
+            </div>
+            <a href="${vac.game_url}" class="och-btn-simulator-direct">
+              <i data-lucide="gamepad-2" style="width: 15px; height: 15px;"></i>
+              <span>${vac.matched_scenario.btn_text}</span>
+            </a>
+          </div>
+        `;
+      }
+
+      const hhLinkHtml = vac.hh_url 
+        ? `<a href="${vac.hh_url}" target="_blank" rel="noopener" style="font-size: 0.78rem; color: var(--och-text-dim); text-decoration: none;" title="Открыть на hh.ru">hh.ru ↗</a>` 
+        : '';
+
+      return `
+        <div class="och-vacancy-card" data-slug="${vac.slug}">
+          <div>
+            <div class="och-vac-top">
+              <h3 class="och-vac-title">
+                <a href="${vac.detail_url}" style="color: inherit; text-decoration: none;">
+                  ${vac.title}
+                </a>
+              </h3>
+            </div>
+            
+            <div class="och-vac-salary">${vac.salary_text}</div>
+            
+            <div class="och-vac-meta">
+              <span class="och-vac-tag" style="color: var(--och-text-heading); font-weight: 700; background: #FFFFFF; border: 1px solid var(--och-border-strong);">
+                <i data-lucide="map-pin" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle; color: var(--och-red);"></i>
+                ${vac.city}
+              </span>
+              <span class="och-vac-tag">${vac.schedule}</span>
+              ${dormHtml}
+              ${studentHtml}
+            </div>
+
+            <p style="font-size: 0.88rem; color: var(--och-text-muted); line-height: 1.45; margin-bottom: 1rem;">
+              ${vac.description_snippet}
+            </p>
+
+            ${scenarioHtml}
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--och-border); margin-top: auto;">
+            <span style="font-size: 0.8rem; color: var(--och-text-dim);">${vac.experience_level}</span>
+            
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              ${hhLinkHtml}
+              <a href="${vac.detail_url}" style="color: var(--och-red); font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none;">
+                <span>Отклик</span>
+                <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
+  // Обработчики событий с дебаунсом
+  filterQ.addEventListener('input', () => {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(performLiveSearch, 200);
+  });
+
+  filterCity.addEventListener('change', performLiveSearch);
+  filterTrack.addEventListener('change', performLiveSearch);
+
+  // Тумблер игрового симулятора
+  btnToggleGame.addEventListener('click', () => {
+    hasGameFilter = !hasGameFilter;
+    btnToggleGame.classList.toggle('active', hasGameFilter);
+    performLiveSearch();
+  });
+
+  // Сброс фильтров
+  function resetAllFilters() {
+    filterQ.value = '';
+    filterCity.value = '';
+    filterTrack.value = '';
+    hasGameFilter = false;
+    btnToggleGame.classList.remove('active');
+    performLiveSearch();
+  }
+
+  btnReset.addEventListener('click', resetAllFilters);
+
+  // Кнопка синхронизации с ochakovo.ru
+  btnSync.addEventListener('click', async () => {
+    btnSync.disabled = true;
+    const currentIcon = btnSync.querySelector('svg, i, [data-lucide]');
+    if (currentIcon) currentIcon.classList.add('spin-animation');
+    if (syncIcon) syncIcon.classList.add('spin-animation');
+    syncMsg.textContent = 'Синхронизация с ochakovo.ru...';
+
+    try {
+      // CSRF токен из куки
+      const getCookie = name => document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)')?.pop() || '';
+      const csrfToken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+      const resp = await fetch('/api/vacancies/sync/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        syncMsg.textContent = `Обновлено: ${data.data.synced_at} (${data.data.total_fetched} поз.)`;
+        syncMsg.style.color = 'var(--och-green)';
+        await performLiveSearch();
+      } else {
+        syncMsg.textContent = 'Ошибка обновления';
+        syncMsg.style.color = 'var(--och-red)';
+      }
+    } catch (err) {
+      syncMsg.textContent = 'Сбой сети';
+    } finally {
+      btnSync.querySelectorAll('.spin-animation, svg, i').forEach(el => el.classList.remove('spin-animation'));
+      if (syncIcon) syncIcon.classList.remove('spin-animation');
+      btnSync.disabled = false;
+    }
+  });
+
+});
+</script>
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}История и секреты мастерства | Очаково (1978 — 2026){% endblock %}
+
+{% block content %}
+<section style="padding: 3.5rem 0 4.5rem; background: #F8FAFC;">
+  <div class="container">
+    
+    <div class="och-section-head">
+      <h1 class="och-section-title">История и смысл работы в «Очаково»</h1>
+      <p class="och-section-subtitle">
+        Мы гордимся тем, что уже почти полвека остаемся полностью независимым российским предприятием, 
+        бережно сохраняя старинные рецепты и создавая напитки мирового уровня.
+      </p>
+    </div>
+
+    <!-- Блок: Секрет двойного брожения -->
+    <div id="fermentation" style="background: #FFFFFF; border: 1px solid var(--och-border); border-radius: var(--radius-lg); padding: 2.5rem; margin-bottom: 3.5rem; box-shadow: var(--shadow-sm);">
+      <div class="och-hero-grid">
+        <div>
+          <div style="font-size: 0.8rem; font-weight: 800; color: var(--och-gold-light); text-transform: uppercase; margin-bottom: 0.5rem;">
+            Биохимия и крафтовое мастерство
+          </div>
+          <h2 style="font-size: clamp(1.35rem, 4.5vw, 2rem); font-weight: 900; color: var(--och-text-heading); line-height: 1.2; margin-bottom: 1rem; word-break: normal; overflow-wrap: break-word;">
+            В чём секрет кваса «Очаковский»?
+          </h2>
+          <p style="font-size: 1rem; color: var(--och-text-muted); line-height: 1.6; margin-bottom: 1.25rem;">
+            Большинство производителей на рынке идут по пути экономии: смешивают концентрат с водой, газируют углекислым газом и добавляют синтетическую кислоту. 
+            «Очаково» — единственный гигант в мире, который производит квас исключительно методом <strong>комбинированного двойного брожения</strong>.
+          </p>
+          <div class="och-ferment-grid">
+            <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-sm); padding: 1rem;">
+              <div style="font-weight: 800; color: var(--och-gold-light); margin-bottom: 0.25rem;">1. Чистые дрожжи</div>
+              <div style="font-size: 0.82rem; color: var(--och-text-muted);">Отвечают за хлебный аромат, игристость и натуральное насыщение напитка пузырьками.</div>
+            </div>
+            <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-sm); padding: 1rem;">
+              <div style="font-weight: 800; color: var(--och-cyan); margin-bottom: 0.25rem;">2. Молок.-кислые бактерии</div>
+              <div style="font-size: 0.82rem; color: var(--och-text-muted);">Создают ту самую благородную освежающую кислинку, как в домашнем деревенском квасе.</div>
+            </div>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--och-text-dim); font-style: italic;">
+            «Работать на нашем бродильном производстве — это всё равно что управлять живым оркестром микроорганизмов в ЦКТ размером с пятиэтажный дом!»
+          </p>
+        </div>
+
+        <div style="text-align: center;">
+          <img src="{% static 'img/ochakovo_hero_banner.jpg' %}" alt="Бродильный цех" style="width: 100%; border-radius: var(--radius-md); border: 1px solid var(--och-border); box-shadow: var(--shadow-md);">
+          <div style="font-size: 0.78rem; color: var(--och-text-dim); margin-top: 0.5rem;">Цилиндро-конические танки (ЦКТ) на заводе в Москве</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Интерактивный таймлайн 1978-2026 -->
+    <div style="margin-bottom: 3.5rem;">
+      <h2 style="font-size: clamp(1.35rem, 4.5vw, 2rem); font-weight: 900; text-align: center; margin-bottom: 2rem; color: var(--och-text-heading); word-break: normal; overflow-wrap: break-word;">
+        Хроника лидерства: от Олимпиады-80 до Индустрии 4.0
+      </h2>
+
+      <div style="display: flex; flex-direction: column; gap: 1.25rem; max-width: 820px; margin: 0 auto; position: relative;">
+        {% for m in milestones %}
+        <div class="och-milestone-card">
+          <div style="background: var(--och-red); color: #ffffff; font-size: 1.2rem; font-weight: 900; padding: 0.45rem 0.9rem; border-radius: var(--radius-sm); white-space: nowrap; box-shadow: 0 4px 10px var(--och-red-glow);">
+            {{ m.year }}
+          </div>
+          <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: var(--och-gold-light); margin-bottom: 0.35rem;">
+              {{ m.badge }}
+            </div>
+            <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 0.45rem;">
+              {{ m.title }}
+            </h3>
+            <p style="font-size: 0.92rem; color: var(--och-text-muted); line-height: 1.55;">
+              {{ m.description }}
+            </p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Заводской фольклор и юмор комбината -->
+    <div style="margin-bottom: 3.5rem;">
+      <div class="och-section-head">
+        <div class="och-section-badge">
+          <i data-lucide="smile" style="width: 15px; height: 15px;"></i>
+          <span>Заводской фольклор и юмор</span>
+        </div>
+        <h2 class="och-section-title">Окрошечный батл & Сленг комбината</h2>
+        <p class="och-section-subtitle">
+          То, о чём не напишут в академических учебниках, но о чём каждый день спорят в цехах во время обеденного перерыва.
+        </p>
+      </div>
+
+      <div class="och-hero-grid" style="align-items: stretch;">
+        
+        <!-- Окрошечный батл -->
+        <div style="background: #FFFFFF; border: 1px solid var(--och-border); border-radius: var(--radius-lg); padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm);">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem;">
+              <span style="font-size: 1.5rem;">🥗</span>
+              <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--och-text-heading);">Главный гастрономический спор страны</h3>
+            </div>
+            
+            <p style="font-size: 0.92rem; color: var(--och-text-muted); line-height: 1.55; margin-bottom: 1.5rem;">
+              В «Очаково» споры о заправке окрошки имеют статус государственной важности. По данным анонимного экспресс-опроса всех 4 заводов:
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.5rem;">
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.25rem;">
+                  <span style="color: var(--och-red); font-weight: 800;">Резкий белый квас с хреном</span>
+                  <span style="font-weight: 800; color: var(--och-text-heading);">68%</span>
+                </div>
+                <div style="height: 8px; background: #F1F5F9; border-radius: 4px; overflow: hidden;">
+                  <div style="width: 68%; height: 100%; background: linear-gradient(90deg, var(--och-red), var(--och-gold));"></div>
+                </div>
+              </div>
+
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.25rem;">
+                  <span style="color: var(--och-text-heading); font-weight: 700;">Классический тёмный квас двойного брожения</span>
+                  <span style="font-weight: 800; color: var(--och-text-heading);">29%</span>
+                </div>
+                <div style="height: 8px; background: #F1F5F9; border-radius: 4px; overflow: hidden;">
+                  <div style="width: 29%; height: 100%; background: var(--och-gold);"></div>
+                </div>
+              </div>
+
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.25rem;">
+                  <span style="color: var(--och-text-dim);">Кефир / сыворотка (заблудшие души)</span>
+                  <span style="font-weight: 800; color: var(--och-text-dim);">3%</span>
+                </div>
+                <div style="height: 8px; background: #F1F5F9; border-radius: 4px; overflow: hidden;">
+                  <div style="width: 3%; height: 100%; background: var(--och-text-dim);"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid var(--och-border); padding-top: 1.25rem;">
+            <div style="font-size: 0.82rem; color: var(--och-text-dim); margin-bottom: 0.65rem;">Ваш голос для заводского протокола:</div>
+            <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+              <button type="button" id="btn-vote-kvass" class="och-btn-primary" style="flex: 1 1 120px; justify-content: center; padding: 0.6rem 0.65rem; font-size: 0.82rem; white-space: nowrap;">
+                <span>🍺 Только на квасе!</span>
+              </button>
+              <button type="button" id="btn-vote-kefir" class="och-btn-secondary" style="flex: 1 1 120px; justify-content: center; padding: 0.6rem 0.65rem; font-size: 0.82rem; white-space: nowrap;">
+                <span>🥛 На кефире...</span>
+              </button>
+            </div>
+            <div id="vote-status-msg" style="margin-top: 0.75rem; font-size: 0.82rem; min-height: 20px;"></div>
+          </div>
+        </div>
+
+        <!-- Словарь сленга -->
+        <div style="background: #FFFFFF; border: 1px solid var(--och-border); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.25rem;">
+            <i data-lucide="book-open" style="width: 20px; height: 20px; color: var(--och-red);"></i>
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--och-text-heading);">Краткий толковый словарь стажёра</h3>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="border-bottom: 1px solid var(--och-border); padding-bottom: 0.75rem;">
+              <div style="font-weight: 800; color: var(--och-red); font-size: 0.95rem; margin-bottom: 0.2rem;">ЦКТ</div>
+              <div style="font-size: 0.85rem; color: var(--och-text-muted);">
+                Цилиндро-конический танк. Огромная стальная башня на 500 тонн, где бурлит жизнь. Если назвать его в цеху «бочкой», Михалыч тихо погрустит.
+              </div>
+            </div>
+
+            <div style="border-bottom: 1px solid var(--och-border); padding-bottom: 0.75rem;">
+              <div style="font-weight: 800; color: var(--och-gold-light); font-size: 0.95rem; margin-bottom: 0.2rem;">Сусло</div>
+              <div style="font-size: 0.85rem; color: var(--och-text-muted);">
+                Не обидное слово, а сладчайший концентрированный навар из отборного ржаного солода и артезианской воды. Душа будущего кваса.
+              </div>
+            </div>
+
+            <div style="border-bottom: 1px solid var(--och-border); padding-bottom: 0.75rem;">
+              <div style="font-weight: 800; color: var(--och-cyan); font-size: 0.95rem; margin-bottom: 0.2rem;">Brix (Брикс)</div>
+              <div style="font-size: 0.85rem; color: var(--och-text-muted);">
+                Шкала плотности сахаров. Если рефрактометр показывает норму — смена удалась, если нет — дрожжи требуют внимания.
+              </div>
+            </div>
+
+            <div>
+              <div style="font-weight: 800; color: var(--och-green); font-size: 0.95rem; margin-bottom: 0.2rem;">Оверклокинг смены</div>
+              <div style="font-size: 0.85rem; color: var(--och-text-muted);">
+                Когда в Москве +32°C, и роботы Krones упаковывают 50 000 банок в час, а логистический хаб отгружает фуру каждые 3 минуты.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Призыв к действию -->
+    <div style="text-align: center; padding: 3rem 1.5rem; background: #FFFFFF; border-radius: var(--radius-lg); border: 1.5px solid var(--och-red); box-shadow: var(--shadow-md);">
+      <h2 style="font-size: 2rem; font-weight: 900; margin-bottom: 1rem; color: var(--och-text-heading);">
+        Стань частью истории «Очаково» в сезоне 2026
+      </h2>
+      <p style="color: var(--och-text-muted); font-size: 1.05rem; max-width: 600px; margin: 0 auto 2rem;">
+        Приходи на оплачиваемую практику, учись у лучших специалистов страны и строй карьеру на ведущем предприятии Москвы.
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="{% url 'careers:game_select' %}" class="och-btn-primary">
+          <i data-lucide="play" style="width: 18px; height: 18px;"></i>
+          <span>Пройти симулятор смены</span>
+        </a>
+        <a href="{% url 'careers:vacancies_list' %}" class="och-btn-secondary">
+          <span>Смотреть открытые позиции</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

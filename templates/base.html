@@ -1,0 +1,241 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  
+  <title>{% block title %}Очаково | Карьера, практика и симулятор завода{% endblock %}</title>
+  <meta name="description" content="{% block description %}Официальный карьерный портал и интерактивный симулятор завода «Очаково». Оплачиваемая практика, общежитие в Москве, старт карьеры в пищевой индустрии.{% endblock %}">
+  <meta name="keywords" content="Очаково, работа в Очаково, практика для студентов, стажировка, вакансии Москва, квасоварение, пивоварение, оператор линии розлива, пищевая промышленность">
+  
+  <!-- PWA & Mobile Meta -->
+  <link rel="manifest" href="{% url 'careers:manifest' %}">
+  <meta name="theme-color" content="#D50032">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Очаково Работа">
+  <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+  <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32x32.png' %}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/icon-192.png' %}">
+
+  <!-- OpenGraph / Социальные сети -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Очаково — Карьера и Практика">
+  <meta property="og:title" content="{% block og_title %}Очаково: Смена на миллион литров | Практика для студентов{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Пик сезона в «Очаково»: сотни оплачиваемых стажировок для молодёжи 18-26 лет. Проверь себя в роли технолога или инженера завода!{% endblock %}">
+  <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/ochakovo_hero_banner.jpg' %}{% endblock %}">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Очаково: Карьерный старт в пик сезона">
+  <meta name="twitter:description" content="Оплачиваемая практика, проживание в Москве и реальный опыт на флагмане натуральных напитков России.">
+  <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/ochakovo_hero_banner.jpg' %}">
+
+  <!-- Schema.org Organization Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Очаково",
+    "alternateName": "Московский пиво-безалкогольный комбинат Очаково",
+    "url": "https://ochakovo.ru/",
+    "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'img/ochakovo_emblem.svg' %}",
+    "foundingDate": "1978",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "ул. Рябиновая, д. 44",
+      "addressLocality": "Москва",
+      "addressCountry": "RU"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+7-495-785-39-30",
+      "contactType": "Human Resources / Трудоустройство",
+      "email": "rabota@ochakovo.ru",
+      "availableLanguage": "Russian"
+    }
+  }
+  </script>
+
+  <!-- Стили приложения -->
+  <link rel="stylesheet" href="{% static 'css/ochakovo.css' %}">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Оффлайн индикатор PWA -->
+  <div id="och-offline-indicator" style="display: none; background: #eab308; color: #1e293b; font-size: 0.85rem; font-weight: 700; padding: 0.5rem 1rem; text-align: center; justify-content: center; align-items: center; gap: 0.5rem; z-index: 9999;">
+    <i data-lucide="wifi-off" style="width: 16px; height: 16px;"></i>
+    <span>Вы находитесь в автономном режиме. Данные сохраняются локально (PWA Offline).</span>
+  </div>
+
+  <!-- Шапка сайта -->
+  <header class="och-header">
+    <div class="container och-header-inner">
+      <div class="och-header-brand">
+        <a href="{% url 'careers:home' %}" class="och-logo-link" title="Очаково — Главная">
+          <img src="{% static 'img/ochakovo_logo.svg' %}" alt="Очаково Логотип" class="och-logo-svg">
+          <span class="och-logo-badge">Карьера 2026</span>
+        </a>
+      </div>
+
+      <!-- Десктопная навигация -->
+      <nav>
+        <ul id="och-nav-list" class="och-nav-list">
+          <li>
+            <a href="{% url 'careers:home' %}" class="och-nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+              <i data-lucide="home" style="width: 16px; height: 16px;"></i>
+              <span>Главная</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'careers:game_select' %}" class="och-nav-link {% if 'game' in request.resolver_match.url_name %}active{% endif %}">
+              <i data-lucide="play-circle" style="width: 16px; height: 16px; color: var(--och-red);"></i>
+              <span style="font-weight: 700;">Симулятор смены</span>
+              {% if total_cases_count %}
+              <span style="background: var(--och-red-subtle); color: var(--och-red); border: 1px solid var(--och-border-red); border-radius: var(--radius-sm); padding: 0.1rem 0.45rem; font-size: 0.72rem; font-weight: 800;">{{ total_cases_count }}</span>
+              {% endif %}
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'careers:vacancies_list' %}" class="och-nav-link {% if 'vacancies' in request.resolver_match.url_name %}active{% endif %}">
+              <i data-lucide="briefcase" style="width: 16px; height: 16px;"></i>
+              <span>Вакансии & Практика</span>
+              {% if total_active_vacancies %}
+              <span style="background: var(--och-red-subtle); color: var(--och-red); border: 1px solid var(--och-border-red); border-radius: var(--radius-sm); padding: 0.1rem 0.45rem; font-size: 0.72rem; font-weight: 800;">{{ total_active_vacancies }}</span>
+              {% endif %}
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'careers:progress' %}" class="och-nav-link {% if request.resolver_match.url_name == 'progress' %}active{% endif %}" id="och-nav-progress-link" title="Личный кабинет стажёра и сертификат для hh.ru">
+              <i data-lucide="award" style="width: 16px; height: 16px; color: var(--och-gold);"></i>
+              <span>Мой прогресс</span>
+              <span id="nav-user-score-badge" class="och-nav-xp-badge">0 XP</span>
+            </a>
+          </li>
+          <li>
+            <button id="och-pwa-install-btn" type="button" class="och-nav-install-btn" onclick="window.installPWA()" title="Установить приложение">
+              <i data-lucide="download" style="width: 15px; height: 15px; color: var(--och-gold); flex-shrink: 0;"></i>
+              <span>Установить приложение</span>
+            </button>
+          </li>
+          <li>
+            <a href="{% url 'careers:game_select' %}" class="och-nav-link och-nav-cta">
+              <span>Старт смены</span>
+              <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Бургер для мобильных -->
+      <button id="och-burger-btn" class="och-burger-btn" aria-label="Меню">
+        <i data-lucide="menu" style="width: 24px; height: 24px;"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Основное содержимое страницы -->
+  <main style="flex: 1;">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Футер -->
+  <footer class="och-footer">
+    <div class="container">
+      <div class="och-footer-grid">
+        <div>
+          <a href="{% url 'careers:home' %}" style="display: inline-block; margin-bottom: 1rem;">
+            <img src="{% static 'img/ochakovo_logo_white.svg' %}" alt="Очаково" style="height: 32px; width: auto;">
+          </a>
+          <p style="line-height: 1.6; margin-bottom: 1rem; max-width: 380px;">
+            100% независимый российский производитель натуральных напитков с 1978 года. 
+            4 производственных комбината: Москва, Краснодар, Пенза, Тюмень. Собственные солодовни и артезианские скважины.
+          </p>
+          <div style="display: flex; gap: 0.5rem; align-items: center; color: var(--och-text-dim); font-size: 0.8rem;">
+            <i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+            <span>{{ contacts.address }}</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="och-footer-title">Карьера & Практика</div>
+          <ul class="och-footer-links">
+            <li><a href="{% url 'careers:vacancies_list' %}">Все сезонные вакансии</a></li>
+            <li><a href="{% url 'careers:game_select' %}">Симулятор «Смена на заводе»</a></li>
+            <li><a href="{% url 'careers:vacancies_list' %}?track=brewing">Квасоварение и брожение</a></li>
+            <li><a href="{% url 'careers:vacancies_list' %}?track=automation">Инженеры розлива и КИПиА</a></li>
+            <li><a href="{% url 'careers:vacancies_list' %}?track=lab">Лаборатория и качество</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="och-footer-title">О комбинатах</div>
+          <ul class="och-footer-links">
+            <li><a href="{% url 'careers:story' %}">История с Олимпиады-80</a></li>
+            <li><a href="{% url 'careers:story' %}#fermentation">Секрет двойного брожения</a></li>
+            <li><a href="https://ochakovo.ru/ekskursii/" target="_blank" rel="noopener">Музей и экскурсии</a></li>
+            <li><a href="https://ochakovo.ru/brands/" target="_blank" rel="noopener">Наши бренды напитков</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="och-footer-title">Контакты HR-отдела</div>
+          <ul class="och-footer-links">
+            <li>
+              <a href="tel:{{ contacts.phone }}" style="color: #ffffff; font-weight: 700;">
+                {{ contacts.phone }}
+              </a>
+              <div style="font-size: 0.75rem; color: var(--och-text-dim);">{{ contacts.phone_ext }}</div>
+            </li>
+            <li>
+              <a href="tel:+79031537740" style="color: #ffffff;">
+                Моб. HR: {{ contacts.mobile_1 }}
+              </a>
+            </li>
+            <li>
+              <a href="mailto:{{ contacts.email }}">
+                {{ contacts.email }}
+              </a>
+            </li>
+            <li style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+              <a href="{{ contacts.telegram }}" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 0.35rem; color: #2AABEE; font-weight: 600; text-decoration: none;">
+                <i data-lucide="send" style="width: 15px; height: 15px;"></i> Telegram
+              </a>
+              <span style="color: var(--och-text-dim);">•</span>
+              <a href="{{ contacts.vk }}" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 0.35rem; color: #0077FF; font-weight: 600; text-decoration: none;">
+                VK
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="och-footer-bottom">
+        <div>
+          © 1978 — 2026 АО МПБК «Очаково». Все права защищены.
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <span style="color: var(--och-gold-light);">АО МПБК «Очаково» • Молодежная карьерная программа</span>
+          <span>•</span>
+          <a href="https://ochakovo.ru/" target="_blank" rel="noopener" style="color: var(--och-text-dim); text-decoration: none;">ochakovo.ru</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Скрипты приложения -->
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

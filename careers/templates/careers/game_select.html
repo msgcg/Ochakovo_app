@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Выбор смены на заводе | Симулятор Очаково{% endblock %}
+
+{% block content %}
+<section style="padding: 3.5rem 0 4.5rem; background: #F8FAFC;">
+  <div class="container">
+    <div class="och-section-head">
+      <div class="och-section-badge" style="margin-bottom: 0.75rem;">
+        <i data-lucide="factory" style="width: 14px; height: 14px;"></i>
+        <span>Доступно смен: {{ total_cases_count }} ({{ total_cases_label }})</span>
+      </div>
+      <h1 class="och-section-title">Выбери свой производственный цех</h1>
+      <p class="och-section-subtitle">
+        Каждый сценарий моделирует реальную внештатную ситуацию во время пикового летнего выпуска напитков.
+        Твои решения влияют на датчики цеха, биохимию сусла и скорость фасовки.
+      </p>
+    </div>
+
+    <div class="och-scenarios-select-grid">
+      {% for sc in scenarios %}
+      <div class="och-hero-card och-scenario-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="position: relative; margin-bottom: 1.25rem;">
+            <img src="{% static 'img/' %}{{ sc.bg_image }}" alt="{{ sc.title }}" class="och-hero-card-img" style="height: 180px;">
+            <span class="och-scenario-diff-badge" style="position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.94); backdrop-filter: blur(8px); border: 1px solid var(--och-border); color: var(--och-text-heading); font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: var(--radius-sm);">
+              {{ sc.difficulty }}
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem;">
+            <img src="{% static 'img/' %}{{ sc.mentor_avatar }}" alt="{{ sc.mentor_name }}" class="och-mentor-avatar" style="flex-shrink: 0;">
+            <div style="min-width: 0;">
+              <div style="font-size: 0.95rem; font-weight: 800; color: var(--och-text-heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ sc.mentor_name }}</div>
+              <div style="font-size: 0.75rem; color: var(--och-red); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ sc.mentor_role }}</div>
+            </div>
+          </div>
+
+          <h3 class="och-scenario-card-title">
+            {{ sc.title }}
+          </h3>
+
+          <p class="och-scenario-card-desc">
+            {{ sc.description }}
+          </p>
+
+          <div class="och-telemetry-badge-row">
+            <div class="och-telemetry-pill">
+              <div class="och-telemetry-pill-val">{{ sc.initial_temperature }}°C</div>
+              <div class="och-telemetry-pill-label" title="Стартовая температура">Темп-ра</div>
+            </div>
+            <div class="och-telemetry-pill">
+              <div class="och-telemetry-pill-val">{{ sc.initial_brix }}°Bx</div>
+              <div class="och-telemetry-pill-label" title="Плотность сусла">Плотность</div>
+            </div>
+            <div class="och-telemetry-pill">
+              <div class="och-telemetry-pill-val">{{ sc.time_limit_sec }} с</div>
+              <div class="och-telemetry-pill-label" title="Лимит времени смены">Таймер</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          {% if sc.target_vacancy %}
+          <div class="och-scenario-target-vac">
+            <i data-lucide="award" style="width: 15px; height: 15px; flex-shrink: 0; color: var(--och-gold); margin-top: 2px;"></i>
+            <span>Целевая вакансия: <strong>{{ sc.target_vacancy.title }}</strong></span>
+          </div>
+          {% endif %}
+
+          <a href="{% url 'careers:game_play' scenario_slug=sc.slug %}" class="och-btn-primary" style="width: 100%; justify-content: center; padding: 0.85rem 1rem;">
+            <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+            <span>Заступить на смену</span>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

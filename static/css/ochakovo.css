@@ -1,0 +1,3668 @@
+/* ==========================================================================
+   ОЧАКОВО: СИСТЕМА ДИЗАЙНА И СТИЛЕЙ БРЕНДА РАБОТОДАТЕЛЯ
+   Хакатон «Открой МосПром 2026»
+   Фирменный брендбук: Светлая промышленная тема (White Industrial Theme)
+   Чёткая геометрия, строгие индустриальные радиусы 3-6px, без закруглений «пузырей»
+   ========================================================================== */
+
+:root {
+  /* Фирменная палитра бренда «Очаково» */
+  --och-red: #D50032;
+  --och-red-hover: #b8002b;
+  --och-red-glow: rgba(213, 0, 50, 0.22);
+  --och-red-dark: #82001e;
+  --och-red-subtle: rgba(213, 0, 50, 0.08);
+
+  --och-gold: #D97706;
+  --och-gold-hover: #b45309;
+  --och-gold-light: #B45309;
+  --och-gold-subtle: rgba(217, 119, 6, 0.1);
+  --och-gold-glow: rgba(217, 119, 6, 0.25);
+
+  /* Светлая тема (White & Industrial Light) */
+  --och-bg: #FFFFFF;
+  --och-body-bg: #F8FAFC;
+  --och-surface: #FFFFFF;
+  --och-surface-subtle: #F1F5F9;
+  --och-surface-elevated: #FFFFFF;
+
+  /* Совместимость с переменными поверхностей */
+  --och-dark: #FFFFFF;
+  --och-dark-surface: #FFFFFF;
+  --och-dark-elevated: #FFFFFF;
+  --och-dark-card: #FFFFFF;
+
+  /* Границы и разделители */
+  --och-border: #E2E8F0;
+  --och-border-strong: #CBD5E1;
+  --och-border-red: rgba(213, 0, 50, 0.3);
+
+  /* Типографика (высокий контраст, глубокий графит) */
+  --och-text: #0F172A;
+  --och-text-heading: #0F172A;
+  --och-text-muted: #475569;
+  --och-text-dim: #64748B;
+
+  /* Функциональные цвета */
+  --och-cyan: #0284C7;
+  --och-green: #059669;
+  --och-purple: #7C3AED;
+  --och-amber: #D97706;
+
+  /* Индустриальная геометрия (четкие, не перекругленные углы 3-6px) */
+  --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-full: 9999px; /* только для микро-бейджей и точек статуса */
+
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.1), 0 4px 8px rgba(15, 23, 42, 0.05);
+  --shadow-glow: 0 0 24px var(--och-red-glow);
+  --transition-fast: 0.18s ease;
+  --transition-normal: 0.25s ease;
+}
+
+/* ==========================================================================
+   СБРОС И БАЗОВЫЕ НАСТРОЙКИ
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+/* Защита кнопок от сжатия во flex-контейнерах и от вылезания за границы */
+.och-btn-primary,
+.och-btn-secondary,
+.och-btn-sync,
+.och-btn-simulator-direct,
+.och-filter-switch-btn {
+  min-width: fit-content;
+  max-width: 100%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-main);
+  background-color: var(--och-body-bg);
+  color: var(--och-text);
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--och-body-bg);
+  color: var(--och-text);
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+}
+
+img, svg, video, canvas, audio, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+main, section, header, footer {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--och-text-heading);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+p {
+  color: var(--och-text-muted);
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+a {
+  color: inherit;
+}
+
+/* Контейнеры с защитой от переполнения */
+.container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 0.85rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .container {
+    padding: 0 0.65rem;
+  }
+}
+
+/* ==========================================================================
+   HEADER / НАВИГАЦИЯ (БЕЛЫЙ БРЕНДОВЫЙ СТИЛЬ)
+   ========================================================================== */
+.och-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--och-border);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: all var(--transition-normal);
+}
+
+.och-header .container {
+  max-width: 1440px;
+}
+
+.och-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.75rem, 1.8vw, 2.5rem);
+  height: 72px;
+}
+
+.och-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.och-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  flex-shrink: 0;
+  margin-right: clamp(0.5rem, 1.2vw, 2rem);
+}
+
+.och-logo-svg {
+  height: 38px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.och-logo-badge {
+  background: var(--och-red-subtle);
+  border: 1px solid var(--och-red);
+  color: var(--och-red);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.och-nav-list {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.45rem, 1vw, 1.25rem);
+  list-style: none;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.och-nav-link {
+  color: var(--och-text-muted);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.och-nav-link:hover, .och-nav-link.active {
+  color: var(--och-red);
+}
+
+/* Кнопка установки приложения в шапке (PWA) */
+.och-nav-install-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  height: 38px;
+  min-height: 38px;
+  max-height: 38px;
+  padding: 0 0.95rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  border: 1px solid var(--och-border-strong);
+  color: var(--och-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
+}
+
+.och-nav-install-btn:hover {
+  background: #f8fafc;
+  border-color: var(--och-red);
+  color: var(--och-red);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.och-nav-cta {
+  background: var(--och-red);
+  color: #ffffff !important;
+  height: 38px;
+  min-height: 38px;
+  max-height: 38px;
+  padding: 0 1.15rem;
+  border-radius: var(--radius-md);
+  font-size: 0.86rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1;
+  box-sizing: border-box;
+  box-shadow: 0 4px 12px var(--och-red-glow);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.och-nav-cta:hover {
+  background: var(--och-red-hover);
+  transform: translateY(-1px);
+}
+
+/* Плавное масштабирование шапки для экранов ноутбуков и компактных ПК (993px - 1320px) */
+@media (max-width: 1320px) and (min-width: 993px) {
+  .och-header-inner {
+    height: 68px;
+    gap: 0.5rem;
+  }
+  .och-logo-link {
+    margin-right: 0.35rem;
+    gap: 0.45rem;
+  }
+  .och-logo-svg {
+    height: 32px;
+  }
+  .och-logo-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.35rem;
+  }
+  .och-nav-list {
+    gap: clamp(0.35rem, 0.7vw, 0.75rem);
+  }
+  .och-nav-link {
+    font-size: 0.82rem;
+    gap: 0.25rem;
+  }
+  .och-nav-link i, .och-nav-link svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  .och-nav-install-btn {
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    padding: 0 0.65rem;
+    font-size: 0.78rem;
+    gap: 0.3rem;
+  }
+  .och-nav-cta {
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    padding: 0 0.85rem;
+    font-size: 0.82rem;
+    gap: 0.3rem;
+  }
+  .och-nav-xp-badge {
+    padding: 0.1rem 0.35rem;
+    font-size: 0.68rem;
+  }
+}
+
+/* Мобильный бургер */
+.och-burger-btn {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-sm);
+  color: var(--och-text);
+  cursor: pointer;
+  padding: 0.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   КНОПКИ И ЭЛЕМЕНТЫ УПРАВЛЕНИЯ
+   ========================================================================== */
+.och-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--och-red);
+  color: #ffffff !important;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.85rem 1.65rem;
+  border-radius: var(--radius-md);
+  text-decoration: none !important;
+  box-shadow: 0 4px 14px var(--och-red-glow);
+  transition: all var(--transition-fast);
+  border: none;
+  cursor: pointer;
+}
+
+.och-btn-primary:hover {
+  background: var(--och-red-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(213, 0, 50, 0.35);
+}
+
+.och-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  border: 1px solid var(--och-border-strong);
+  color: var(--och-text);
+  font-size: 0.98rem;
+  font-weight: 600;
+  padding: 0.85rem 1.45rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.och-btn-secondary:hover {
+  background: #f8fafc;
+  border-color: var(--och-red);
+  color: var(--och-red);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   HERO СЕКЦИЯ
+   ========================================================================== */
+.och-hero {
+  position: relative;
+  padding: 4rem 0 3.5rem;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  border-bottom: 1px solid var(--och-border);
+  overflow: hidden;
+}
+
+.och-hero-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.och-season-pill {
+  display: none !important;
+}
+
+.och-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--och-green);
+  box-shadow: 0 0 8px var(--och-green);
+  animation: pulse 2s infinite;
+}
+
+.och-hero-title {
+  font-size: clamp(1.5rem, 5.5vw, 3.1rem);
+  font-weight: 900;
+  line-height: 1.14;
+  letter-spacing: -0.025em;
+  margin-bottom: 1rem;
+  color: var(--och-text-heading);
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.och-hero-title span {
+  color: var(--och-red);
+}
+
+.och-hero-subtitle {
+  font-size: clamp(0.9rem, 2.5vw, 1.12rem);
+  color: var(--och-text-muted);
+  line-height: 1.55;
+  margin-bottom: 1.75rem;
+  max-width: 580px;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.och-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Правая карточка Hero */
+.och-hero-card {
+  position: relative;
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.och-hero-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--och-red) 0%, var(--och-gold) 100%);
+}
+
+.och-hero-card-img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--och-border);
+}
+
+.och-scenarios-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 1.5rem;
+}
+
+.och-scenario-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.och-scenario-card-title {
+  font-size: 1.2rem;
+  font-weight: 900;
+  margin-bottom: 0.65rem;
+  color: var(--och-text-heading);
+  line-height: 1.3;
+  min-height: 3.2rem;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.och-scenario-card-desc {
+  font-size: 0.88rem;
+  color: var(--och-text-muted);
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+  min-height: 4.2rem;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.och-telemetry-badge-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.och-telemetry-pill {
+  background: #F8FAFC;
+  border: 1px solid var(--och-border);
+  padding: 0.55rem 0.35rem;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.och-telemetry-pill-val {
+  font-size: clamp(0.92rem, 1.2vw, 1.15rem);
+  font-weight: 800;
+  color: var(--och-text-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.och-telemetry-pill-label {
+  font-size: 0.65rem;
+  color: var(--och-text-dim);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.och-scenario-target-vac {
+  font-size: 0.8rem;
+  color: var(--och-red);
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-weight: 700;
+  line-height: 1.35;
+  min-height: 2.3rem;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+
+/* ==========================================================================
+   СЕКЦИЯ СТАТИСТИКИ И ФАКТОВ
+   ========================================================================== */
+.och-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin: 3.5rem 0;
+}
+
+.och-stat-card {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  padding: 1.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.och-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--och-red);
+  box-shadow: var(--shadow-md);
+}
+
+.och-stat-num {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--och-red);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.och-stat-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+  margin-bottom: 0.35rem;
+}
+
+.och-stat-desc {
+  font-size: 0.85rem;
+  color: var(--och-text-muted);
+  line-height: 1.45;
+}
+
+/* ==========================================================================*/
+   КАРЬЕРНЫЕ ТРЕКИ И ВАКАНСИИ
+.och-section {
+  padding: clamp(3rem, 5vw, 4.5rem) 0;
+}
+
+.och-section-head {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 3rem;
+}
+
+.och-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--och-red);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.65rem;
+}
+
+.och-section-title {
+  font-size: clamp(1.35rem, 4.5vw, 2.25rem);
+  font-weight: 900;
+  color: var(--och-text-heading);
+  margin-bottom: 0.65rem;
+  line-height: 1.2;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.och-section-subtitle {
+  font-size: clamp(0.86rem, 2.3vw, 1.05rem);
+  color: var(--och-text-muted);
+  line-height: 1.55;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.och-tracks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3.5rem;
+}
+
+.och-track-card {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.och-track-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--och-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.och-track-icon-box {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.och-track-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+  margin-bottom: 0.65rem;
+}
+
+.och-track-desc {
+  font-size: 0.9rem;
+  color: var(--och-text-muted);
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.och-mentor-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--och-border);
+}
+
+.och-mentor-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--och-border);
+}
+
+.och-mentor-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+}
+
+.och-mentor-role {
+  font-size: 0.75rem;
+  color: var(--och-text-dim);
+}
+
+/* Карточки вакансий */
+.och-vacancies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1.5rem;
+}
+
+.och-vacancy-card {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  padding: 1.75rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-sm);
+}
+
+.och-vacancy-card:hover {
+  border-color: var(--och-red);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.och-vac-top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+  width: 100%;
+}
+
+.och-vac-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 16px;
+  width: 100%;
+}
+
+.och-vac-title {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+  line-height: 1.35;
+  width: 100%;
+  hyphens: none;
+  -webkit-hyphens: none;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.och-vac-badge {
+  display: none !important;
+}
+
+.och-vac-salary {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--och-green);
+  margin-bottom: 0.75rem;
+}
+
+.och-vac-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.och-vac-tag {
+  background: #F1F5F9;
+  border: 1px solid var(--och-border);
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-sm);
+  color: var(--och-text-muted);
+}
+
+/* ==========================================================================
+   СТРАНИЦА ВАКАНСИИ (RESPONSIVE GRID И ФОРМА ОТКЛИКА)
+   ========================================================================== */
+.och-vacancy-detail-layout {
+  display: grid;
+  grid-template-columns: 1.7fr 1.3fr;
+  gap: 2.5rem;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.och-vacancy-detail-sidebar {
+  position: sticky;
+  top: 96px;
+  width: 100%;
+}
+
+@media (max-width: 992px) {
+  .och-vacancy-detail-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .och-vacancy-detail-sidebar {
+    position: static !important;
+    top: auto !important;
+  }
+}
+
+/* ==========================================================================
+   ИНТЕРАКТИВНОЕ МЕНЮ ПОИСКА И СИНХРОНИЗАЦИИ
+   ========================================================================== */
+.och-live-sync-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.och-sync-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--och-text-dim);
+}
+
+.och-sync-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--och-green);
+  box-shadow: 0 0 8px var(--och-green);
+  animation: pulse 2s infinite ease-in-out;
+}
+
+.och-btn-sync {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border-strong);
+  color: var(--och-text);
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.och-btn-sync:hover {
+  background: #F8FAFC;
+  border-color: var(--och-gold);
+  color: var(--och-gold-light);
+}
+
+.och-search-wrapper {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .och-search-wrapper {
+    padding: 0.85rem 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+}
+
+#search-form-grid {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.2fr auto;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+}
+
+.och-filter-switch-btn {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border-strong);
+  color: var(--och-text-muted);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.och-filter-switch-btn:hover {
+  border-color: var(--och-red);
+  color: var(--och-red);
+}
+
+.och-filter-switch-btn.active {
+  background: var(--och-red-subtle);
+  border-color: var(--och-red);
+  color: var(--och-red);
+  box-shadow: 0 0 12px var(--och-red-glow);
+}
+
+.och-scenario-prompt-box {
+  background: linear-gradient(135deg, rgba(213, 0, 50, 0.05), rgba(217, 119, 6, 0.05));
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.och-scenario-prompt-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--och-red);
+}
+
+.och-scenario-prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--och-red);
+}
+
+.och-btn-simulator-direct {
+  background: var(--och-red);
+  color: #ffffff !important;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 10px var(--och-red-glow);
+  text-align: center;
+}
+
+.och-btn-simulator-direct:hover {
+  background: var(--och-red-hover);
+  transform: translateY(-1px);
+}
+
+.och-scenario-mentor-chip {
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  color: #FFFFFF;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   СИМУЛЯТОР: CHAT-FIRST ИНТЕРФЕЙС БЕЗ ПЕРЕГРУЗА
+   Свободный просторный чат, интерактивно всплывающие кнопки, живые маскоты
+   ========================================================================== */
+.och-sim-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem 0 2.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* 1. Верхний компактный статус-бар (Телеметрия цеха) */
+.och-sim-compact-hud {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+
+.och-sim-hud-title-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.och-sim-hud-title {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--och-text-heading);
+}
+
+.och-sim-hud-sub {
+  font-size: 0.76rem;
+  color: var(--och-text-dim);
+  font-weight: 600;
+}
+
+.och-sim-telemetry-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.och-hud-live-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: rgba(5, 150, 105, 0.08);
+  border: 1px solid rgba(5, 150, 105, 0.3);
+  color: var(--och-green);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.och-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--och-green);
+  box-shadow: 0 0 6px var(--och-green);
+  animation: pulse 1.6s infinite ease-in-out;
+}
+
+.och-gauge-chip {
+  background: #F8FAFC;
+  border: 1px solid var(--och-border);
+  padding: 0 0.75rem;
+  height: 36px;
+  min-height: 36px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: all 0.25s ease;
+  min-width: fit-content;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.och-gauge-chip.gauge-opt {
+  border-color: rgba(5, 150, 105, 0.35);
+  background: #ECFDF5;
+}
+
+.och-gauge-chip.gauge-warn {
+  border-color: rgba(217, 119, 6, 0.45);
+  background: #FFFBEB;
+  animation: pulseWarning 2.2s infinite ease-in-out;
+}
+
+.och-gauge-chip.gauge-danger {
+  border-color: var(--och-red);
+  background: #FEF2F2;
+  box-shadow: 0 0 10px rgba(213, 0, 50, 0.25);
+  animation: pulseDanger 1.2s infinite ease-in-out;
+}
+
+@keyframes pulseWarning {
+  0%, 100% { box-shadow: 0 0 0 rgba(217, 119, 6, 0); }
+  50% { box-shadow: 0 0 8px rgba(217, 119, 6, 0.25); }
+}
+
+@keyframes pulseDanger {
+  0%, 100% { box-shadow: 0 0 0 rgba(213, 0, 50, 0); }
+  50% { box-shadow: 0 0 12px rgba(213, 0, 50, 0.35); }
+}
+
+.och-gauge-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--och-green);
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+
+.och-gauge-status-dot.dot-opt {
+  background: #10B981;
+  box-shadow: 0 0 6px #10B981;
+}
+
+.och-gauge-status-dot.dot-warn {
+  background: #F59E0B;
+  box-shadow: 0 0 6px #F59E0B;
+}
+
+.och-gauge-status-dot.dot-danger {
+  background: #EF4444;
+  box-shadow: 0 0 8px #EF4444;
+}
+
+.och-gauge-chip-val {
+  color: var(--och-text-heading);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.25s ease;
+}
+
+/* Бейдж серии смен (Win Streak) */
+.och-streak-badge-hud {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: #FFFBEB;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: var(--och-gold-light);
+  padding: 0 0.75rem;
+  height: 36px;
+  min-height: 36px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 800;
+  user-select: none;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  min-width: fit-content;
+  box-sizing: border-box;
+}
+
+.och-streak-badge-hud.has-streak {
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF2F2 100%);
+  border-color: var(--och-gold);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.och-streak-badge-hud.overclock-max {
+  border-color: var(--och-red);
+  color: var(--och-red);
+  box-shadow: 0 0 12px var(--och-red-glow);
+  animation: pulse 2s infinite ease-in-out;
+}
+
+.och-streak-flame {
+  font-size: 0.95rem;
+}
+
+.och-streak-multiplier {
+  background: var(--och-gold);
+  color: #FFFFFF;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.och-streak-badge-hud.overclock-max .och-streak-multiplier {
+  background: var(--och-red);
+}
+
+.och-hud-score-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: var(--och-red-subtle);
+  border: 1px solid var(--och-red);
+  color: var(--och-red);
+  padding: 0 0.75rem;
+  height: 36px;
+  min-height: 36px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  min-width: fit-content;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Карусель цехов завода */
+.och-sim-carousel-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.95rem;
+  box-shadow: var(--shadow-sm);
+  margin-top: -0.35rem;
+}
+
+.och-carousel-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #F8FAFC;
+  border: 1px solid var(--och-border-strong);
+  color: var(--och-text-muted);
+  text-decoration: none !important;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.och-carousel-nav-btn:hover {
+  background: #FFFFFF;
+  border-color: var(--och-red);
+  color: var(--och-red);
+  box-shadow: var(--shadow-sm);
+}
+
+.och-carousel-nav-btn.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.och-carousel-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+}
+
+.och-carousel-tag {
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--och-red);
+  text-transform: uppercase;
+}
+
+.och-carousel-workshop-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 340px;
+}
+
+@media (max-width: 600px) {
+  .carousel-btn-text {
+    display: none;
+  }
+  .och-carousel-workshop-name {
+    max-width: 170px;
+    font-size: 0.76rem;
+  }
+}
+
+/* 2. Основная рабочая сцена: ЧАТ-ЦЕНТРИЧНЫЙ ВИЮПОРТ */
+.och-sim-stage-main {
+  position: relative;
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  min-height: 540px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+/* Фон с квасными пузырьками и легкой производственной сеткой */
+.och-sim-stage-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(217, 119, 6, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(213, 0, 50, 0.04) 0%, transparent 40%),
+    linear-gradient(180deg, #FFFFFF 0%, #FAFAFC 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Анимированные пузырьки брожения (Carbonation effect) */
+.och-carbonation-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.och-fizzy-bubble {
+  position: absolute;
+  bottom: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(245, 158, 11, 0.35), rgba(213, 0, 50, 0.15));
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  animation: fizzyRise linear infinite;
+}
+
+@keyframes fizzyRise {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-560px) scale(1.15);
+    opacity: 0;
+  }
+}
+
+/* Шапка сцены */
+.och-sim-scene-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--och-border);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.och-incident-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+}
+
+.och-timer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(217, 119, 6, 0.1);
+  border: 1px solid var(--och-gold);
+  color: var(--och-gold-light);
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+/* ПРОСТОРНАЯ ЛЕНТА ДИАЛОГА */
+.och-sim-dialogue-feed {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 23, 42, 0.25) transparent;
+  scrollbar-gutter: stable;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  max-height: 480px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.och-sim-dialogue-feed::-webkit-scrollbar {
+  width: 6px;
+}
+
+.och-sim-dialogue-feed::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.och-sim-dialogue-feed::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.25);
+  border-radius: 4px;
+}
+
+.och-sim-dialogue-feed::-webkit-scrollbar-thumb:hover {
+  background: var(--och-red);
+}
+
+.och-chat-row {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  animation: fadeIn 0.25s ease;
+  max-width: 86%;
+  width: auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.och-chat-row.mentor {
+  align-self: flex-start;
+  margin-right: auto;
+  margin-left: 0.2rem;
+}
+
+.och-chat-row.candidate {
+  align-self: flex-end;
+  margin-left: auto;
+  margin-right: 0.2rem;
+  flex-direction: row-reverse;
+}
+
+.och-speaker-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  width: 58px;
+  min-width: 58px;
+  max-width: 58px;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.och-speaker-avatar {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--och-border);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+  display: block;
+}
+
+.och-speaker-role-pill {
+  font-size: 0.62rem;
+  font-weight: 800;
+  background: #F1F5F9;
+  border: 1px solid var(--och-border);
+  padding: 0.1rem 0.2rem;
+  border-radius: var(--radius-sm);
+  color: var(--och-text-dim);
+  width: 100%;
+  max-width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  display: block;
+  letter-spacing: -0.01em;
+}
+
+/* Пузыри сообщений */
+.och-bubble {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  max-width: calc(100% - 72px);
+  box-sizing: border-box;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.och-chat-row.mentor .och-bubble {
+  border-left: 3px solid var(--och-red);
+}
+
+.och-chat-row.candidate .och-bubble {
+  background: var(--och-red-subtle);
+  border-color: rgba(213, 0, 50, 0.25);
+  border-right: 3px solid var(--och-red);
+}
+
+.och-bubble-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.och-speaker-name {
+  font-weight: 800;
+  color: var(--och-text-heading);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.och-bubble-audio-btn {
+  background: transparent;
+  border: none;
+  color: var(--och-cyan);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.och-bubble-audio-btn:hover {
+  text-decoration: underline;
+}
+
+.och-bubble-audio-btn.playing {
+  background: var(--och-red);
+  color: #FFFFFF;
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.45rem;
+  text-decoration: none;
+}
+
+.och-bubble-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--och-text);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.och-bubble-sub {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--och-border);
+  font-size: 0.8rem;
+  color: var(--och-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* ==========================================================================
+   МАСКОТЫ: ТАНЦУЮЩАЯ БАНКА КВАСА И ТАНЦУЮЩАЯ КИЛЬКА
+   ========================================================================== */
+.och-mascot-strip {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1.5rem;
+  background: rgba(248, 250, 252, 0.8);
+  border-top: 1px solid var(--och-border);
+  font-size: 0.8rem;
+}
+
+.och-mascot-unit {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.och-dancing-can,
+.och-dancing-sprat,
+.och-mascot-kombucha,
+.och-mascot-barrel,
+.och-mascot-robot {
+  transition: all 0.3s ease;
+  transform-origin: bottom center;
+}
+
+.och-dancing-can {
+  width: 44px;
+  height: 52px;
+  animation: canDance 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes canDance {
+  0% { transform: rotate(-5deg) translateY(0); }
+  50% { transform: rotate(5deg) translateY(-4px); }
+  100% { transform: rotate(-5deg) translateY(0); }
+}
+
+.och-dancing-sprat {
+  width: 48px;
+  height: 44px;
+  animation: spratWiggle 1.4s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+
+@keyframes spratWiggle {
+  0% { transform: rotate(-6deg) scaleX(1); }
+  50% { transform: rotate(6deg) scaleX(0.96); }
+  100% { transform: rotate(-6deg) scaleX(1); }
+}
+
+.och-mascot-kombucha {
+  width: 44px;
+  height: 48px;
+  animation: kombuchaFloat 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes kombuchaFloat {
+  0% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-5px) rotate(3deg); }
+  100% { transform: translateY(0) rotate(-3deg); }
+}
+
+.och-mascot-barrel {
+  width: 46px;
+  height: 46px;
+  animation: barrelRock 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes barrelRock {
+  0% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg) translateY(-2px); }
+  100% { transform: rotate(-4deg); }
+}
+
+.och-mascot-robot {
+  width: 44px;
+  height: 48px;
+  animation: robotArm 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes robotArm {
+  0% { transform: rotate(-5deg); }
+  50% { transform: rotate(8deg); }
+  100% { transform: rotate(-5deg); }
+}
+
+.och-mascot-speech {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--och-text);
+  box-shadow: var(--shadow-sm);
+  max-width: 420px;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+  box-sizing: border-box;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   ИНТЕРАКТИВНО ВСПЛЫВАЮЩИЕ КНОПКИ ДЕЙСТВИЙ (ACTION CHIPS)
+   Всплывают по мере надобности, не перегружают экран
+   ========================================================================== */
+.och-action-chips-wrapper {
+  position: relative;
+  z-index: 2;
+  padding: 0.85rem 1.25rem;
+  background: #FFFFFF;
+  border-top: 1px solid var(--och-border);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.och-action-chips-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--och-text-dim);
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+}
+
+.och-action-chips-header .och-action-chip {
+  width: auto;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 0.75rem;
+  font-size: 0.76rem;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.och-action-chips-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.65rem;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.och-action-chip {
+  background: #FFFFFF;
+  border: 1.5px solid var(--och-border-strong);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  min-height: 52px;
+  height: 100%;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--och-text-heading);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  animation: chipPop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.och-action-chip:hover {
+  background: var(--och-red-subtle);
+  border-color: var(--och-red);
+  color: var(--och-red);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.och-action-chip i,
+.och-action-chip svg {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.och-action-chip span {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: inherit;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.och-action-chip-hint {
+  border-color: rgba(217, 119, 6, 0.4);
+  color: var(--och-gold-light);
+  background: rgba(217, 119, 6, 0.05);
+}
+
+.och-action-chip-hint:hover {
+  background: rgba(217, 119, 6, 0.12);
+  border-color: var(--och-gold);
+  color: var(--och-gold-light);
+}
+
+.och-action-chip-tool {
+  border-color: rgba(2, 132, 199, 0.4);
+  color: var(--och-cyan);
+  background: rgba(2, 132, 199, 0.05);
+}
+
+.och-action-chip-tool:hover {
+  background: rgba(2, 132, 199, 0.12);
+  border-color: var(--och-cyan);
+  color: var(--och-cyan);
+}
+
+@keyframes chipPop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Баннер активной голосовой записи */
+.och-mic-banner {
+  background: #FEF2F2;
+  border: 1px solid var(--och-red);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  animation: fadeIn 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.och-mic-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--och-red);
+  flex: 1;
+  min-width: 0;
+}
+
+#och-mic-banner-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.och-mic-banner-btn {
+  background: var(--och-red);
+  color: #FFFFFF !important;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.95rem;
+  min-width: fit-content;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.och-mic-banner-btn:hover {
+  background: var(--och-red-hover);
+  transform: translateY(-1px);
+}
+
+.och-mic-pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--och-red);
+  box-shadow: 0 0 8px var(--och-red);
+  animation: pulse 0.9s infinite;
+  flex-shrink: 0;
+}
+
+.och-mic-waves {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+}
+
+.och-mic-wave-bar {
+  width: 3px;
+  height: 6px;
+  background: var(--och-red);
+  border-radius: 2px;
+  animation: waveBar 0.8s ease-in-out infinite alternate;
+}
+
+.och-mic-wave-bar:nth-child(2) { animation-delay: 0.15s; }
+.och-mic-wave-bar:nth-child(3) { animation-delay: 0.3s; }
+.och-mic-wave-bar:nth-child(4) { animation-delay: 0.45s; }
+
+@keyframes waveBar {
+  0% { height: 4px; }
+  100% { height: 16px; }
+}
+
+/* Нижняя панель ввода */
+.och-sim-input-bar {
+  position: relative;
+  z-index: 2;
+  padding: 0.85rem 1.25rem;
+  background: #F8FAFC;
+  border-top: 1px solid var(--och-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.och-sim-input-row {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.och-ptt-mini-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: #FFFFFF;
+  border: 1px solid var(--och-border-strong);
+  color: var(--och-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.och-ptt-mini-btn.recording {
+  background: var(--och-red);
+  color: #ffffff;
+  border-color: var(--och-red);
+  box-shadow: 0 0 14px var(--och-red-glow);
+  animation: pulse 1s infinite;
+}
+
+.och-text-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
+  background: #FFFFFF;
+  border: 1px solid var(--och-border-strong);
+  border-radius: var(--radius-md);
+  padding: 0 1rem;
+  color: var(--och-text);
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.och-text-input:focus {
+  border-color: var(--och-red);
+  box-shadow: 0 0 0 3px rgba(213, 0, 50, 0.12);
+}
+
+.och-text-input.och-input-highlight {
+  border-color: var(--och-gold) !important;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.3) !important;
+  background-color: #FFFDF7 !important;
+  transition: all 0.3s ease;
+}
+
+select.och-text-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #FFFFFF;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 0.85rem) center;
+  background-size: 14px 14px;
+  padding-right: 2.5rem !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+select.och-text-input::-ms-expand {
+  display: none;
+}
+
+.och-text-submit-btn {
+  background: var(--och-red);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0 1.25rem;
+  height: 44px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.och-text-submit-btn:hover {
+  background: var(--och-red-hover);
+}
+
+@media (max-width: 540px) {
+  .och-text-submit-btn {
+    padding: 0 0.85rem;
+  }
+  .och-text-submit-btn span {
+    display: none;
+  }
+}
+
+/* Всплывающий ящик оборудования цеха (по клику / требованию) */
+.och-tool-drawer {
+  display: none;
+  position: relative;
+  z-index: 2;
+  padding: 1rem 1.5rem;
+  background: #FFFFFF;
+  border-top: 1px solid var(--och-border);
+  animation: fadeIn 0.2s ease;
+}
+
+.och-tool-drawer.open {
+  display: block;
+}
+
+.och-tool-drawer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+}
+
+.och-tool-mini-card {
+  background: #F8FAFC;
+  border: 1.5px solid var(--och-border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 84px;
+  height: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.och-tool-mini-card:hover {
+  background: #FFFFFF;
+  border-color: var(--och-cyan);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.och-tool-mini-svg {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 0.25rem;
+}
+
+.och-tool-mini-name {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+}
+
+/* ==========================================================================
+   МОДАЛЬНЫЕ ОКНА: УСПЕХ, СБОЙ, ОТКЛИК
+   ========================================================================== */
+.och-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.och-modal-box {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-lg);
+  max-width: 620px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: popIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.och-modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--och-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.och-modal-close-btn {
+  background: transparent;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  border-radius: var(--radius-sm);
+  color: var(--och-text-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.och-modal-close-btn:hover {
+  background: var(--och-red);
+  color: #ffffff;
+  border-color: var(--och-red);
+}
+
+.och-modal-body {
+  padding: 1.5rem;
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.och-modal-form-row,
+.och-form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .och-modal-form-row,
+  .och-form-row-2col {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+}
+
+.och-ferment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .och-ferment-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+.och-modal-actions {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.och-modal-actions > * {
+  flex: 1 1 calc(33.333% - 0.65rem);
+  min-width: 110px;
+  justify-content: center;
+  padding: 0.65rem 0.5rem;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .och-modal-actions {
+    gap: 0.5rem;
+  }
+  .och-modal-actions > * {
+    flex: 1 1 100%;
+    min-width: 100%;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.85rem;
+  }
+}
+
+.och-milestone-card {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease;
+}
+
+@media (max-width: 600px) {
+  .och-milestone-card {
+    padding: 1rem 0.85rem;
+    gap: 0.85rem;
+  }
+}
+
+/* ==========================================================================
+   FOOTER (КОНТРАСТНЫЙ ПРОМЫШЛЕННЫЙ ТЁМНЫЙ ГРАФИТ)
+   ========================================================================== */
+.och-footer {
+  margin-top: auto;
+  background: #0F172A;
+  border-top: 1px solid #1E293B;
+  padding: 3.5rem 0 2rem;
+  font-size: 0.9rem;
+  color: #94A3B8;
+}
+
+.och-footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(3, 1fr);
+  gap: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.och-footer-title {
+  color: #FFFFFF;
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.och-footer-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.och-footer-links a {
+  color: #94A3B8;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.och-footer-links a:hover {
+  color: #FFFFFF;
+}
+
+.och-footer-bottom {
+  padding-top: 1.5rem;
+  border-top: 1px solid #1E293B;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #64748B;
+}
+
+/* ==========================================================================
+   АНИМАЦИИ
+   ========================================================================== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-animation {
+  animation: spin 1s linear infinite;
+}
+
+/* ==========================================================================
+   RESPONSIVE (MOBILE & TABLET ADAPTATION)
+   Принцип: масштабирование и уменьшение размеров элементов вместо растяжения
+   в узкие вертикальные колонки. Полное исключение горизонтального скролла.
+   ========================================================================== */
+
+@media (max-width: 992px) {
+  /* Шапка и мобильное меню */
+  .och-nav-list {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 72px;
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    padding: 1.25rem;
+    border-bottom: 2px solid var(--och-red);
+    box-shadow: var(--shadow-lg);
+    gap: 0.85rem;
+    z-index: 1000;
+  }
+  .och-nav-list.mobile-open {
+    display: flex !important;
+  }
+  .och-nav-link {
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+    width: 100%;
+  }
+  .och-nav-install-btn {
+    width: 100%;
+    height: 42px;
+    min-height: 42px;
+    max-height: 42px;
+    font-size: 0.95rem;
+    justify-content: center;
+  }
+  .och-nav-cta {
+    justify-content: center;
+    width: 100%;
+    height: 42px;
+    min-height: 42px;
+    max-height: 42px;
+    font-size: 0.95rem;
+  }
+  .och-burger-btn {
+    display: flex;
+  }
+
+  .och-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2rem;
+  }
+  .och-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem;
+  }
+  .och-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  #search-form-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  #search-form-grid > div {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  .och-filter-switch-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Статистика: сохраняем 2 колонки, пропорционально уменьшая размер */
+  .och-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem;
+    margin: 1.5rem 0;
+  }
+  .och-stat-card {
+    padding: 0.85rem 0.75rem;
+  }
+  .och-stat-num {
+    font-size: clamp(1.15rem, 4.5vw, 1.6rem);
+    margin-bottom: 0.25rem;
+  }
+  .och-stat-title {
+    font-size: 0.8rem;
+    line-height: 1.25;
+    margin-bottom: 0.2rem;
+  }
+  .och-stat-desc {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  /* Симулятор: компактный HUD и диалог без вертикальной полосы букв */
+  .och-sim-container {
+    padding: 0.5rem 0.5rem 1.5rem;
+    gap: 0.65rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .och-sim-compact-hud {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.65rem 0.75rem;
+    gap: 0.65rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .och-sim-hud-title-box {
+    gap: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .och-sim-hud-title-box .och-speaker-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+  }
+  .och-sim-hud-title {
+    font-size: 0.92rem;
+  }
+  .och-sim-hud-sub {
+    font-size: 0.7rem;
+  }
+  .och-sim-telemetry-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+    gap: 0.35rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .och-gauge-chip,
+  .och-streak-badge-hud,
+  .och-hud-score-badge {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 0.45rem !important;
+    font-size: 0.72rem !important;
+    gap: 0.25rem !important;
+    justify-content: center !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .och-gauge-chip svg,
+  .och-hud-score-badge svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  /* Сцена и диалог */
+  .och-sim-stage-main {
+    min-height: 380px;
+    border-radius: var(--radius-md);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .och-sim-scene-header {
+    padding: 0.5rem 0.75rem;
+  }
+  .och-incident-pill {
+    font-size: 0.78rem;
+    gap: 0.35rem;
+  }
+  .och-sim-dialogue-feed {
+    padding: 0.75rem 0.65rem;
+    gap: 0.75rem;
+    max-height: 400px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+  }
+  .och-chat-row {
+    max-width: 100% !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+    box-sizing: border-box !important;
+  }
+  .och-chat-row.mentor {
+    margin-left: 0 !important;
+  }
+  .och-chat-row.candidate {
+    margin-right: 0 !important;
+  }
+  .och-speaker-col {
+    width: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    gap: 0.2rem !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  .och-speaker-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    border-width: 1.5px !important;
+  }
+  .och-speaker-role-pill {
+    font-size: 0.58rem !important;
+    padding: 0.08rem 0.1rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    letter-spacing: -0.02em !important;
+    box-sizing: border-box !important;
+  }
+  .och-bubble {
+    padding: 0.65rem 0.75rem !important;
+    border-radius: var(--radius-sm) !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    max-width: calc(100% - 54px) !important;
+    box-sizing: border-box !important;
+  }
+  .och-bubble-head {
+    font-size: 0.76rem;
+    margin-bottom: 0.25rem;
+  }
+  .och-bubble-text {
+    font-size: 0.86rem;
+    line-height: 1.42;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+  .och-bubble-sub {
+    font-size: 0.72rem;
+    padding-top: 0.35rem;
+    margin-top: 0.35rem;
+  }
+
+  /* Маскоты и реплики */
+  .och-mascot-strip {
+    padding: 0.35rem 0.65rem;
+    gap: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .och-mascot-unit svg {
+    width: 32px !important;
+    height: 34px !important;
+  }
+  .och-mascot-speech {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.5rem;
+    line-height: 1.25;
+    max-width: 100%;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Кнопки действий */
+  .och-action-chips-wrapper {
+    padding: 0.5rem 0.65rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .och-action-chips-header {
+    font-size: 0.7rem !important;
+    margin-bottom: 0.35rem !important;
+    flex-wrap: wrap !important;
+  }
+  .och-action-chips-row {
+    grid-template-columns: 1fr !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+  }
+  .och-action-chip {
+    padding: 0.65rem 0.85rem !important;
+    min-height: 48px !important;
+    font-size: 0.84rem !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .och-action-chip svg,
+  .och-action-chip i {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+  }
+  .och-action-chip span {
+    font-size: 0.84rem !important;
+  }
+
+  /* Ящик оборудования на мобильных */
+  .och-tool-drawer {
+    padding: 0.75rem 0.65rem !important;
+  }
+  .och-tool-drawer-grid {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+  .och-tool-mini-card {
+    min-height: 72px !important;
+    padding: 0.5rem 0.35rem !important;
+  }
+
+  /* Панель ввода */
+  .och-sim-input-bar {
+    padding: 0.55rem 0.65rem;
+    gap: 0.4rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .och-ptt-mini-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: var(--radius-sm);
+  }
+  .och-text-input {
+    height: 40px;
+    min-height: 40px;
+    padding: 0 0.75rem;
+    font-size: 0.86rem;
+    border-radius: var(--radius-sm);
+  }
+  .och-text-submit-btn {
+    height: 40px;
+    min-height: 40px;
+    padding: 0 0.85rem;
+    font-size: 0.85rem;
+    border-radius: var(--radius-sm);
+  }
+}
+
+@media (max-width: 600px) {
+  /* Hero секция */
+  .och-hero {
+    padding: 2.25rem 0 2rem;
+  }
+  .och-hero-card {
+    padding: 1.15rem 0.95rem;
+  }
+  .och-hero-card-img {
+    height: 160px;
+  }
+  .och-hero-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.65rem;
+  }
+  .och-hero-actions > a,
+  .och-hero-actions > button {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.88rem;
+    padding: 0.75rem 1rem;
+  }
+  .och-btn-primary,
+  .och-btn-secondary {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+  }
+
+  /* Карточки */
+  .och-track-card {
+    padding: 1.15rem 0.95rem;
+  }
+  .och-vacancy-card {
+    padding: 1.15rem 0.95rem;
+  }
+  .och-vac-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+  .och-vac-title {
+    font-size: 1.05rem;
+  }
+  .och-vac-salary {
+    font-size: 1.05rem;
+    margin-bottom: 0.4rem;
+  }
+
+  /* Таблетки телеметрии на карточках */
+  .och-telemetry-badge-row {
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+  }
+  .och-telemetry-pill {
+    padding: 0.4rem 0.25rem;
+  }
+  .och-telemetry-pill-val {
+    font-size: clamp(0.85rem, 3.2vw, 1.05rem);
+  }
+  .och-telemetry-pill-label {
+    font-size: 0.62rem;
+  }
+
+  /* Футер */
+  .och-footer {
+    padding: 2.5rem 0 1.5rem;
+  }
+  .och-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+  .och-footer-bottom {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  /* Полоса синхронизации */
+  .och-live-sync-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding: 0.75rem 0.85rem;
+  }
+  .och-live-sync-bar > div:last-child {
+    justify-content: space-between;
+  }
+
+  /* Модальные окна */
+  .och-modal-backdrop {
+    padding: 0.5rem;
+  }
+  .och-modal-box {
+    border-radius: var(--radius-md);
+  }
+  .och-modal-header {
+    padding: 0.85rem 1rem;
+  }
+  .och-modal-header h3 {
+    font-size: 1.05rem !important;
+  }
+  .och-modal-body {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 440px) {
+  /* Для экранов 320px - 440px: ужимаем телеметрию в 2x2 */
+  .och-sim-telemetry-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.35rem;
+  }
+  .och-stats-grid {
+    gap: 0.45rem;
+  }
+  .och-stat-card {
+    padding: 0.65rem 0.5rem;
+  }
+  .och-stat-num {
+    font-size: 1.15rem;
+  }
+  .och-stat-title {
+    font-size: 0.74rem;
+  }
+  .och-stat-desc {
+    font-size: 0.68rem;
+    line-height: 1.3;
+  }
+  #search-form-grid input,
+  #search-form-grid select,
+  #search-form-grid button {
+    font-size: 0.82rem;
+    padding: 0.55rem 0.6rem;
+  }
+}
+
+/* ==========================================================================
+   ДИНАМИЧЕСКИЙ FLOATER БАЛЛОВ И НАВИГАЦИОННЫЙ XP-БЕЙДЖ
+   ========================================================================== */
+.och-hud-score-badge {
+  position: relative;
+}
+
+.och-score-delta-floater {
+  position: absolute;
+  top: -12px;
+  right: -8px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(0);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.45rem;
+  z-index: 100;
+  white-space: nowrap;
+}
+
+.och-score-delta-floater.fly-positive {
+  opacity: 1;
+  transform: translateY(-22px) scale(1.1);
+  background: #059669;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+}
+
+.och-score-delta-floater.fly-negative {
+  opacity: 1;
+  transform: translateY(-22px) scale(1.1);
+  background: #D50032;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(213, 0, 50, 0.35);
+}
+
+.och-nav-xp-badge {
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--och-gold-light);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-left: 0.35rem;
+  transition: all 0.25s ease;
+}
+
+.och-nav-xp-badge.has-points {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.18), rgba(213, 0, 50, 0.15));
+  color: var(--och-red);
+  border-color: var(--och-red);
+}
+
+/* ==========================================================================
+   РАЗДЕЛ: ЛИЧНЫЙ КАБИНЕТ И ПРОГРЕСС СТАЖЁРА (/progress/)
+   ========================================================================== */
+.och-progress-page-wrapper {
+  background: var(--och-bg);
+  min-height: 85vh;
+}
+
+.och-progress-hero {
+  padding: 3rem 0 2.5rem;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--och-border);
+}
+
+.och-progress-hero-inner {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .och-progress-hero-inner {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.och-progress-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--och-text-heading);
+  letter-spacing: -0.02em;
+  margin: 0.5rem 0 0.85rem;
+  line-height: 1.2;
+}
+
+.och-progress-desc {
+  font-size: 1rem;
+  color: var(--och-text-dim);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.och-progress-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Карточка профиля и разряда */
+.och-progress-profile-card {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.och-progress-profile-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--och-red), var(--och-gold));
+}
+
+.och-profile-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.och-profile-avatar-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: rgba(213, 0, 50, 0.06);
+  border: 1px solid var(--och-border-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.och-profile-avatar {
+  width: 32px;
+  height: 32px;
+}
+
+.och-profile-online-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: #059669;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+}
+
+.och-profile-rank-name {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--och-text-heading);
+}
+
+.och-profile-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  background: #F8FAFC;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.och-pmetric-val {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--och-red);
+  line-height: 1.1;
+}
+
+.och-pmetric-val small {
+  font-size: 0.75rem;
+  color: var(--och-gold-light);
+}
+
+.och-pmetric-lbl {
+  font-size: 0.7rem;
+  color: var(--och-text-dim);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-top: 0.25rem;
+}
+
+.och-profile-xp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.och-xp-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--och-text-dim);
+}
+
+.och-xp-labels strong {
+  color: var(--och-text-heading);
+}
+
+.och-xp-bar-track {
+  width: 100%;
+  height: 8px;
+  background: #E2E8F0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.och-xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--och-gold), var(--och-red));
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+/* Сетка кейсов */
+.och-progress-cases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.och-progress-case-card {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  padding: 1.35rem;
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.och-progress-case-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.och-pcase-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.och-pcase-mentor {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.och-pcase-avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--och-border);
+  flex-shrink: 0;
+}
+
+.och-pcase-mentor-name {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+  line-height: 1.25;
+  margin-bottom: 0.15rem;
+}
+
+.och-pcase-mentor-role {
+  font-size: 0.74rem;
+  color: var(--och-text-dim);
+  line-height: 1.35;
+}
+
+.och-pcase-status-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.och-pcase-status-badge.badge-todo {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #CBD5E1;
+}
+
+.och-pcase-status-badge.badge-done {
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+}
+
+.och-pcase-workshop {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--och-text-dim);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.och-pcase-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+  margin: 0 0 0.5rem;
+  line-height: 1.3;
+}
+
+.och-pcase-desc {
+  font-size: 0.84rem;
+  color: var(--och-text-dim);
+  line-height: 1.45;
+  margin: 0 0 1rem;
+}
+
+.och-pcase-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--och-border);
+}
+
+.och-pcase-score-display .lbl {
+  font-size: 0.72rem;
+  color: var(--och-text-dim);
+  display: block;
+}
+
+.och-pcase-score-display .score-val {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--och-text-heading);
+}
+
+/* Сетка достижений */
+.och-achieve-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.och-achieve-card {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  opacity: 0.65;
+  transition: all 0.25s ease;
+}
+
+.och-achieve-card.unlocked {
+  opacity: 1;
+  border-color: var(--och-gold);
+  background: linear-gradient(135deg, #FFFFFF, rgba(217, 119, 6, 0.03));
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.1);
+}
+
+.och-achieve-icon-box {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-cooling { background: rgba(14, 165, 233, 0.12); color: #0284c7; }
+.icon-krones { background: rgba(168, 85, 247, 0.12); color: #9333ea; }
+.icon-warehouse { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.icon-lab { background: rgba(16, 185, 129, 0.12); color: #059669; }
+.icon-retro { background: rgba(213, 0, 50, 0.12); color: var(--och-red); }
+.icon-streak { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+
+.och-achieve-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+  margin-bottom: 0.2rem;
+}
+
+.och-achieve-desc {
+  font-size: 0.8rem;
+  color: var(--och-text-dim);
+  line-height: 1.4;
+  margin-bottom: 0.4rem;
+}
+
+.och-achieve-status {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+/* Сертификат */
+.och-cert-wrapper {
+  max-width: 860px;
+  margin: 1.5rem auto 0;
+}
+
+.och-cert-card {
+  background: #FFFFFF;
+  border: 2px solid var(--och-border);
+  border-radius: var(--radius-md);
+  padding: 2.25rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.och-cert-card::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px dashed rgba(217, 119, 6, 0.35);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+
+.och-cert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--och-border);
+  margin-bottom: 1.5rem;
+}
+
+.och-cert-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.8rem;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #B45309;
+}
+
+.och-cert-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.och-cert-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.och-cert-table th {
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  background: #F8FAFC;
+  color: var(--och-text-dim);
+  font-weight: 800;
+  border-bottom: 1px solid var(--och-border);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.och-cert-table td {
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid #F1F5F9;
+  color: var(--och-text);
+}
+
+.och-cert-check {
+  display: inline-flex;
+  align-items: center;
+  color: #059669;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.och-cert-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--och-border);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.och-cert-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* ==========================================================================
+   ИНТЕРАКТИВНЫЙ БРИФИНГ И НАСТРОЙКА ИИ-НАСТАВНИКА (GIGACHAT / OFFLINE)
+   ========================================================================== */
+.och-hud-ai-badge {
+  background: #F8FAFC;
+  border: 1px solid var(--och-border);
+  padding: 0 0.75rem;
+  height: 36px;
+  min-height: 36px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--och-text-heading);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.och-hud-ai-badge:hover {
+  background: #FFFFFF;
+  border-color: var(--och-red);
+  box-shadow: 0 2px 8px rgba(227, 6, 19, 0.12);
+  transform: translateY(-1px);
+}
+
+.och-ai-mode-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.och-ai-mode-dot.dot-gigachat {
+  background: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+}
+
+.och-ai-mode-dot.dot-offline {
+  background: #3B82F6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.7);
+}
+
+.och-briefing-modal-box {
+  max-width: 580px;
+}
+
+.och-briefing-modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--och-red-subtle);
+  border: 1px solid rgba(227, 6, 19, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.och-briefing-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  background: #F1F5F9;
+  padding: 0.3rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--och-border);
+}
+
+.och-briefing-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: var(--och-text-dim);
+  font-size: 0.84rem;
+  font-weight: 700;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.och-briefing-tab-btn:hover {
+  color: var(--och-text-heading);
+}
+
+.och-briefing-tab-btn.active {
+  background: #FFFFFF;
+  color: var(--och-text-heading);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.och-briefing-badge-rec {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: 9999px;
+  letter-spacing: 0.03em;
+}
+
+.och-briefing-badge-offline {
+  background: #EFF6FF;
+  color: #2563EB;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: 9999px;
+  letter-spacing: 0.03em;
+}
+
+.och-briefing-info-card {
+  background: #EFF6FF;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.och-briefing-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.och-briefing-details {
+  background: #F8FAFC;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  font-size: 0.82rem;
+}
+
+.och-briefing-summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--och-text-dim);
+  outline: none;
+}
+
+.och-briefing-summary:hover {
+  color: var(--och-text-heading);
+}
+
+.och-briefing-status {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  margin-bottom: 1.25rem;
+  font-weight: 600;
+}
+
+.och-briefing-status.status-loading {
+  background: #F8FAFC;
+  border: 1px solid var(--och-border);
+  color: var(--och-text);
+}
+
+.och-briefing-status.status-error {
+  background: #FEF2F2;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #B91C1C;
+}
+
+.och-briefing-status.status-success {
+  background: #ECFDF5;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #047857;
+}
+
+.och-briefing-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+@media (max-width: 540px) {
+  .och-briefing-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .och-briefing-actions button {
+    width: 100%;
+  }
+}
+
+.och-briefing-offline-card {
+  background: #F8FAFC;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+}
+
+.och-briefing-offline-badge {
+  display: inline-block;
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.04em;
+}
+
+.och-briefing-feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.och-briefing-feature-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.84rem;
+  color: var(--och-text);
+  line-height: 1.4;
+}
+
+

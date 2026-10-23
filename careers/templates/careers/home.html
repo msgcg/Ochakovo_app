@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Очаково | Карьерный старт и оплачиваемая практика в пик сезона 2026{% endblock %}
+
+{% block content %}
+<!-- 1. HERO СЕКЦИЯ С ЖИВЫМ КАРЬЕРНЫМ КРЮЧКОМ -->
+<section class="och-hero">
+  <div class="container">
+    <div class="och-hero-grid">
+      <div>
+        <h1 class="och-hero-title">
+          Смена на <span>миллион литров</span>. Твой карьерный старт в Очаково
+        </h1>
+        
+        <p class="och-hero-subtitle">
+          В пиковые месяцы в Москве и по всей стране мы варим и разливаем рекордные объемы натурального кваса, комбучи и лимонадов. 
+          Оплачиваемая практика для студентов, официальный стаж с первого дня, общежитие в Москве рядом с заводом и современный хайтек-пищепром.
+        </p>
+
+        <div class="och-hero-actions">
+          <a href="{% url 'careers:game_select' %}" class="och-btn-primary">
+            <i data-lucide="play-circle" style="width: 20px; height: 20px;"></i>
+            <span>Пройти тест-смену в цеху (2 мин)</span>
+          </a>
+          <a href="{% url 'careers:vacancies_list' %}" class="och-btn-secondary">
+            <i data-lucide="briefcase" style="width: 18px; height: 18px; color: var(--och-red);"></i>
+            <span>Вакансии сезона ({{ total_active_vacancies }})</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Карточка-тизер симулятора -->
+      <div class="och-hero-card">
+        <img src="{% static 'img/ochakovo_hero_banner.jpg' %}" alt="Цех Очаково" class="och-hero-card-img">
+        
+        <div class="och-telemetry-badge-row">
+          <div class="och-telemetry-pill">
+            <div class="och-telemetry-pill-val">25.5°C</div>
+            <div class="och-telemetry-pill-label">Сусло ЦКТ</div>
+          </div>
+          <div class="och-telemetry-pill">
+            <div class="och-telemetry-pill-val">32 000</div>
+            <div class="och-telemetry-pill-label">Бут / час</div>
+          </div>
+          <div class="och-telemetry-pill">
+            <div class="och-telemetry-pill-val">100%</div>
+            <div class="och-telemetry-pill-label">Натурально</div>
+          </div>
+        </div>
+
+        <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-sm); padding: 0.95rem; margin-bottom: 1.25rem;">
+          <div style="font-size: 0.88rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 0.25rem;">
+            Инцидент в смене: «Дрожжевой флекс в ЦКТ №7»
+          </div>
+          <div style="font-size: 0.8rem; color: var(--och-text-muted); line-height: 1.45;">
+            Дрожжи заиграли слишком бодро в жаркий полдень. Проверь свои инженерные рефлексы и получи прямой оффер от наставника!
+          </div>
+        </div>
+
+        <a href="{% url 'careers:game_play' scenario_slug='brew-yeast-flex' %}" class="och-btn-primary" style="width: 100%; justify-content: center; padding: 0.85rem 1rem; font-size: 0.95rem;">
+          <i data-lucide="zap" style="width: 16px; height: 16px;"></i>
+          <span>Включиться в решение инцидента</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. СТАТИСТИКА И ФАКТЫ О КОМПАНИИ -->
+<section style="padding: 2.5rem 0; border-bottom: 1px solid var(--och-border); background: #FFFFFF;">
+  <div class="container">
+    <div class="och-stats-grid">
+      <div class="och-stat-card">
+        <div class="och-stat-num">1 000 000+</div>
+        <div class="och-stat-title">Литров напитков в сутки</div>
+        <div class="och-stat-desc">Колоссальные масштабы в пиковый сезон с марта по сентябрь.</div>
+      </div>
+      <div class="och-stat-card">
+        <div class="och-stat-num">100%</div>
+        <div class="och-stat-title">Российская независимость</div>
+        <div class="och-stat-desc">Частная отечественная компания без иностранного участия с 1978 года.</div>
+      </div>
+      <div class="och-stat-card">
+        <div class="och-stat-num">4 завода</div>
+        <div class="och-stat-title">Москва, Юг, Поволжье, Сибирь</div>
+        <div class="och-stat-desc">Филиалы в Москве, Краснодаре, Пензе и Тюмени со своими солодовнями.</div>
+      </div>
+      <div class="och-stat-card">
+        <div class="och-stat-num">1-й день</div>
+        <div class="och-stat-title">Оформление по ТК РФ</div>
+        <div class="och-stat-desc">Официальная белая зарплата 2 раза в месяц, стаж для вуза и резюме.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. КАРЬЕРНЫЕ ТРЕКИ: КТО НАМ НУЖЕН В ПИК СЕЗОНА -->
+<section style="padding: 4.5rem 0; background: #F8FAFC;">
+  <div class="container">
+    <div class="och-section-head">
+      <div class="och-section-badge">
+        <i data-lucide="compass" style="width: 15px; height: 15px;"></i>
+        <span>Направления практики и стажировок</span>
+      </div>
+      <h2 class="och-section-title">Найди своё призвание на гиганте индустрии</h2>
+      <p class="och-section-subtitle">
+        Мы соединяем старинные рецепты естественного двойного брожения с передовой робототехникой Krones, автоматизацией SCADA и химическим контролем.
+      </p>
+    </div>
+
+    <div class="och-tracks-grid">
+      {% for track in tracks %}
+      <div class="och-track-card" style="border-top: 3px solid {{ track.accent_color }};">
+        <div>
+          <div class="och-track-icon-box" style="background: {{ track.accent_color }}15; color: {{ track.accent_color }};">
+            <i data-lucide="{{ track.icon_name }}" style="width: 26px; height: 26px;"></i>
+          </div>
+          <h3 class="och-track-title">{{ track.title }}</h3>
+          <p class="och-track-desc">{{ track.short_desc }}</p>
+        </div>
+
+        <div>
+          <div class="och-mentor-row">
+            <img src="{% static 'img/' %}{{ track.mentor_avatar }}" alt="{{ track.mentor_name }}" class="och-mentor-avatar">
+            <div>
+              <div class="och-mentor-name">{{ track.mentor_name }}</div>
+              <div class="och-mentor-role">{{ track.mentor_title }}</div>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+            <a href="{% url 'careers:vacancies_list' %}?track={{ track.slug }}" class="och-btn-secondary" style="flex: 1; justify-content: center; font-size: 0.85rem; padding: 0.6rem 0.8rem;">
+              <span>Вакансии трека</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- 4. ИНТЕРАКТИВНЫЙ БЛОК: СИМУЛЯТОР СМЕНЫ -->
+<section style="padding: 4.5rem 0; background: #FFFFFF; border-top: 1px solid var(--och-border); border-bottom: 1px solid var(--och-border);">
+  <div class="container">
+    <div class="och-hero-grid">
+      <div>
+        <div class="och-section-badge">
+          <i data-lucide="gamepad-2" style="width: 16px; height: 16px;"></i>
+          <span>Геймифицированный отбор</span>
+        </div>
+        <h2 style="font-size: clamp(1.4rem, 4.5vw, 2.35rem); font-weight: 900; line-height: 1.15; margin-bottom: 1.25rem; color: var(--och-text-heading); word-break: normal; overflow-wrap: break-word;">
+          Квас варят не по учебникам. Проверь себя на реальной линии!
+        </h2>
+        <p style="color: var(--och-text-muted); font-size: 1.05rem; line-height: 1.6; margin-bottom: 1.5rem;">
+          Думаешь, квас — это просто сухари в банке? На комбинате «Очаково» это ЦКТ объемом до 500 тонн, 
+          штаммы закваски живого брожения и скоростные конвейеры. Реши производственный кейс с живым ИИ-наставником 
+          и получи приоритетное рассмотрение анкеты в HR!
+        </p>
+
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem;">
+          <li style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: var(--och-text);">
+            <i data-lucide="check-circle" style="width: 18px; height: 18px; color: var(--och-green);"></i>
+            <span>Нелинейный сюжет с реакцией на каждое слово и действие</span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: var(--och-text);">
+            <i data-lucide="check-circle" style="width: 18px; height: 18px; color: var(--och-green);"></i>
+            <span>Интерактивные датчики сусла, плотности Brix и скорости упаковки</span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: var(--och-text);">
+            <i data-lucide="check-circle" style="width: 18px; height: 18px; color: var(--och-green);"></i>
+            <span>Голосовая рация PTT и всплывающие подсказки наставников цеха</span>
+          </li>
+        </ul>
+
+        <a href="{% url 'careers:game_select' %}" class="och-btn-primary">
+          <i data-lucide="play" style="width: 18px; height: 18px;"></i>
+          <span>Выбрать цех и начать смену</span>
+        </a>
+      </div>
+
+      <div class="och-lore-card" style="background: #F8FAFC; border: 1px solid var(--och-border-strong); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow-md); position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--och-border);">
+          <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <img id="lore-avatar" src="{% static 'img/mentor_brewer.jpg' %}" alt="Наставник" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--och-red); transition: all 0.3s ease;">
+            <div>
+              <div id="lore-name" style="font-size: 1.1rem; font-weight: 800; color: var(--och-text-heading);">Михалыч говорит:</div>
+              <div id="lore-role" style="font-size: 0.78rem; color: var(--och-gold-light); font-weight: 700;">Главный технолог-квасовар комбината</div>
+            </div>
+          </div>
+          <button type="button" id="btn-next-joke" class="och-btn-sync" title="Другая байка со смены" style="padding: 0.4rem 0.75rem; font-size: 0.78rem;">
+            <i data-lucide="shuffle" style="width: 13px; height: 13px;"></i>
+            <span>Ещё байка</span>
+          </button>
+        </div>
+
+        <blockquote id="lore-quote" style="font-size: 1.02rem; line-height: 1.6; color: var(--och-text); font-style: italic; margin-bottom: 1.5rem; min-height: 80px; transition: opacity 0.25s ease;">
+          «Двойное брожение — это когда сначала дрожжи устраивают бодрый флекс, а потом молочнокислые бактерии добавляют резкости и бодрости!»
+        </blockquote>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--och-text-dim); border-top: 1px solid var(--och-border); padding-top: 0.85rem;">
+          <span id="lore-location" style="font-weight: 600;">Цех брожения №1 • Москва</span>
+          <span id="lore-badge" style="color: var(--och-green); font-weight: 700;">Партия: «Очаковский 1978»</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. ГОРЯЧИЕ СЕЗОННЫЕ ВАКАНСИИ -->
+<section style="padding: 4.5rem 0; background: #F8FAFC;">
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1.5rem;">
+      <div>
+        <div class="och-section-badge">
+          <i data-lucide="zap" style="width: 15px; height: 15px;"></i>
+          <span>Срочный весенне-летний набор</span>
+        </div>
+        <h2 class="och-section-title">Популярные вакансии сезона</h2>
+      </div>
+      <a href="{% url 'careers:vacancies_list' %}" class="och-btn-secondary">
+        <span>Смотреть все вакансии</span>
+        <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+      </a>
+    </div>
+
+    <div class="och-vacancies-grid">
+      {% for vac in featured_vacancies %}
+      <div class="och-vacancy-card">
+        <div>
+          <div class="och-vac-top">
+            <h3 class="och-vac-title">
+              <a href="{% url 'careers:vacancy_detail' slug=vac.slug %}" style="color: inherit; text-decoration: none;">
+                {{ vac.title }}
+              </a>
+            </h3>
+          </div>
+          <div class="och-vac-salary">{{ vac.salary_text }}</div>
+          <div class="och-vac-meta">
+            <span class="och-vac-tag" style="color: var(--och-text-heading); font-weight: 700; background: #FFFFFF; border: 1px solid var(--och-border-strong);">
+              <i data-lucide="map-pin" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle; color: var(--och-red);"></i>
+              {{ vac.city }}
+            </span>
+            <span class="och-vac-tag">{{ vac.schedule }}</span>
+            {% if vac.has_dormitory %}
+            <span class="och-vac-tag" style="color: #047857; background: #ECFDF5; border-color: rgba(16,185,129,0.3);">Общежитие</span>
+            {% endif %}
+            {% if vac.is_student_friendly %}
+            <span class="och-vac-tag" style="color: var(--och-gold-light); background: #FFFBEB; border-color: rgba(245,158,11,0.3);">Практика для ВУЗа</span>
+            {% endif %}
+          </div>
+          <p style="font-size: 0.88rem; color: var(--och-text-muted); line-height: 1.45; margin-bottom: 1rem;">
+            {{ vac.description|truncatewords:20 }}
+          </p>
+
+          {% if vac.matched_scenario %}
+          <div class="och-scenario-prompt-box">
+            <div class="och-scenario-prompt-header">
+              <i data-lucide="zap" style="width: 14px; height: 14px;"></i>
+              <span>Симулятор с наставником: {{ vac.matched_scenario.mentor_name }}</span>
+            </div>
+            <a href="{% url 'careers:game_play' scenario_slug=vac.matched_scenario.scenario_slug %}" class="och-btn-simulator-direct">
+              <i data-lucide="gamepad-2" style="width: 15px; height: 15px;"></i>
+              <span>{{ vac.matched_scenario.btn_text }}</span>
+            </a>
+          </div>
+          {% endif %}
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--och-border); margin-top: auto;">
+          <span style="font-size: 0.8rem; color: var(--och-text-dim);">{{ vac.experience_level }}</span>
+          <a href="{% url 'careers:vacancy_detail' slug=vac.slug %}" style="color: var(--och-red); font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none;">
+            <span>Подробнее</span>
+            <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- 6. ПРЕИМУЩЕСТВА РАБОТОДАТЕЛЯ И ЗАБОТА О СОТРУДНИКАХ -->
+<section style="padding: 4.5rem 0; background: #FFFFFF; border-top: 1px solid var(--och-border);">
+  <div class="container">
+    <div class="och-section-head">
+      <div class="och-section-badge">
+        <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i>
+        <span>Корпоративная забота</span>
+      </div>
+      <h2 class="och-section-title">Условия, которые ценят студенты и молодые специалисты</h2>
+      <p class="och-section-subtitle">
+        Мы создаем все условия, чтобы практика приносила не только зачет и деньги, но и комфортную жизнь в Москве.
+      </p>
+    </div>
+
+    <div class="och-tracks-grid">
+      {% for perk in perks %}
+      <div style="background: #FFFFFF; border: 1px solid var(--och-border); border-radius: var(--radius-md); padding: 1.75rem 1.5rem; box-shadow: var(--shadow-sm);">
+        <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: var(--och-red-subtle); color: var(--och-red); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+          <i data-lucide="{{ perk.icon_name }}" style="width: 22px; height: 22px;"></i>
+        </div>
+        <div style="font-size: 0.72rem; font-weight: 800; color: var(--och-gold-light); text-transform: uppercase; margin-bottom: 0.35rem;">{{ perk.tag }}</div>
+        <h4 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--och-text-heading);">{{ perk.title }}</h4>
+        <p style="font-size: 0.88rem; color: var(--och-text-muted); line-height: 1.5;">{{ perk.short_desc }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- 7. БЫСТРАЯ ПОДАЧА АНКЕТЫ (CALL TO ACTION) -->
+<section style="padding: 4.5rem 0; background: #F8FAFC; border-top: 1px solid var(--och-border);">
+  <div class="container">
+    <div style="background: #FFFFFF; border: 1.5px solid var(--och-red); border-radius: var(--radius-lg); padding: 3rem 2rem; box-shadow: var(--shadow-md);">
+      <div style="max-width: 650px; margin: 0 auto; text-align: center;">
+        <h2 style="font-size: clamp(1.35rem, 4.5vw, 2.25rem); font-weight: 900; margin-bottom: 1rem; color: var(--och-text-heading); word-break: normal; overflow-wrap: break-word;">
+          Готов к оплачиваемой практике в «Очаково»?
+        </h2>
+        <p style="font-size: 1.05rem; color: var(--och-text-muted); line-height: 1.55; margin-bottom: 2rem;">
+          Оставь заявку сейчас: мы подберем смену и цех с учетом расписания твоих занятий и поможем с заселением в общежитие.
+        </p>
+
+        <form id="och-home-apply-form" onsubmit="window.submitFastApplication(event, 'och-home-apply-form')" style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
+          <div class="och-form-row-2col">
+            <div>
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--och-text-muted); margin-bottom: 0.35rem; display: block;">Ваше Имя и Фамилия</label>
+              <input type="text" name="full_name" required placeholder="Иван Иванов" class="och-text-input" style="width: 100%;">
+            </div>
+            <div>
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--och-text-muted); margin-bottom: 0.35rem; display: block;">Номер телефона</label>
+              <input type="tel" name="phone" required placeholder="+7 (999) 000-00-00" class="och-text-input" style="width: 100%;">
+            </div>
+          </div>
+
+          <div class="och-form-row-2col">
+            <div>
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--och-text-muted); margin-bottom: 0.35rem; display: block;">ВУЗ / Колледж</label>
+              <input type="text" name="university" placeholder="РОСБИОТЕХ, РТУ МИРЭА, Бауманка..." class="och-text-input" style="width: 100%;">
+            </div>
+            <div>
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--och-text-muted); margin-bottom: 0.35rem; display: block;">Email или Telegram</label>
+              <input type="text" name="email" placeholder="student@mail.ru / @tg_nick" class="och-text-input" style="width: 100%;">
+            </div>
+          </div>
+
+          <button type="submit" class="och-btn-primary" style="justify-content: center; font-size: 1.05rem; padding: 0.95rem; margin-top: 0.5rem; width: 100%;">
+            <span>Отправить анкету в HR-отдел</span>
+            <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+          </button>
+          
+          <div style="font-size: 0.75rem; color: var(--och-text-dim); text-align: center; margin-top: 0.5rem;">
+            Нажимая кнопку, вы соглашаетесь на обработку персональных данных согласно ТК РФ и политике конфиденциальности Очаково.
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

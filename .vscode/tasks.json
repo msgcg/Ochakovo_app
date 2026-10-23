@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Django: Запуск сервера",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe manage.py runserver 127.0.0.1:8000",
+      "problemMatcher": [],
+      "isBackground": true,
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Очаково: Запустить все проверки (Smoke Tests)",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe careers/management/smoke_tests.py",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "БД: Наполнить демонстрационными данными",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe manage.py seed_ochakovo",
+      "problemMatcher": []
+    },
+    {
+      "label": "Сеть: Синхронизировать вакансии с ochakovo.ru",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe -c \"import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ochakovo_project.settings'); django.setup(); from careers.services.vacancy_crawler import sync_vacancies_to_database; print(sync_vacancies_to_database(force_refresh=True))\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Статика: Собрать статические файлы",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe manage.py collectstatic --noinput",
+      "problemMatcher": []
+    }
+  ]
+}

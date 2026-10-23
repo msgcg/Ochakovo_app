@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <rect width="120" height="120" rx="24" fill="#18181b"/>
+  <circle cx="60" cy="46" r="22" fill="#fde68a"/>
+  <!-- Modern Stylish Hair -->
+  <path d="M36 38c2-12 14-18 26-18 14 0 24 8 24 18 0 4-4 6-8 6-4-8-12-10-22-10-8 0-14 2-20 4z" fill="#451a03"/>
+  <circle cx="53" cy="46" r="2.5" fill="#1c1917"/>
+  <circle cx="67" cy="46" r="2.5" fill="#1c1917"/>
+  <path d="M55 54c3 3 7 3 10 0" stroke="#b45309" stroke-width="2" stroke-linecap="round"/>
+  <!-- Stylish Hoodie -->
+  <path d="M28 112c0-22 14-38 32-38s32 16 32 38H28z" fill="#1e293b"/>
+  <path d="M52 74c0 6 4 12 8 12s8-6 8-12" fill="#d50032"/>
+  <circle cx="60" cy="100" r="10" fill="#d50032"/>
+  <path d="M56 100l3 3 6-6" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+</svg>
