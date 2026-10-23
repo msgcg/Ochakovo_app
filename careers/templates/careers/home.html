@@ -140,6 +140,104 @@
   </div>
 </section>
 
+<!-- ВИДЕО ИЗ ЦЕХОВ: РЕАЛЬНОЕ ПРОИЗВОДСТВО ОЧАКОВО -->
+<section style="padding: 4.5rem 0; background: #FFFFFF; border-top: 1px solid var(--och-border);">
+  <div class="container">
+    <div class="och-section-head">
+      <div class="och-section-badge">
+        <i data-lucide="video" style="width: 15px; height: 15px; color: var(--och-red);"></i>
+        <span>Видео с комбината</span>
+      </div>
+      <h2 class="och-section-title">Взгляни на смену своими глазами</h2>
+      <p class="och-section-subtitle">
+        Никаких постановочных стоков. Посмотри, как в действительности работают скоростные конвейеры Krones, варочные котлы ЦКТ, исследовательская R&D-лаборатория и служба качества.
+      </p>
+    </div>
+
+    <div class="och-video-showcase-grid">
+      <!-- 1. Оператор линии розлива -->
+      <div class="och-video-card">
+        <div class="och-video-wrapper">
+          <video controls preload="metadata" poster="{% static 'img/vn_bg/bg_bottling_line.jpg' %}">
+            <source src="/media/videos/operator_linii_rozliva.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="och-video-body">
+          <div>
+            <span class="och-video-tag">Цех розлива • от 70 000 ₽</span>
+            <h3 class="och-video-title">Оператор линии розлива Krones</h3>
+            <p class="och-video-desc">Розлив баночного кваса и напитков CoolCola на скорости до 50 000 банок в час. Контроль укупорки и паллетирования.</p>
+          </div>
+          <a href="{% url 'careers:game_play' scenario_slug='krones-robot-tilt' %}" class="och-btn-secondary" style="justify-content: center; font-size: 0.85rem; padding: 0.55rem 0.85rem; margin-top: 0.75rem;">
+            <i data-lucide="play" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+            <span>Пройти тест-смену розлива</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 2. Машинист варочного оборудования -->
+      <div class="och-video-card">
+        <div class="och-video-wrapper">
+          <video controls preload="metadata" poster="{% static 'img/vn_bg/bg_brewhouse.jpg' %}">
+            <source src="/media/videos/mashinist_oborudovaniya.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="och-video-body">
+          <div>
+            <span class="och-video-tag">Варочный цех • от 70 000 ₽</span>
+            <h3 class="och-video-title">Машинист оборудования варки</h3>
+            <p class="och-video-desc">Управление ЦКТ, затирание ржаного и ячменного солода, внесение живой закваски двойного брожения.</p>
+          </div>
+          <a href="{% url 'careers:game_play' scenario_slug='brew-yeast-flex' %}" class="och-btn-secondary" style="justify-content: center; font-size: 0.85rem; padding: 0.55rem 0.85rem; margin-top: 0.75rem;">
+            <i data-lucide="play" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+            <span>Пройти тест-смену варки</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 3. Химик-лаборант -->
+      <div class="och-video-card">
+        <div class="och-video-wrapper">
+          <video controls preload="metadata" poster="{% static 'img/vn_bg/bg_laboratory.jpg' %}">
+            <source src="/media/videos/himik_laborant.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="och-video-body">
+          <div>
+            <span class="och-video-tag">Лаборатория • от 60 000 ₽</span>
+            <h3 class="och-video-title">Химик-лаборант ОТК</h3>
+            <p class="och-video-desc">Экспресс-контроль титруемой кислотности, плотности сусла рефрактометром Brix и микробиологической чистоты.</p>
+          </div>
+          <a href="{% url 'careers:game_play' scenario_slug='okroshka-detective' %}" class="och-btn-secondary" style="justify-content: center; font-size: 0.85rem; padding: 0.55rem 0.85rem; margin-top: 0.75rem;">
+            <i data-lucide="play" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+            <span>Пройти тест-смену в лаборатории</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 4. R&D Создание нового вкуса -->
+      <div class="och-video-card">
+        <div class="och-video-wrapper">
+          <video controls preload="metadata" poster="{% static 'img/vn_bg/bg_rnd_lab.jpg' %}">
+            <source src="/media/videos/noviy_vkus_rnd.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="och-video-body">
+          <div>
+            <span class="och-video-tag">R&D Центр • от 75 000 ₽</span>
+            <h3 class="och-video-title">Создание нового вкуса (R&D)</h3>
+            <p class="och-video-desc">Купажирование растительных экстрактов, карамельного солода и фруктовых соков для лимитированных релизов напитков.</p>
+          </div>
+          <a href="{% url 'careers:game_play' scenario_slug='secret-drop-1978' %}" class="och-btn-secondary" style="justify-content: center; font-size: 0.85rem; padding: 0.55rem 0.85rem; margin-top: 0.75rem;">
+            <i data-lucide="play" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+            <span>Пройти тест-смену купажиста</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- 4. ИНТЕРАКТИВНЫЙ БЛОК: СИМУЛЯТОР СМЕНЫ -->
 <section style="padding: 4.5rem 0; background: #FFFFFF; border-top: 1px solid var(--och-border); border-bottom: 1px solid var(--och-border);">
   <div class="container">
@@ -309,7 +407,55 @@
   </div>
 </section>
 
-<!-- 7. БЫСТРАЯ ПОДАЧА АНКЕТЫ (CALL TO ACTION) -->
+<!-- 7. СПРАВОЧНИК СТУДЕНТА: БЫТ, ОБЩЕЖИТИЕ, СМЕНЫ -->
+<section style="padding: 4.5rem 0; background: #FFFFFF; border-top: 1px solid var(--och-border);">
+  <div class="container">
+    <div class="och-section-head">
+      <div class="och-section-badge">
+        <i data-lucide="book-open" style="width: 15px; height: 15px; color: var(--och-red);"></i>
+        <span>Справочник студента Очаково</span>
+      </div>
+      <h2 class="och-section-title">Все ответы о практике, общежитии и выплатах</h2>
+      <p class="och-section-subtitle">
+        Подробные правила из официального иллюстрированного гида стажёра: как устроен быт, сколько стоит столовая, график смен и как совмещать с учебой в вузе.
+      </p>
+    </div>
+
+    <div class="och-handbook-grid">
+      <div class="och-handbook-card">
+        <h4><i data-lucide="home" style="width: 18px; height: 18px; color: var(--och-red);"></i> Общежитие в Москве</h4>
+        <p>Комнаты на 4–6 человек, чистые душевые, общие кухни и зоны отдыха. Компания «Очаково» компенсирует 50% стоимости проживания для иногородних практикантов.</p>
+      </div>
+
+      <div class="och-handbook-card">
+        <h4><i data-lucide="utensils" style="width: 18px; height: 18px; color: var(--och-gold-light);"></i> Заводская столовая</h4>
+        <p>Сытные комплексные обеды из трёх блюд с выпечкой и натуральным квасом. Половину стоимости питания компенсирует завод — обед обходится всего в ~150 ₽.</p>
+      </div>
+
+      <div class="och-handbook-card">
+        <h4><i data-lucide="shirt" style="width: 18px; height: 18px; color: var(--och-blue);"></i> Спецодежда и прачечная</h4>
+        <p>Полный комплект удобной рабочей формы и спецобуви выдаётся бесплатно в первый рабочий день. На комбинате работает собственная бесплатная прачечная.</p>
+      </div>
+
+      <div class="och-handbook-card">
+        <h4><i data-lucide="calendar" style="width: 18px; height: 18px; color: var(--och-purple);"></i> Сменный график 2/2</h4>
+        <p>Смены по 12 часов (дневные и ночные) с перерывами на отдых. График составляется руководителем цеха заранее — можно согласовать дни под сдачу сессии и экзаменов.</p>
+      </div>
+
+      <div class="och-handbook-card">
+        <h4><i data-lucide="credit-card" style="width: 18px; height: 18px; color: var(--och-green);"></i> Зарплата 12 и 27 числа</h4>
+        <p>Белая зарплата перечисляется официально на банковскую карту 2 раза в месяц без задержек. Официальный трудовой стаж в резюме с первого дня практики.</p>
+      </div>
+
+      <div class="och-handbook-card">
+        <h4><i data-lucide="heart-pulse" style="width: 18px; height: 18px; color: var(--och-red);"></i> Здравпункт и проходная</h4>
+        <p>Круглосуточный медицинский кабинет на территории комбината (ул. Рябиновая, 44), регулярный медосмотр за счёт компании и электронная пропускная система.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. БЫСТРАЯ ПОДАЧА АНКЕТЫ (CALL TO ACTION) -->
 <section style="padding: 4.5rem 0; background: #F8FAFC; border-top: 1px solid var(--och-border);">
   <div class="container">
     <div style="background: #FFFFFF; border: 1.5px solid var(--och-red); border-radius: var(--radius-lg); padding: 3rem 2rem; box-shadow: var(--shadow-md);">

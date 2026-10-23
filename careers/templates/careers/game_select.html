@@ -23,7 +23,7 @@
       <div class="och-hero-card och-scenario-card" style="display: flex; flex-direction: column; justify-content: space-between;">
         <div>
           <div style="position: relative; margin-bottom: 1.25rem;">
-            <img src="{% static 'img/' %}{{ sc.bg_image }}" alt="{{ sc.title }}" class="och-hero-card-img" style="height: 180px;">
+            <img src="{% static 'img/' %}{{ sc.bg_image }}" alt="{{ sc.title }}" class="och-hero-card-img" style="height: 180px; object-fit: cover; width: 100%;">
             <span class="och-scenario-diff-badge" style="position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.94); backdrop-filter: blur(8px); border: 1px solid var(--och-border); color: var(--och-text-heading); font-size: 0.75rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: var(--radius-sm);">
               {{ sc.difficulty }}
             </span>

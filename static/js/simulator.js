@@ -530,6 +530,9 @@ window.simulator = (function () {
     // Добавляем реплику кандидата в ленту
     if (params.user_text) {
       appendChatTurn('candidate', 'Вы (Стажёр)', params.user_text);
+      updateStudentSprite('talking');
+    } else {
+      updateStudentSprite('thinking');
     }
 
     try {
@@ -563,9 +566,13 @@ window.simulator = (function () {
 
         // Проверяем окончание смены (как в симуляторе проводников VSM_game)
         if (data.is_completed || data.status === 'completed') {
+          updateStudentSprite('success');
           setTimeout(() => showSuccessModal(data), 600);
         } else if (data.is_failed || data.status === 'failed') {
+          updateStudentSprite('thinking');
           setTimeout(() => showFailureModal(data), 600);
+        } else {
+          updateStudentSprite('neutral');
         }
       }
     } catch (err) {
@@ -1031,6 +1038,48 @@ window.simulator = (function () {
 
     const briefingModal = document.getElementById('och-briefing-modal');
     if (briefingModal) briefingModal.style.display = 'none';
+
+    closeVideoBriefingModal();
+  }
+
+  // Управление видео-инструктажем мастера цеха
+  function openVideoBriefingModal() {
+    const modal = document.getElementById('och-video-briefing-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    const video = document.getElementById('och-briefing-video-player');
+    if (video) {
+      try {
+        video.play().catch(() => {});
+      } catch (e) {}
+    }
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+
+  function closeVideoBriefingModal() {
+    const modal = document.getElementById('och-video-briefing-modal');
+    if (modal) modal.style.display = 'none';
+    const video = document.getElementById('och-briefing-video-player');
+    if (video) {
+      video.pause();
+    }
+  }
+
+  // Обновление эмоции студента в визуальной новелле
+  function updateStudentSprite(mood) {
+    const sprite = document.getElementById('vn-sprite-student');
+    if (!sprite) return;
+    const moodMap = {
+      'neutral': '/static/img/vn_sprites/student_neutral.png',
+      'talking': '/static/img/vn_sprites/student_talking.png',
+      'thinking': '/static/img/vn_sprites/student_thinking.png',
+      'success': '/static/img/vn_sprites/student_success.png'
+    };
+    if (moodMap[mood]) {
+      sprite.src = moodMap[mood];
+    }
   }
 
   // Сохранение завершенного кейса в карьерный прогресс стажёра
@@ -1365,6 +1414,9 @@ window.simulator = (function () {
     closeBriefingModal,
     switchBriefingTab,
     submitGigaChatCredentials,
-    useSmartOfflineMode
+    useSmartOfflineMode,
+    openVideoBriefingModal,
+    closeVideoBriefingModal,
+    updateStudentSprite
   };
 })();

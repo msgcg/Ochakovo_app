@@ -114,6 +114,24 @@
         </div>
         {% endif %}
 
+        <!-- Видео с производства: реальная смена -->
+        <div style="background: #FFFFFF; border: 1px solid var(--och-border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.85rem;">
+            <i data-lucide="video" style="width: 20px; height: 20px; color: var(--och-red);"></i>
+            <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--och-text-heading); margin: 0;">Видео смены: реальная работа в цеху</h3>
+          </div>
+          <div style="position: relative; border-radius: var(--radius-sm); overflow: hidden; background: #000; box-shadow: var(--shadow-md);">
+            <video controls preload="metadata" style="width: 100%; height: auto; max-height: 420px; display: block;">
+              <source src="/media/videos/{% if 'розлив' in vacancy.title|lower or 'налив' in vacancy.title|lower or 'krones' in vacancy.title|lower %}operator_linii_rozliva.mp4{% elif 'вар' in vacancy.title|lower or 'технолог' in vacancy.title|lower or 'машинист' in vacancy.title|lower %}mashinist_oborudovaniya.mp4{% elif 'химик' in vacancy.title|lower or 'лаборатор' in vacancy.title|lower or 'микробиолог' in vacancy.title|lower %}himik_laborant.mp4{% elif 'маркетолог' in vacancy.title|lower or 'вкус' in vacancy.title|lower %}noviy_vkus_rnd.mp4{% else %}operator_linii_rozliva.mp4{% endif %}" type="video/mp4">
+              Ваш браузер не поддерживает воспроизведение видео.
+            </video>
+          </div>
+          <div style="font-size: 0.82rem; color: var(--och-text-muted); margin-top: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+            <i data-lucide="info" style="width: 14px; height: 14px; color: var(--och-gold-light);"></i>
+            <span>Кадры сняты на действующем комбинате «Очаково» (Москва, ул. Рябиновая, 44).</span>
+          </div>
+        </div>
+
         <div style="background: #FFFFFF; border: 1px solid var(--och-border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
           <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 1rem;">О роли и задачах</h3>
           <p style="font-size: 0.98rem; line-height: 1.6; color: var(--och-text-muted); margin-bottom: 1.75rem;">

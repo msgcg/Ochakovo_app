@@ -5,13 +5,28 @@
    Чёткая геометрия, строгие индустриальные радиусы 3-6px, без закруглений «пузырей»
    ========================================================================== */
 
+@font-face {
+  font-family: 'Proxima Nova';
+  src: url('../fonts/ProximaNova.ttf') format('truetype');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  /* Фирменная палитра бренда «Очаково» */
+  /* Фирменная палитра бренда «Очаково» (BrandBook Pantone 199 C, 429, 2194, RAL 7024) */
   --och-red: #D50032;
   --och-red-hover: #b8002b;
   --och-red-glow: rgba(213, 0, 50, 0.22);
   --och-red-dark: #82001e;
   --och-red-subtle: rgba(213, 0, 50, 0.08);
+
+  --och-grey: #A2AAAD;
+  --och-grey-subtle: rgba(162, 170, 173, 0.15);
+  --och-blue: #0086D6;
+  --och-blue-hover: #0070b5;
+  --och-blue-subtle: rgba(0, 134, 214, 0.1);
+  --och-graphite: #2B2D31;
 
   --och-gold: #D97706;
   --och-gold-hover: #b45309;
@@ -21,36 +36,36 @@
 
   /* Светлая тема (White & Industrial Light) */
   --och-bg: #FFFFFF;
-  --och-body-bg: #F8FAFC;
+  --och-body-bg: #F7F8FA;
   --och-surface: #FFFFFF;
   --och-surface-subtle: #F1F5F9;
   --och-surface-elevated: #FFFFFF;
 
   /* Совместимость с переменными поверхностей */
-  --och-dark: #FFFFFF;
+  --och-dark: #2B2D31;
   --och-dark-surface: #FFFFFF;
   --och-dark-elevated: #FFFFFF;
   --och-dark-card: #FFFFFF;
 
   /* Границы и разделители */
   --och-border: #E2E8F0;
-  --och-border-strong: #CBD5E1;
+  --och-border-strong: #A2AAAD;
   --och-border-red: rgba(213, 0, 50, 0.3);
 
   /* Типографика (высокий контраст, глубокий графит) */
   --och-text: #0F172A;
-  --och-text-heading: #0F172A;
+  --och-text-heading: #2B2D31;
   --och-text-muted: #475569;
   --och-text-dim: #64748B;
 
   /* Функциональные цвета */
-  --och-cyan: #0284C7;
+  --och-cyan: #0086D6;
   --och-green: #059669;
   --och-purple: #7C3AED;
   --och-amber: #D97706;
 
-  /* Индустриальная геометрия (четкие, не перекругленные углы 3-6px) */
-  --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Индустриальная геометрия и официальная гарнитура Proxima Nova */
+  --font-main: 'Proxima Nova', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --radius-xs: 2px;
   --radius-sm: 3px;
   --radius-md: 4px;
@@ -3664,5 +3679,248 @@ select.och-text-input::-ms-expand {
   color: var(--och-text);
   line-height: 1.4;
 }
+
+/* ==========================================================================
+   ВИЗУАЛЬНАЯ НОВЕЛЛА ОЧАКОВО: СЛОИ СЦЕНЫ, СПРАЙТЫ И ВИДЕО-БРИФИНГИ
+   ========================================================================== */
+
+/* Кнопка видео-инструктажа мастера в HUD */
+.och-hud-video-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #FFF5F6;
+  border: 1px solid var(--och-border-red);
+  color: var(--och-red);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.och-hud-video-btn:hover {
+  background: var(--och-red);
+  color: #FFFFFF;
+  border-color: var(--och-red);
+}
+
+.och-hud-video-btn:hover i {
+  color: #FFFFFF !important;
+}
+
+/* Наложение на фон сцены для читаемости текста и сохранения глубины */
+.och-vn-stage-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(255, 255, 255, 0.72) 35%,
+    rgba(255, 255, 255, 0.94) 100%
+  );
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Слой спрайтов визуальной новеллы */
+.och-vn-actors-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 1.75rem;
+  overflow: hidden;
+}
+
+.och-vn-actor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  will-change: transform, opacity;
+  position: relative;
+  margin-bottom: 72px; /* отступ над диалоговой панелью */
+}
+
+.och-vn-actor-student {
+  max-width: 190px;
+}
+
+.och-vn-actor-mentor {
+  max-width: 210px;
+}
+
+.och-vn-sprite {
+  height: clamp(140px, 24vh, 230px);
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.22));
+  animation: vn-idle-bob 4s ease-in-out infinite;
+  display: block;
+}
+
+.och-vn-actor-mentor .och-vn-sprite {
+  animation-delay: -2s;
+  height: clamp(130px, 22vh, 200px);
+}
+
+@keyframes vn-idle-bob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.och-vn-actor-nametag {
+  background: rgba(43, 45, 49, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  margin-top: 0.35rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+}
+
+/* Мобильная адаптация спрайтов визуальной новеллы */
+@media (max-width: 768px) {
+  .och-vn-actors-layer {
+    padding: 0 0.5rem;
+    opacity: 0.38;
+  }
+  .och-vn-sprite {
+    height: clamp(85px, 15vh, 130px);
+  }
+  .och-vn-actor {
+    margin-bottom: 90px;
+  }
+  .och-vn-actor-nametag {
+    display: none;
+  }
+}
+
+/* Видео-секция для главной страницы и вакансий */
+.och-video-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.och-video-card {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.och-video-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--och-border-strong);
+}
+
+.och-video-wrapper {
+  position: relative;
+  background: #0F172A;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+}
+
+.och-video-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.och-video-body {
+  padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.och-video-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--och-red);
+  background: var(--och-red-subtle);
+  border: 1px solid var(--och-border-red);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-xs);
+  margin-bottom: 0.5rem;
+}
+
+.och-video-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+  margin-bottom: 0.4rem;
+  line-height: 1.3;
+}
+
+.och-video-desc {
+  font-size: 0.85rem;
+  color: var(--och-text-muted);
+  line-height: 1.45;
+  margin-bottom: 1rem;
+}
+
+/* Секция «Справочник студента» */
+.och-handbook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.och-handbook-card {
+  background: #FFFFFF;
+  border: 1px solid var(--och-border);
+  border-left: 3px solid var(--och-red);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.och-handbook-card h4 {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--och-text-heading);
+  margin-bottom: 0.45rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.och-handbook-card p {
+  font-size: 0.85rem;
+  color: var(--och-text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
 
 

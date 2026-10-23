@@ -68,6 +68,12 @@
         <div id="och-score-delta-floater" class="och-score-delta-floater"></div>
       </div>
 
+      <!-- Кнопка видео-инструктажа мастера цеха -->
+      <button type="button" class="och-hud-video-btn" onclick="simulator.openVideoBriefingModal()" title="Смотреть реальный видео-инструктаж наставника (30 сек)">
+        <i data-lucide="video" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+        <span>Видео цеха</span>
+      </button>
+
       <!-- Переключатель режима ИИ и вызов окна инструктажа/ключей -->
       <button type="button" class="och-hud-ai-badge" id="och-hud-ai-badge" onclick="simulator.openBriefingModal()" title="Нажмите для настройки Сбер GigaChat или офлайн-движка">
         <span class="och-ai-mode-dot {% if ai_mode == 'gigachat' %}dot-gigachat{% else %}dot-offline{% endif %}" id="och-hud-ai-dot"></span>
@@ -103,9 +109,25 @@
     {% endif %}
   </div>
 
-  <!-- 2. ПРОСТОРНАЯ ГЛАВНАЯ СЦЕНА (CHAT-FIRST + МАСКОТЫ И ИНТЕРАКТИВНЫЕ ЧИПЫ) -->
+  <!-- 2. ПРОСТОРНАЯ ГЛАВНАЯ СЦЕНА (ВИЗУАЛЬНАЯ НОВЕЛЛА ОЧАКОВО) -->
   <div class="och-sim-stage-main">
-    <div class="och-sim-stage-bg"></div>
+    <div class="och-sim-stage-bg" style="background-image: url('{% static 'img/' %}{{ scenario.bg_image }}');"></div>
+    <div class="och-vn-stage-overlay"></div>
+
+    <!-- СЛОЙ ПЕРСОНАЖЕЙ ВИЗУАЛЬНОЙ НОВЕЛЛЫ -->
+    <div class="och-vn-actors-layer">
+      <!-- Студент-практикант слева -->
+      <div class="och-vn-actor och-vn-actor-student" id="vn-actor-student">
+        <img src="{% static 'img/vn_sprites/student_neutral.png' %}" alt="Стажёр" class="och-vn-sprite" id="vn-sprite-student">
+        <div class="och-vn-actor-nametag">Стажёр (Вы)</div>
+      </div>
+      
+      <!-- Наставник цеха справа -->
+      <div class="och-vn-actor och-vn-actor-mentor" id="vn-actor-mentor">
+        <img src="{% static 'img/vn_sprites/' %}{{ scenario.mentor_avatar|slice:':-4' }}_bust.png" onerror="this.src='{% static 'img/' %}{{ scenario.mentor_avatar }}'" alt="{{ scenario.mentor_name }}" class="och-vn-sprite" id="vn-sprite-mentor">
+        <div class="och-vn-actor-nametag">{{ scenario.mentor_name }}</div>
+      </div>
+    </div>
 
     <!-- Анимированные пузырьки брожения Очаково -->
     <div class="och-carbonation-container">
@@ -287,42 +309,42 @@
 
       <div class="och-tool-drawer-grid">
         <div class="och-tool-mini-card" onclick="simulator.useEquipment('valve_cooling', 'Клапан охлаждения рубашки ЦКТ')">
-          <img src="{% static 'img/equipment/valve_cooling.svg' %}" alt="Охлаждение" class="och-tool-mini-svg">
+          <img src="{% static 'img/brand_icons/cooling_pipe.png' %}" onerror="this.src='{% static 'img/equipment/valve_cooling.svg' %}'" alt="Охлаждение" class="och-tool-mini-svg">
           <div class="och-tool-mini-name">Охлаждение ЦКТ</div>
         </div>
 
         <div class="och-tool-mini-card" onclick="simulator.useEquipment('starter_culture', 'Закваска натурального брожения 1978')">
-          <img src="{% static 'img/equipment/starter_culture.svg' %}" alt="Закваска" class="och-tool-mini-svg">
+          <img src="{% static 'img/brand_icons/yeast_culture.png' %}" onerror="this.src='{% static 'img/equipment/starter_culture.svg' %}'" alt="Закваска" class="och-tool-mini-svg">
           <div class="och-tool-mini-name">Закваска 1978</div>
         </div>
 
         <div class="och-tool-mini-card" onclick="simulator.useEquipment('cip_wash', 'Пульт контура CIP-мойки')">
-          <img src="{% static 'img/equipment/cip_wash.svg' %}" alt="CIP-мойка" class="och-tool-mini-svg">
+          <img src="{% static 'img/brand_icons/boiler_valve.png' %}" onerror="this.src='{% static 'img/equipment/cip_wash.svg' %}'" alt="CIP-мойка" class="och-tool-mini-svg">
           <div class="och-tool-mini-name">CIP-мойка</div>
         </div>
 
         <div class="och-tool-mini-card" onclick="simulator.useEquipment('emergency_stop', 'Кнопка аварийного останова конвейера')">
-          <img src="{% static 'img/equipment/emergency_stop.svg' %}" alt="Стоп" class="och-tool-mini-svg">
+          <img src="{% static 'img/brand_icons/conveyor_bottles.png' %}" onerror="this.src='{% static 'img/equipment/emergency_stop.svg' %}'" alt="Стоп" class="och-tool-mini-svg">
           <div class="och-tool-mini-name">Аварийный стоп</div>
         </div>
 
         <div class="och-tool-mini-card" onclick="simulator.useEquipment('refractometer', 'Оптический рефрактометр сахаров Brix')">
-          <img src="{% static 'img/equipment/refractometer.svg' %}" alt="Рефрактометр" class="och-tool-mini-svg">
+          <img src="{% static 'img/brand_icons/thermometer.png' %}" onerror="this.src='{% static 'img/equipment/refractometer.svg' %}'" alt="Рефрактометр" class="och-tool-mini-svg">
           <div class="och-tool-mini-name">Рефрактометр</div>
         </div>
 
         <div class="och-tool-mini-card" onclick="simulator.useEquipment('tasting_mug', 'Органолептическая проба кваса')">
-          <img src="{% static 'img/equipment/tasting_mug.svg' %}" alt="Дегустация" class="och-tool-mini-svg">
+          <img src="{% static 'img/brand_icons/cup_tasting.png' %}" onerror="this.src='{% static 'img/equipment/tasting_mug.svg' %}'" alt="Дегустация" class="och-tool-mini-svg">
           <div class="och-tool-mini-name">Дегустация</div>
         </div>
 
         <div class="och-tool-mini-card" onclick="simulator.useEquipment('intercom_radio', 'Интерком диспетчера производства')">
-          <img src="{% static 'img/equipment/intercom_radio.svg' %}" alt="Интерком" class="och-tool-mini-svg">
+          <img src="{% static 'img/brand_icons/fermentation_cct.png' %}" onerror="this.src='{% static 'img/equipment/intercom_radio.svg' %}'" alt="Интерком" class="och-tool-mini-svg">
           <div class="och-tool-mini-name">Интерком связи</div>
         </div>
 
         <div class="och-tool-mini-card" onclick="simulator.useEquipment('ph_meter', 'Лабораторный экспресс pH-метр')">
-          <img src="{% static 'img/equipment/ph_meter.svg' %}" alt="pH-метр" class="och-tool-mini-svg">
+          <img src="{% static 'img/brand_icons/lab_flask.png' %}" onerror="this.src='{% static 'img/equipment/ph_meter.svg' %}'" alt="pH-метр" class="och-tool-mini-svg">
           <div class="och-tool-mini-name">pH-метр</div>
         </div>
       </div>
@@ -621,6 +643,41 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ВИДЕО-ИНСТРУКТАЖА МАСТЕРА -->
+<div id="och-video-briefing-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeVideoBriefingModal()">
+  <div class="och-modal-box" style="max-width: 680px; border: 2px solid var(--och-red);">
+    <div class="och-modal-header" style="background: #FFF5F6;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--och-red); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <i data-lucide="play-circle" style="width: 22px; height: 22px;"></i>
+        </div>
+        <div>
+          <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--och-red);">Видео-инструктаж мастера цеха</div>
+          <h3 style="font-size: 1.15rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">{{ scenario.workshop_name }}</h3>
+        </div>
+      </div>
+      <button type="button" class="och-modal-close-btn" onclick="simulator.closeVideoBriefingModal()" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="och-modal-body" style="padding: 1.25rem;">
+      <div style="position: relative; border-radius: var(--radius-md); overflow: hidden; background: #000; box-shadow: var(--shadow-md); margin-bottom: 1rem;">
+        <video id="och-briefing-video-player" controls preload="metadata" style="width: 100%; height: auto; max-height: 380px; display: block;">
+          <source src="/media/videos/{% if 'krones' in scenario.slug or 'bot-line' in scenario.slug %}operator_linii_rozliva.mp4{% elif 'brew' in scenario.slug %}mashinist_oborudovaniya.mp4{% elif 'okroshka' in scenario.slug or 'lab' in scenario.slug %}himik_laborant.mp4{% elif 'secret' in scenario.slug %}noviy_vkus_rnd.mp4{% else %}operator_linii_rozliva.mp4{% endif %}" type="video/mp4">
+          Ваш браузер не поддерживает видео.
+        </video>
+      </div>
+      <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-sm); padding: 0.85rem; font-size: 0.88rem; color: var(--och-text); line-height: 1.5;">
+        <strong style="color: var(--och-red);">Инструктаж наставника ({{ scenario.mentor_name }}):</strong> «Смотри, как работает узел на реальном конвейере комбината! Изучи ритм оборудования перед запуском смены. Главное — чистота контура, контроль температуры и слаженность действий с диспетчером!»
+      </div>
+      <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+        <button type="button" class="och-btn-primary" onclick="simulator.closeVideoBriefingModal()" style="padding: 0.65rem 1.25rem;">
+          <i data-lucide="check" style="width: 16px; height: 16px;"></i>
+          <span>Всё понятно, приступить к смене!</span>
+        </button>
       </div>
     </div>
   </div>
