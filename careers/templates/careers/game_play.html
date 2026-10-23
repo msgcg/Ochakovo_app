@@ -1,689 +1,746 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Симулятор смены: {{ scenario.title }} | Очаково{% endblock %}
-
-{% block content %}
-<div class="och-sim-container">
-  
-  <!-- 1. ВЕРХНИЙ КОМПАКТНЫЙ СТАТУС-БАР ТЕЛЕМЕТРИИ ЦЕХА С ДИНАМИЧЕСКИМИ ДАТЧИКАМИ -->
-  <div class="och-sim-compact-hud" id="och-sim-hud" 
-       data-session-id="{{ session.session_uuid }}"
-       data-mentor-name="{{ scenario.mentor_name }}"
-       data-scenario-slug="{{ scenario.slug }}"
-       data-scenario-title="{{ scenario.title }}"
-       data-workshop-name="{{ scenario.workshop_name }}"
-       data-temp-min="{{ scenario.target_temp_min }}"
-       data-temp-max="{{ scenario.target_temp_max }}"
-       data-brix-min="{{ scenario.target_brix_min }}"
-       data-brix-max="{{ scenario.target_brix_max }}"
-       data-ai-mode="{{ ai_mode }}"
-       data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
-    
-    <div class="och-sim-hud-title-box">
-      <img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="{{ scenario.mentor_name }}" class="och-speaker-avatar" style="width: 44px; height: 44px;">
-      <div>
-        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-          <span class="och-sim-hud-title">{{ scenario.workshop_name }}</span>
-          <span class="och-hud-live-tag">
-            <span class="och-live-dot"></span> LIVE 100мс
-          </span>
-        </div>
-        <div class="och-sim-hud-sub">Наставник: <strong>{{ scenario.mentor_name }}</strong> ({{ scenario.mentor_role }})</div>
-      </div>
-    </div>
-
-    <!-- Показания датчиков в виде динамических интерактивных чипов -->
-    <div class="och-sim-telemetry-strip">
-      <div class="och-gauge-chip" id="chip-temp" title="Температура сусла (Оптимум {{ scenario.target_temp_min }}–{{ scenario.target_temp_max }}°C)">
-        <i data-lucide="thermometer" id="icon-temp" style="width: 15px; height: 15px; color: var(--och-red);"></i>
-        <span>Сусло:</span>
-        <span id="val-temp" class="och-gauge-chip-val" style="color: var(--och-red);">{{ session.temperature|floatformat:1 }}°C</span>
-        <span class="och-gauge-status-dot" id="dot-temp"></span>
-      </div>
-
-      <div class="och-gauge-chip" id="chip-brix" title="Плотность затора Brix (Оптимум {{ scenario.target_brix_min }}–{{ scenario.target_brix_max }}°Bx)">
-        <i data-lucide="droplet" id="icon-brix" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
-        <span>Brix:</span>
-        <span id="val-brix" class="och-gauge-chip-val" style="color: var(--och-gold-light);">{{ session.brix|floatformat:1 }}°Bx</span>
-        <span class="och-gauge-status-dot" id="dot-brix"></span>
-      </div>
-
-      <div class="och-gauge-chip" id="chip-speed" title="Скорость линии розлива">
-        <i data-lucide="gauge" style="width: 15px; height: 15px; color: var(--och-purple);"></i>
-        <span>Линия:</span>
-        <span id="val-speed" class="och-gauge-chip-val" style="color: var(--och-purple);">{{ session.line_speed }} б/ч</span>
-      </div>
-
-      <!-- Бейдж серии успешных смен (Оверклокинг) -->
-      <div class="och-streak-badge-hud" id="och-streak-container" title="Серия смен без брака (накопительный множитель)">
-        <span class="och-streak-flame">🔥</span>
-        <span class="och-streak-text">Стрик: <strong id="val-streak-count">0</strong></span>
-        <span class="och-streak-multiplier" id="val-streak-mult">x1.0</span>
-      </div>
-
-      <div class="och-hud-score-badge" id="och-hud-score-badge" title="Заработанные баллы мастерства на смене">
-        <i data-lucide="award" style="width: 18px; height: 18px; color: var(--och-gold);"></i>
-        <span>Баллы: <strong id="val-score">{{ session.score }}</strong> <small style="color: var(--och-gold); font-size: 0.72rem; font-weight: 800;">XP</small></span>
-        <div id="och-score-delta-floater" class="och-score-delta-floater"></div>
-      </div>
-
-      <!-- Кнопка видео-инструктажа мастера цеха -->
-      <button type="button" class="och-hud-video-btn" onclick="simulator.openVideoBriefingModal()" title="Смотреть реальный видео-инструктаж наставника (30 сек)">
-        <i data-lucide="video" style="width: 14px; height: 14px; color: var(--och-red);"></i>
-        <span>Видео цеха</span>
-      </button>
-
-      <!-- Переключатель режима ИИ и вызов окна инструктажа/ключей -->
-      <button type="button" class="och-hud-ai-badge" id="och-hud-ai-badge" onclick="simulator.openBriefingModal()" title="Нажмите для настройки Сбер GigaChat или офлайн-движка">
-        <span class="och-ai-mode-dot {% if ai_mode == 'gigachat' %}dot-gigachat{% else %}dot-offline{% endif %}" id="och-hud-ai-dot"></span>
-        <span id="och-hud-ai-label">{% if ai_mode == 'gigachat' %}GigaChat AI{% else %}Офлайн AI{% endif %}</span>
-        <i data-lucide="settings" style="width: 13px; height: 13px; opacity: 0.75;"></i>
-      </button>
-    </div>
-  </div>
-
-  <!-- КАРУСЕЛЬ ЦЕХОВ ЗАВОДА «ОЧАКОВО» -->
-  <div class="och-sim-carousel-bar">
-    {% if prev_scenario %}
-    <a href="{% url 'careers:game_play' scenario_slug=prev_scenario.slug %}" class="och-carousel-nav-btn" title="Перейти в: {{ prev_scenario.workshop_name }}">
-      <i data-lucide="chevron-left" style="width: 15px; height: 15px;"></i>
-      <span class="carousel-btn-text">Пред. цех: {{ prev_scenario.mentor_name }}</span>
-    </a>
-    {% else %}
-    <span class="och-carousel-nav-btn disabled"><i data-lucide="chevron-left" style="width: 15px; height: 15px;"></i></span>
-    {% endif %}
-
-    <div class="och-carousel-center">
-      <span class="och-carousel-tag">ЦЕХ {{ carousel_position }}</span>
-      <span class="och-carousel-workshop-name">{{ scenario.workshop_name }}</span>
-    </div>
-
-    {% if next_scenario %}
-    <a href="{% url 'careers:game_play' scenario_slug=next_scenario.slug %}" class="och-carousel-nav-btn" title="Перейти в: {{ next_scenario.workshop_name }}">
-      <span class="carousel-btn-text">След. цех: {{ next_scenario.mentor_name }}</span>
-      <i data-lucide="chevron-right" style="width: 15px; height: 15px;"></i>
-    </a>
-    {% else %}
-    <span class="och-carousel-nav-btn disabled"><i data-lucide="chevron-right" style="width: 15px; height: 15px;"></i></span>
-    {% endif %}
-  </div>
-
-  <!-- 2. ПРОСТОРНАЯ ГЛАВНАЯ СЦЕНА (ВИЗУАЛЬНАЯ НОВЕЛЛА ОЧАКОВО) -->
-  <div class="och-sim-stage-main">
-    <div class="och-sim-stage-bg" style="background-image: url('{% static 'img/' %}{{ scenario.bg_image }}');"></div>
-    <div class="och-vn-stage-overlay"></div>
-
-    <!-- СЛОЙ ПЕРСОНАЖЕЙ ВИЗУАЛЬНОЙ НОВЕЛЛЫ -->
-    <div class="och-vn-actors-layer">
-      <!-- Студент-практикант слева -->
-      <div class="och-vn-actor och-vn-actor-student" id="vn-actor-student">
-        <img src="{% static 'img/vn_sprites/student_neutral.png' %}" alt="Стажёр" class="och-vn-sprite" id="vn-sprite-student">
-        <div class="och-vn-actor-nametag">Стажёр (Вы)</div>
-      </div>
-      
-      <!-- Наставник цеха справа -->
-      <div class="och-vn-actor och-vn-actor-mentor" id="vn-actor-mentor">
-        <img src="{% static 'img/vn_sprites/' %}{{ scenario.mentor_avatar|slice:':-4' }}_bust.png" onerror="this.src='{% static 'img/' %}{{ scenario.mentor_avatar }}'" alt="{{ scenario.mentor_name }}" class="och-vn-sprite" id="vn-sprite-mentor">
-        <div class="och-vn-actor-nametag">{{ scenario.mentor_name }}</div>
-      </div>
-    </div>
-
-    <!-- Анимированные пузырьки брожения Очаково -->
-    <div class="och-carbonation-container">
-      <div class="och-fizzy-bubble" style="left: 12%; width: 14px; height: 14px; animation-duration: 7s; animation-delay: 0s;"></div>
-      <div class="och-fizzy-bubble" style="left: 28%; width: 22px; height: 22px; animation-duration: 9s; animation-delay: 2s;"></div>
-      <div class="och-fizzy-bubble" style="left: 48%; width: 12px; height: 12px; animation-duration: 6s; animation-delay: 1s;"></div>
-      <div class="och-fizzy-bubble" style="left: 68%; width: 18px; height: 18px; animation-duration: 8s; animation-delay: 3s;"></div>
-      <div class="och-fizzy-bubble" style="left: 84%; width: 24px; height: 24px; animation-duration: 10s; animation-delay: 1.5s;"></div>
-    </div>
-
-    <!-- Верхняя строка сцены: статус инцидента -->
-    <div class="och-sim-scene-header">
-      <div class="och-incident-pill">
-        <span class="och-status-dot"></span>
-        <span>Инцидент: {{ scenario.title }}</span>
-      </div>
-    </div>
-
-    <!-- ПРОСТОРНАЯ ЛЕНТА ДИАЛОГА -->
-    <div class="och-sim-dialogue-feed" id="och-chat-feed" data-mentor-avatar="{{ scenario.mentor_avatar }}">
-      
-      <!-- Стартовая реплика наставника -->
-      <div class="och-chat-row mentor">
-        <div class="och-speaker-col">
-          <img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="{{ scenario.mentor_name }}" class="och-speaker-avatar">
-          <span class="och-speaker-role-pill">Наставник</span>
-        </div>
-        <div class="och-bubble">
-          <div class="och-bubble-head">
-            <span class="och-speaker-name">{{ current_node.speaker_name }}</span>
-            <button type="button" class="och-bubble-audio-btn" onclick="simulator.playMentorVoice('{{ current_node.dialogue_text|escapejs }}', this)">
-              <i data-lucide="volume-2" style="width: 14px; height: 14px;"></i>
-              <span>Озвучить</span>
-            </button>
-          </div>
-          <div class="och-bubble-text">{{ current_node.dialogue_text }}</div>
-          {% if current_node.narrative_context %}
-          <div class="och-bubble-sub">
-            <i data-lucide="info" style="width: 14px; height: 14px; color: var(--och-red);"></i>
-            <span>{{ current_node.narrative_context }}</span>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ЖИВЫЕ АНИМИРОВАННЫЕ МАСКОТЫ: ТАНЦУЮЩАЯ БАНКА КВАСА И ТАНЦУЮЩАЯ КИЛЬКА -->
-    <div class="och-mascot-strip">
-      <div class="och-mascot-unit" id="och-mascot-unit">
-        <!-- 1. Танцующая банка кваса Очаково -->
-        <svg id="och-mascot-can" class="och-dancing-can" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="25" y="20" width="50" height="75" rx="6" fill="#D50032" stroke="#A00024" stroke-width="2"/>
-          <ellipse cx="50" cy="20" rx="25" ry="8" fill="#F59E0B"/>
-          <ellipse cx="50" cy="95" rx="25" ry="8" fill="#82001E"/>
-          <rect x="25" y="42" width="50" height="24" fill="#F8FAFC"/>
-          <text x="50" y="58" font-size="10" font-weight="900" fill="#D50032" text-anchor="middle" font-family="sans-serif">ОЧАКОВО</text>
-          <rect x="34" y="28" width="14" height="9" rx="2" fill="#0F172A"/>
-          <rect x="52" y="28" width="14" height="9" rx="2" fill="#0F172A"/>
-          <line x1="48" y1="32" x2="52" y2="32" stroke="#0F172A" stroke-width="2"/>
-          <path d="M25 45 C10 40 12 25 5 35" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
-          <path d="M75 45 C90 40 88 25 95 35" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
-          <path d="M38 100 L32 114" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
-          <path d="M62 100 L68 114" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
-        </svg>
-
-        <!-- 2. Танцующая килька с кружкой кваса -->
-        <svg id="och-mascot-sprat" class="och-dancing-sprat" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 50 C30 30 75 35 95 50 C75 65 30 70 15 50 Z" fill="#94A3B8" stroke="#475569" stroke-width="2"/>
-          <path d="M15 50 L2 36 L6 50 L2 64 Z" fill="#64748B"/>
-          <path d="M85 38 C90 32 98 32 104 38 L92 38 Z" fill="#D50032"/>
-          <ellipse cx="98" cy="38" rx="8" ry="3" fill="#D50032"/>
-          <circle cx="88" cy="46" r="3" fill="#0F172A"/>
-          <circle cx="89" cy="45" r="1" fill="#FFFFFF"/>
-          <path d="M92 53 C90 56 84 56 82 53" stroke="#0F172A" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M55 52 C50 62 42 60 40 50" stroke="#64748B" stroke-width="3" stroke-linecap="round"/>
-          <rect x="32" y="44" width="10" height="13" rx="2" fill="#F59E0B" stroke="#B45309" stroke-width="1"/>
-          <ellipse cx="37" cy="44" rx="6" ry="3" fill="#FFFFFF"/>
-        </svg>
-
-        <!-- 3. Чайный гриб в банке (мудрец брожения) -->
-        <svg id="och-mascot-kombucha" class="och-mascot-kombucha" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-          <rect x="20" y="30" width="60" height="70" rx="8" fill="rgba(224, 242, 254, 0.4)" stroke="#38BDF8" stroke-width="2"/>
-          <path d="M28 30 L28 20 L72 20 L72 30" stroke="#38BDF8" stroke-width="2" fill="none"/>
-          <ellipse cx="50" cy="18" rx="26" ry="6" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5"/>
-          <line x1="24" y1="22" x2="76" y2="22" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
-          <rect x="22" y="42" width="56" height="56" rx="6" fill="rgba(217, 119, 6, 0.25)"/>
-          <ellipse cx="50" cy="62" rx="22" ry="10" fill="#B45309"/>
-          <ellipse cx="50" cy="58" rx="20" ry="8" fill="#D97706"/>
-          <ellipse cx="50" cy="55" rx="18" ry="6" fill="#F59E0B"/>
-          <circle cx="44" cy="56" r="2.5" fill="#0F172A"/>
-          <circle cx="56" cy="56" r="2.5" fill="#0F172A"/>
-          <circle cx="45" cy="55" r="0.8" fill="#FFFFFF"/>
-          <circle cx="57" cy="55" r="0.8" fill="#FFFFFF"/>
-          <path d="M48 61 C50 63 52 63 54 61" stroke="#0F172A" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="34" cy="80" r="2" fill="#FBBF24" opacity="0.7"/>
-          <circle cx="64" cy="72" r="2.5" fill="#FBBF24" opacity="0.7"/>
-          <circle cx="50" cy="88" r="1.5" fill="#FBBF24" opacity="0.6"/>
-        </svg>
-
-        <!-- 4. Жёлтая бочка кваса (ретро-легенда) -->
-        <svg id="och-mascot-barrel" class="och-mascot-barrel" viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-          <rect x="25" y="24" width="60" height="48" rx="12" fill="#FBBF24" stroke="#D97706" stroke-width="2"/>
-          <ellipse cx="85" cy="48" rx="8" ry="24" fill="#F59E0B" stroke="#D97706" stroke-width="2"/>
-          <line x1="42" y1="24" x2="42" y2="72" stroke="#B45309" stroke-width="2"/>
-          <line x1="68" y1="24" x2="68" y2="72" stroke="#B45309" stroke-width="2"/>
-          <text x="55" y="52" font-size="10" font-weight="900" fill="#D50032" text-anchor="middle" font-family="sans-serif">КВАС</text>
-          <path d="M25 54 L12 54 L12 62" stroke="#78350F" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="12" cy="66" r="2.5" fill="#FBBF24"/>
-          <circle cx="42" cy="76" r="12" fill="#334155" stroke="#0F172A" stroke-width="2"/>
-          <circle cx="42" cy="76" r="4" fill="#94A3B8"/>
-          <circle cx="74" cy="76" r="12" fill="#334155" stroke="#0F172A" stroke-width="2"/>
-          <circle cx="74" cy="76" r="4" fill="#94A3B8"/>
-        </svg>
-
-        <!-- 5. Роборука Krones -->
-        <svg id="och-mascot-robot" class="och-mascot-robot" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-          <rect x="35" y="78" width="30" height="14" rx="3" fill="#334155" stroke="#0F172A" stroke-width="2"/>
-          <circle cx="50" cy="76" r="8" fill="#EA580C" stroke="#9A3412" stroke-width="2"/>
-          <path d="M50 76 L40 45" stroke="#F97316" stroke-width="6" stroke-linecap="round"/>
-          <circle cx="40" cy="45" r="7" fill="#334155" stroke="#0F172A" stroke-width="2"/>
-          <circle cx="40" cy="45" r="3" fill="#38BDF8"/>
-          <path d="M40 45 L68 30" stroke="#F97316" stroke-width="5" stroke-linecap="round"/>
-          <path d="M68 30 L74 24 M68 30 L78 34" stroke="#0F172A" stroke-width="3" stroke-linecap="round"/>
-          <rect x="74" y="22" width="12" height="18" rx="2" fill="#D50032"/>
-          <ellipse cx="80" cy="22" rx="6" ry="2" fill="#F59E0B"/>
-        </svg>
-      </div>
-
-      <div class="och-mascot-speech" id="och-mascot-comment">
-        «Килька в деле — квас в теле! Следим за балансом брожения!»
-      </div>
-    </div>
-
-    <!-- 3. ИНТЕРАКТИВНО ВСПЛЫВАЮЩИЕ КНОПКИ ДЕЙСТВИЙ (ACTION CHIPS) -->
-    <div class="och-action-chips-wrapper" id="och-action-chips-wrapper">
-      <div class="och-action-chips-header">
-        <span>Быстрые действия и подсказки смены:</span>
-        <button type="button" class="och-action-chip och-action-chip-tool" onclick="simulator.toggleToolDrawer()" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-          <i data-lucide="wrench" style="width: 13px; height: 13px;"></i>
-          <span>Оборудование цеха (8)</span>
-        </button>
-      </div>
-
-      <div class="och-action-chips-row" id="och-choices-container">
-        {% for choice in choices %}
-        <button type="button" class="och-action-chip" onclick="simulator.chooseAction({{ choice.id }}, this)">
-          <i data-lucide="zap" style="width: 15px; height: 15px; color: var(--och-red);"></i>
-          <span>{{ choice.choice_text }}</span>
-        </button>
-        {% empty %}
-        <button type="button" class="och-action-chip" onclick="simulator.useEquipment('valve_cooling', 'Охлаждение рубашки ЦКТ')">
-          <i data-lucide="snowflake" style="width: 15px; height: 15px; color: var(--och-cyan);"></i>
-          <span>Охладить сусло гликолем (-3°C)</span>
-        </button>
-        <button type="button" class="och-action-chip" onclick="simulator.useEquipment('starter_culture', 'Закваска натурального брожения 1978')">
-          <i data-lucide="flask-conical" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
-          <span>Добавить закваску 1978</span>
-        </button>
-        <button type="button" class="och-action-chip och-action-chip-hint" onclick="simulator.requestHint()">
-          <i data-lucide="help-circle" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
-          <span>Спросить совет {{ scenario.mentor_name }}</span>
-        </button>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- 4. ВСПЛЫВАЮЩИЙ ЯЩИК ОБОРУДОВАНИЯ ЦЕХА (ПО ТРЕБОВАНИЮ) -->
-    <div class="och-tool-drawer" id="och-tool-drawer">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-        <div style="font-size: 0.85rem; font-weight: 800; color: var(--och-text-heading); display: flex; align-items: center; gap: 0.4rem;">
-          <i data-lucide="wrench" style="width: 16px; height: 16px; color: var(--och-cyan);"></i>
-          <span>Панель управления цехом и приборы мастера</span>
-        </div>
-        <button type="button" onclick="simulator.toggleToolDrawer()" style="background: none; border: none; font-size: 0.8rem; color: var(--och-text-dim); cursor: pointer;">
-          Закрыть ✕
-        </button>
-      </div>
-
-      <div class="och-tool-drawer-grid">
-        <div class="och-tool-mini-card" onclick="simulator.useEquipment('valve_cooling', 'Клапан охлаждения рубашки ЦКТ')">
-          <img src="{% static 'img/brand_icons/cooling_pipe.png' %}" onerror="this.src='{% static 'img/equipment/valve_cooling.svg' %}'" alt="Охлаждение" class="och-tool-mini-svg">
-          <div class="och-tool-mini-name">Охлаждение ЦКТ</div>
-        </div>
-
-        <div class="och-tool-mini-card" onclick="simulator.useEquipment('starter_culture', 'Закваска натурального брожения 1978')">
-          <img src="{% static 'img/brand_icons/yeast_culture.png' %}" onerror="this.src='{% static 'img/equipment/starter_culture.svg' %}'" alt="Закваска" class="och-tool-mini-svg">
-          <div class="och-tool-mini-name">Закваска 1978</div>
-        </div>
-
-        <div class="och-tool-mini-card" onclick="simulator.useEquipment('cip_wash', 'Пульт контура CIP-мойки')">
-          <img src="{% static 'img/brand_icons/boiler_valve.png' %}" onerror="this.src='{% static 'img/equipment/cip_wash.svg' %}'" alt="CIP-мойка" class="och-tool-mini-svg">
-          <div class="och-tool-mini-name">CIP-мойка</div>
-        </div>
-
-        <div class="och-tool-mini-card" onclick="simulator.useEquipment('emergency_stop', 'Кнопка аварийного останова конвейера')">
-          <img src="{% static 'img/brand_icons/conveyor_bottles.png' %}" onerror="this.src='{% static 'img/equipment/emergency_stop.svg' %}'" alt="Стоп" class="och-tool-mini-svg">
-          <div class="och-tool-mini-name">Аварийный стоп</div>
-        </div>
-
-        <div class="och-tool-mini-card" onclick="simulator.useEquipment('refractometer', 'Оптический рефрактометр сахаров Brix')">
-          <img src="{% static 'img/brand_icons/thermometer.png' %}" onerror="this.src='{% static 'img/equipment/refractometer.svg' %}'" alt="Рефрактометр" class="och-tool-mini-svg">
-          <div class="och-tool-mini-name">Рефрактометр</div>
-        </div>
-
-        <div class="och-tool-mini-card" onclick="simulator.useEquipment('tasting_mug', 'Органолептическая проба кваса')">
-          <img src="{% static 'img/brand_icons/cup_tasting.png' %}" onerror="this.src='{% static 'img/equipment/tasting_mug.svg' %}'" alt="Дегустация" class="och-tool-mini-svg">
-          <div class="och-tool-mini-name">Дегустация</div>
-        </div>
-
-        <div class="och-tool-mini-card" onclick="simulator.useEquipment('intercom_radio', 'Интерком диспетчера производства')">
-          <img src="{% static 'img/brand_icons/fermentation_cct.png' %}" onerror="this.src='{% static 'img/equipment/intercom_radio.svg' %}'" alt="Интерком" class="och-tool-mini-svg">
-          <div class="och-tool-mini-name">Интерком связи</div>
-        </div>
-
-        <div class="och-tool-mini-card" onclick="simulator.useEquipment('ph_meter', 'Лабораторный экспресс pH-метр')">
-          <img src="{% static 'img/brand_icons/lab_flask.png' %}" onerror="this.src='{% static 'img/equipment/ph_meter.svg' %}'" alt="pH-метр" class="och-tool-mini-svg">
-          <div class="och-tool-mini-name">pH-метр</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. НИЖНЯЯ ПАНЕЛЬ ВВОДА СТАЖЁРА -->
-    <div class="och-sim-input-bar">
-      <!-- Баннер активной голосовой записи / рации -->
-      <div id="och-mic-banner" class="och-mic-banner" style="display: none;">
-        <div class="och-mic-banner-left">
-          <div class="och-mic-pulse-dot"></div>
-          <div class="och-mic-waves">
-            <div class="och-mic-wave-bar"></div>
-            <div class="och-mic-wave-bar"></div>
-            <div class="och-mic-wave-bar"></div>
-            <div class="och-mic-wave-bar"></div>
-          </div>
-          <span id="och-mic-banner-text">Рация мастера активна... Говорите в микрофон</span>
-        </div>
-        <button type="button" class="och-mic-banner-btn" onclick="simulator.stopVoiceRecording()">
-          <span>Завершить</span>
-        </button>
-      </div>
-
-      <div class="och-sim-input-row">
-        <button type="button" id="och-mic-btn" class="och-ptt-mini-btn" onclick="simulator.toggleVoiceRecording()" title="Нажмите для голосовой передачи (Push-to-Talk)">
-          <i data-lucide="mic" style="width: 20px; height: 20px;"></i>
-        </button>
-
-        <form onsubmit="simulator.sendTextTurn(event)" style="display: flex; gap: 0.65rem; flex: 1; min-width: 0;">
-          <input type="text" id="och-sim-text-input" class="och-text-input" placeholder="Решение или вопрос наставнику..." autocomplete="off">
-          <button type="submit" class="och-text-submit-btn">
-            <span>Сказать</span>
-            <i data-lucide="send" style="width: 15px; height: 15px;"></i>
-          </button>
-        </form>
-      </div>
-    </div>
-
-  </div>
-
-</div>
-
-<!-- МОДАЛЬНОЕ ОКНО УСПЕХА СМЕНЫ И КАРЬЕРНОГО МЭТЧА -->
-<div id="och-success-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeModals()">
-  <div class="och-modal-box" style="border: 2px solid var(--och-green);">
-    <div class="och-modal-header" style="background: #ECFDF5;">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: #10b981; color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <i data-lucide="check-circle" style="width: 26px; height: 26px;"></i>
-        </div>
-        <div>
-          <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: #047857;">Смена принята на отлично!</div>
-          <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">Партия напитка спасена</h3>
-        </div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 0.85rem;">
-        <div style="text-align: right;">
-          <div style="font-size: 0.72rem; color: var(--och-text-dim);">Результат</div>
-          <div style="font-size: 1.45rem; font-weight: 900; color: #10b981;"><span id="och-modal-score">95</span> / 100</div>
-        </div>
-        <button type="button" class="och-modal-close-btn" onclick="simulator.closeModals()" aria-label="Закрыть окно" title="Закрыть окно">
-          ✕
-        </button>
-      </div>
-    </div>
-
-    <div class="och-modal-body">
-      <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-md); padding: 1.15rem; margin-bottom: 1.25rem;">
-        <div style="font-size: 0.8rem; font-weight: 800; color: var(--och-red); margin-bottom: 0.35rem;">Разбор наставника:</div>
-        <p id="och-modal-feedback" style="font-size: 0.92rem; line-height: 1.5; color: var(--och-text); margin: 0;">
-          Технологический норматив выдержан. Двойное брожение завершилось в идеальном балансе.
-        </p>
-      </div>
-
-      <!-- Баннер серии успешных смен (Оверклокинг) -->
-      <div id="och-modal-streak-banner" class="och-modal-streak-banner" style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(90deg, rgba(217,119,6,0.1), rgba(213,0,50,0.08)); border: 1px solid var(--och-gold); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.15rem;">
-        <div style="display: flex; align-items: center; gap: 0.6rem;">
-          <span style="font-size: 1.4rem;">🔥</span>
-          <div>
-            <div style="color: var(--och-text-heading); font-size: 0.9rem; font-weight: 800;">
-              Серия смен без брака: <span id="och-modal-streak-val">1</span> подряд!
-            </div>
-            <div style="font-size: 0.76rem; color: var(--och-gold-light); font-weight: 600;">
-              Множитель очков активен: <strong id="och-modal-mult-val">x1.2</strong>
-            </div>
-          </div>
-        </div>
-        {% if next_scenario %}
-        <a href="{% url 'careers:game_play' scenario_slug=next_scenario.slug %}" class="och-btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; white-space: nowrap;">
-          <span>В следующий цех ▶</span>
-        </a>
-        {% endif %}
-      </div>
-
-      <div style="margin-bottom: 1.25rem;">
-        <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--och-gold-light); margin-bottom: 0.35rem;">
-          Рекомендованная оплачиваемая вакансия сезона:
-        </div>
-        <div id="och-modal-vac-title" style="font-size: 1.1rem; font-weight: 800; color: var(--och-text-heading);">
-          {{ scenario.target_vacancy.title|default:"Мастер-технолог бродильного производства" }}
-        </div>
-      </div>
-
-      <!-- Форма фаст-трек отклика -->
-      <form id="och-success-apply-form" onsubmit="window.submitFastApplication(event, 'och-success-apply-form')" style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
-        <input type="hidden" name="session_id" value="{{ session.session_uuid }}">
-        <input type="hidden" name="vacancy_slug" value="{{ scenario.target_vacancy.slug }}">
-
-        <div class="och-modal-form-row">
-          <input type="text" name="full_name" required placeholder="Ваше Имя и Фамилия" class="och-text-input">
-          <input type="tel" name="phone" required placeholder="Телефон для связи" class="och-text-input">
-        </div>
-
-        <div class="och-modal-form-row">
-          <input type="text" name="university" placeholder="ВУЗ или Колледж" class="och-text-input">
-          <input type="text" name="telegram" placeholder="Telegram @username" class="och-text-input">
-        </div>
-
-        <button type="submit" class="och-btn-primary" style="justify-content: center; padding: 0.85rem; width: 100%;">
-          <i data-lucide="send" style="width: 16px; height: 16px;"></i>
-          <span>Отправить заявку на практику с этим баллом</span>
-        </button>
-
-        <div class="och-modal-actions">
-          <button type="button" class="och-btn-secondary" onclick="simulator.closeModals()">
-            <i data-lucide="x" style="width: 14px; height: 14px;"></i>
-            <span>Закрыть окно</span>
-          </button>
-          {% if next_scenario %}
-          <a href="{% url 'careers:game_play' scenario_slug=next_scenario.slug %}" class="och-btn-secondary" style="border-color: var(--och-gold); color: var(--och-gold-light);">
-            <i data-lucide="arrow-right-circle" style="width: 14px; height: 14px;"></i>
-            <span>В следующий цех ({{ next_scenario.mentor_name }})</span>
-          </a>
-          {% endif %}
-          <a href="{% url 'careers:vacancies_list' %}" class="och-btn-secondary">
-            <i data-lucide="briefcase" style="width: 14px; height: 14px;"></i>
-            <span>В каталог вакансий</span>
-          </a>
-          <a href="{% url 'careers:game_select' %}" class="och-btn-secondary">
-            <i data-lucide="layout-grid" style="width: 14px; height: 14px;"></i>
-            <span>Другой цех</span>
-          </a>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- МОДАЛЬНОЕ ОКНО ПРОВАЛА СМЕНЫ -->
-<div id="och-failure-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeModals()">
-  <div class="och-modal-box" style="border: 2px solid var(--och-red);">
-    <div class="och-modal-header" style="background: #FEF2F2;">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: #ef4444; color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <i data-lucide="alert-triangle" style="width: 24px; height: 24px;"></i>
-        </div>
-        <div>
-          <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: #b91c1c;">Инцидент не урегулирован</div>
-          <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">Смена сорвана</h3>
-        </div>
-      </div>
-      <button type="button" class="och-modal-close-btn" onclick="simulator.closeModals()" aria-label="Закрыть окно" title="Закрыть окно">
-        ✕
-      </button>
-    </div>
-
-    <div class="och-modal-body">
-      <div style="background: #FEF2F2; border-left: 4px solid #ef4444; padding: 1rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-bottom: 1.5rem;">
-        <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #b91c1c; margin-bottom: 0.35rem;">Причина остановки:</div>
-        <p id="och-fail-feedback" style="font-size: 0.92rem; line-height: 1.5; color: var(--och-text);">
-          Допущен перегрев сусла или заклинивание конвейера без своевременного включения охлаждения.
-        </p>
-      </div>
-
-      <div class="och-modal-actions">
-        <a href="{% url 'careers:game_play' scenario_slug=scenario.slug %}" class="och-btn-primary">
-          <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i>
-          <span>Переиграть смену</span>
-        </a>
-        <a href="{% url 'careers:game_select' %}" class="och-btn-secondary">
-          <span>Другой цех</span>
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- МОДАЛЬНОЕ ОКНО ПРЕДСМЕННОГО ИНСТРУКТАЖА И ПОДКЛЮЧЕНИЯ ИИ -->
-<div id="och-briefing-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeModals()">
-  <div class="och-modal-box och-briefing-modal-box">
-    <div class="och-modal-header">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div class="och-briefing-modal-icon">
-          <i data-lucide="cpu" style="width: 24px; height: 24px; color: var(--och-red);"></i>
-        </div>
-        <div>
-          <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: var(--och-red); letter-spacing: 0.05em;">Предсменный инструктаж комбината</div>
-          <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">Подключение ИИ-наставника</h3>
-        </div>
-      </div>
-      <button type="button" class="och-modal-close-btn" onclick="simulator.closeModals()" aria-label="Закрыть окно" title="Закрыть окно">
-        ✕
-      </button>
-    </div>
-
-    <div class="och-modal-body">
-      <!-- Навигация по вкладкам -->
-      <div class="och-briefing-tabs">
-        <button type="button" class="och-briefing-tab-btn active" id="tab-btn-gigachat" onclick="simulator.switchBriefingTab('gigachat')">
-          <i data-lucide="zap" style="width: 15px; height: 15px;"></i>
-          <span>Сбер GigaChat API</span>
-          <span class="och-briefing-badge-rec">Онлайн</span>
-        </button>
-        <button type="button" class="och-briefing-tab-btn" id="tab-btn-offline" onclick="simulator.switchBriefingTab('offline')">
-          <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i>
-          <span>Офлайн-движок цеха</span>
-          <span class="och-briefing-badge-offline">Smart</span>
-        </button>
-      </div>
-
-      <!-- Вкладка 1: GigaChat API -->
-      <div class="och-briefing-tab-content" id="tab-content-gigachat">
-        <div class="och-briefing-info-card">
-          <div style="display: flex; gap: 0.65rem; align-items: flex-start;">
-            <i data-lucide="info" style="width: 18px; height: 18px; color: #2563EB; flex-shrink: 0; margin-top: 2px;"></i>
-            <div style="font-size: 0.84rem; line-height: 1.45; color: var(--och-text);">
-              Для живого диалога с наставниками от первого лица и свободного ввода решений введите ключи из личного кабинета 
-              <a href="https://developers.sber.ru/" target="_blank" rel="noopener noreferrer" style="color: #2563EB; font-weight: 700; text-decoration: underline;">Studio Salute (GigaChat API)</a>.
-              Для физических лиц сервис предоставляет <strong>1 000 000 бесплатных токенов в месяц</strong>.
-            </div>
-          </div>
-        </div>
-
-        <form id="och-gigachat-form" onsubmit="event.preventDefault(); simulator.submitGigaChatCredentials();">
-          <div class="och-briefing-fields">
-            <div class="och-form-group">
-              <label for="och-input-client-id" class="och-form-label">
-                Client ID
-                <span class="och-form-required">*</span>
-              </label>
-              <input type="text" id="och-input-client-id" name="client_id" class="och-text-input" placeholder="например: a1b2c3d4-e5f6-7890-abcd-ef0123456789" autocomplete="off" spellcheck="false">
-            </div>
-
-            <div class="och-form-group">
-              <label for="och-input-client-secret" class="och-form-label">
-                Client Secret
-                <span class="och-form-required">*</span>
-              </label>
-              <input type="password" id="och-input-client-secret" name="client_secret" class="och-text-input" placeholder="секретный ключ доступа" autocomplete="off" spellcheck="false">
-            </div>
-
-            <!-- Альтернатива: готовый Base64 Auth Key -->
-            <details class="och-briefing-details">
-              <summary class="och-briefing-summary">Или ввести готовый Авторизационный ключ (Base64 Auth Key)</summary>
-              <div style="padding-top: 0.65rem;">
-                <input type="password" id="och-input-auth-key" name="auth_key" class="och-text-input" placeholder="Basic Auth Key (Base64 client_id:client_secret)" autocomplete="off" spellcheck="false">
-                <small style="color: var(--och-text-dim); font-size: 0.74rem; display: block; margin-top: 0.35rem;">Если указан данный ключ, он имеет приоритет над полями Client ID и Client Secret.</small>
-              </div>
-            </details>
-          </div>
-
-          <div id="och-briefing-status" class="och-briefing-status" style="display: none;"></div>
-
-          <div class="och-briefing-actions">
-            <button type="submit" class="och-btn-primary" id="och-btn-connect-gigachat" style="flex: 1; justify-content: center;">
-              <i data-lucide="key" style="width: 16px; height: 16px;"></i>
-              <span id="och-btn-connect-text">Проверить и заступить на смену</span>
-            </button>
-            <button type="button" class="och-btn-secondary" onclick="simulator.useSmartOfflineMode()">
-              <span>Играть офлайн</span>
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Вкладка 2: Офлайн-режим -->
-      <div class="och-briefing-tab-content" id="tab-content-offline" style="display: none;">
-        <div class="och-briefing-offline-card">
-          <div class="och-briefing-offline-badge">100% автономный контур</div>
-          <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--och-text-heading); margin: 0.5rem 0 0.35rem;">Умный локальный биохимический движок «Очаково»</h4>
-          <p style="font-size: 0.86rem; color: var(--och-text); line-height: 1.5; margin-bottom: 1rem;">
-            Симулятор полностью работоспособен без внешних подключений к интернет-сервисам и сторонних API:
-          </p>
-          <ul class="och-briefing-feature-list">
-            <li><i data-lucide="check" style="width: 15px; height: 15px; color: var(--och-green);"></i><span>Полная база из 20 промышленных ситуаций и регламентов цехов</span></li>
-            <li><i data-lucide="check" style="width: 15px; height: 15px; color: var(--och-green);"></i><span>Биохимическая физика брожения ЦКТ, температур и плотности Brix</span></li>
-            <li><i data-lucide="check" style="width: 15px; height: 15px; color: var(--och-green);"></i><span>Локальная озвучка реплик наставников цеха Михалыча и Елены</span></li>
-            <li><i data-lucide="check" style="width: 15px; height: 15px; color: var(--och-green);"></i><span>Выдача персонального Сертификата готовности с защитным кодом</span></li>
-          </ul>
-
-          <div class="och-briefing-actions" style="margin-top: 1.25rem;">
-            <button type="button" class="och-btn-primary" onclick="simulator.useSmartOfflineMode()" style="width: 100%; justify-content: center;">
-              <i data-lucide="play" style="width: 16px; height: 16px;"></i>
-              <span>Заступить на смену в офлайн-режиме</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- МОДАЛЬНОЕ ОКНО ВИДЕО-ИНСТРУКТАЖА МАСТЕРА -->
-<div id="och-video-briefing-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeVideoBriefingModal()">
-  <div class="och-modal-box" style="max-width: 680px; border: 2px solid var(--och-red);">
-    <div class="och-modal-header" style="background: #FFF5F6;">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div style="width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--och-red); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <i data-lucide="play-circle" style="width: 22px; height: 22px;"></i>
-        </div>
-        <div>
-          <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--och-red);">Видео-инструктаж мастера цеха</div>
-          <h3 style="font-size: 1.15rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">{{ scenario.workshop_name }}</h3>
-        </div>
-      </div>
-      <button type="button" class="och-modal-close-btn" onclick="simulator.closeVideoBriefingModal()" aria-label="Закрыть">✕</button>
-    </div>
-    <div class="och-modal-body" style="padding: 1.25rem;">
-      <div style="position: relative; border-radius: var(--radius-md); overflow: hidden; background: #000; box-shadow: var(--shadow-md); margin-bottom: 1rem;">
-        <video id="och-briefing-video-player" controls preload="metadata" style="width: 100%; height: auto; max-height: 380px; display: block;">
-          <source src="/media/videos/{% if 'krones' in scenario.slug or 'bot-line' in scenario.slug %}operator_linii_rozliva.mp4{% elif 'brew' in scenario.slug %}mashinist_oborudovaniya.mp4{% elif 'okroshka' in scenario.slug or 'lab' in scenario.slug %}himik_laborant.mp4{% elif 'secret' in scenario.slug %}noviy_vkus_rnd.mp4{% else %}operator_linii_rozliva.mp4{% endif %}" type="video/mp4">
-          Ваш браузер не поддерживает видео.
-        </video>
-      </div>
-      <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-sm); padding: 0.85rem; font-size: 0.88rem; color: var(--och-text); line-height: 1.5;">
-        <strong style="color: var(--och-red);">Инструктаж наставника ({{ scenario.mentor_name }}):</strong> «Смотри, как работает узел на реальном конвейере комбината! Изучи ритм оборудования перед запуском смены. Главное — чистота контура, контроль температуры и слаженность действий с диспетчером!»
-      </div>
-      <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
-        <button type="button" class="och-btn-primary" onclick="simulator.closeVideoBriefingModal()" style="padding: 0.65rem 1.25rem;">
-          <i data-lucide="check" style="width: 16px; height: 16px;"></i>
-          <span>Всё понятно, приступить к смене!</span>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-{% endblock %}
-
-{% block extra_scripts %}
-<script src="{% static 'js/simulator.js' %}"></script>
-{% endblock %}
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Симулятор смены: {{ scenario.title }} | Очаково{% endblock %}
+
+{% block content %}
+<div class="och-sim-container">
+  
+  <!-- 1. ВЕРХНИЙ КОМПАКТНЫЙ СТАТУС-БАР ТЕЛЕМЕТРИИ ЦЕХА С ДИНАМИЧЕСКИМИ ДАТЧИКАМИ -->
+  <div class="och-sim-compact-hud" id="och-sim-hud" 
+       data-session-id="{{ session.session_uuid }}"
+       data-mentor-name="{{ scenario.mentor_name }}"
+       data-scenario-slug="{{ scenario.slug }}"
+       data-scenario-title="{{ scenario.title }}"
+       data-workshop-name="{{ scenario.workshop_name }}"
+       data-temp-min="{{ scenario.target_temp_min }}"
+       data-temp-max="{{ scenario.target_temp_max }}"
+       data-brix-min="{{ scenario.target_brix_min }}"
+       data-brix-max="{{ scenario.target_brix_max }}"
+       data-ai-mode="{{ ai_mode }}"
+       data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
+    
+    <div class="och-sim-hud-title-box">
+      <img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="{{ scenario.mentor_name }}" class="och-speaker-avatar" style="width: 44px; height: 44px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <span class="och-sim-hud-title">{{ scenario.workshop_name }}</span>
+          <span class="och-hud-live-tag">
+            <span class="och-live-dot"></span> LIVE 100мс
+          </span>
+        </div>
+        <div class="och-sim-hud-sub">Наставник: <strong>{{ scenario.mentor_name }}</strong> ({{ scenario.mentor_role }})</div>
+      </div>
+    </div>
+
+    <!-- Показания датчиков в виде динамических интерактивных чипов -->
+    <div class="och-sim-telemetry-strip">
+      <div class="och-gauge-chip" id="chip-temp" title="Температура сусла (Оптимум {{ scenario.target_temp_min }}–{{ scenario.target_temp_max }}°C)">
+        <i data-lucide="thermometer" id="icon-temp" style="width: 15px; height: 15px; color: var(--och-red);"></i>
+        <span>Сусло:</span>
+        <span id="val-temp" class="och-gauge-chip-val" style="color: var(--och-red);">{{ session.temperature|floatformat:1 }}°C</span>
+        <span class="och-gauge-status-dot" id="dot-temp"></span>
+      </div>
+
+      <div class="och-gauge-chip" id="chip-brix" title="Плотность затора Brix (Оптимум {{ scenario.target_brix_min }}–{{ scenario.target_brix_max }}°Bx)">
+        <i data-lucide="droplet" id="icon-brix" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
+        <span>Brix:</span>
+        <span id="val-brix" class="och-gauge-chip-val" style="color: var(--och-gold-light);">{{ session.brix|floatformat:1 }}°Bx</span>
+        <span class="och-gauge-status-dot" id="dot-brix"></span>
+      </div>
+
+      <div class="och-gauge-chip" id="chip-speed" title="Скорость линии розлива">
+        <i data-lucide="gauge" style="width: 15px; height: 15px; color: var(--och-purple);"></i>
+        <span>Линия:</span>
+        <span id="val-speed" class="och-gauge-chip-val" style="color: var(--och-purple);">{{ session.line_speed }} б/ч</span>
+      </div>
+
+      <!-- Бейдж серии успешных смен (Оверклокинг) -->
+      <div class="och-streak-badge-hud" id="och-streak-container" title="Серия смен без брака (накопительный множитель)">
+        <span class="och-streak-flame">🔥</span>
+        <span class="och-streak-text">Стрик: <strong id="val-streak-count">0</strong></span>
+        <span class="och-streak-multiplier" id="val-streak-mult">x1.0</span>
+      </div>
+
+      <div class="och-hud-score-badge" id="och-hud-score-badge" title="Заработанные баллы мастерства на смене">
+        <i data-lucide="award" style="width: 18px; height: 18px; color: var(--och-gold);"></i>
+        <span>Баллы: <strong id="val-score">{{ session.score }}</strong> <small style="color: var(--och-gold); font-size: 0.72rem; font-weight: 800;">XP</small></span>
+        <div id="och-score-delta-floater" class="och-score-delta-floater"></div>
+      </div>
+
+      <!-- Кнопка видео-инструктажа мастера цеха -->
+      <button type="button" class="och-hud-video-btn" onclick="simulator.openVideoBriefingModal()" title="Смотреть реальный видео-инструктаж наставника (30 сек)">
+        <i data-lucide="video" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+        <span>Видео цеха</span>
+      </button>
+
+      <!-- Переключатель режима ИИ и вызов окна инструктажа/ключей -->
+      <button type="button" class="och-hud-ai-badge" id="och-hud-ai-badge" onclick="simulator.openBriefingModal()" title="Нажмите для настройки Сбер GigaChat или офлайн-движка">
+        <span class="och-ai-mode-dot {% if ai_mode == 'gigachat' %}dot-gigachat{% else %}dot-offline{% endif %}" id="och-hud-ai-dot"></span>
+        <span id="och-hud-ai-label">{% if ai_mode == 'gigachat' %}GigaChat AI{% else %}Офлайн AI{% endif %}</span>
+        <i data-lucide="settings" style="width: 13px; height: 13px; opacity: 0.75;"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- КАРУСЕЛЬ ЦЕХОВ ЗАВОДА «ОЧАКОВО» -->
+  <div class="och-sim-carousel-bar">
+    {% if prev_scenario %}
+    <a href="{% url 'careers:game_play' scenario_slug=prev_scenario.slug %}" class="och-carousel-nav-btn" title="Перейти в: {{ prev_scenario.workshop_name }}">
+      <i data-lucide="chevron-left" style="width: 15px; height: 15px;"></i>
+      <span class="carousel-btn-text">Пред. цех: {{ prev_scenario.mentor_name }}</span>
+    </a>
+    {% else %}
+    <span class="och-carousel-nav-btn disabled"><i data-lucide="chevron-left" style="width: 15px; height: 15px;"></i></span>
+    {% endif %}
+
+    <div class="och-carousel-center">
+      <span class="och-carousel-tag">ЦЕХ {{ carousel_position }}</span>
+      <span class="och-carousel-workshop-name">{{ scenario.workshop_name }}</span>
+    </div>
+
+    {% if next_scenario %}
+    <a href="{% url 'careers:game_play' scenario_slug=next_scenario.slug %}" class="och-carousel-nav-btn" title="Перейти в: {{ next_scenario.workshop_name }}">
+      <span class="carousel-btn-text">След. цех: {{ next_scenario.mentor_name }}</span>
+      <i data-lucide="chevron-right" style="width: 15px; height: 15px;"></i>
+    </a>
+    {% else %}
+    <span class="och-carousel-nav-btn disabled"><i data-lucide="chevron-right" style="width: 15px; height: 15px;"></i></span>
+    {% endif %}
+  </div>
+
+  <!-- 2. СЦЕНА ВИЗУАЛЬНОЙ НОВЕЛЛЫ «ОЧАКОВО» -->
+  <div class="och-vn-stage" style="background-image: url('{% static 'img/' %}{{ scenario.bg_image }}');">
+    <div class="och-vn-stage-halftone"></div>
+    
+    <!-- Анимированные пузырьки брожения Очаково -->
+    <div class="och-carbonation-container">
+      <div class="och-fizzy-bubble" style="left: 12%; width: 14px; height: 14px; animation-duration: 7s; animation-delay: 0s;"></div>
+      <div class="och-fizzy-bubble" style="left: 28%; width: 22px; height: 22px; animation-duration: 9s; animation-delay: 2s;"></div>
+      <div class="och-fizzy-bubble" style="left: 48%; width: 12px; height: 12px; animation-duration: 6s; animation-delay: 1s;"></div>
+      <div class="och-fizzy-bubble" style="left: 68%; width: 18px; height: 18px; animation-duration: 8s; animation-delay: 3s;"></div>
+      <div class="och-fizzy-bubble" style="left: 84%; width: 24px; height: 24px; animation-duration: 10s; animation-delay: 1.5s;"></div>
+    </div>
+
+    <!-- Верхняя строка сцены: статус инцидента и контролы -->
+    <div class="och-vn-stage-top">
+      <div class="och-incident-pill">
+        <span class="och-status-dot"></span>
+        <span>Инцидент: {{ scenario.title }}</span>
+      </div>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button type="button" class="och-hud-video-btn" onclick="simulator.openVideoBriefingModal()" title="Смотреть реальный видео-инструктаж наставника (30 сек)" style="background: rgba(255,255,255,0.95);">
+          <i data-lucide="video" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+          <span>Видео цеха</span>
+        </button>
+        <button type="button" class="och-comic-btn-log" onclick="simulator.toggleHistoryDrawer()" title="Открыть полный журнал реплик смены">
+          <i data-lucide="book-open" style="width: 14px; height: 14px;"></i>
+          <span>История смены</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- СЛОЙ ПЕРСОНАЖЕЙ НА ПОЛУ СЦЕНЫ (ВИЗУАЛЬНАЯ НОВЕЛЛА) -->
+    <div class="och-vn-stage-floor">
+      <!-- Студент-стажёр слева -->
+      <div class="och-vn-character intern" id="vn-actor-student">
+        <div class="och-vn-card-wrap">
+          <img src="{% static 'img/avatar_student_boy.jpg' %}" alt="Стажёр" class="och-vn-card-img" id="vn-sprite-student">
+        </div>
+        <div class="och-comic-nametag intern-tag" id="vn-tag-student">
+          <i data-lucide="user" style="width: 12px; height: 12px;"></i>
+          <span>Стажёр (Вы)</span>
+        </div>
+      </div>
+
+      <!-- Живые анимированные маскоты завода по центру -->
+      <div class="och-vn-stage-center-mascot">
+        <div class="och-mascot-unit" id="och-mascot-unit">
+          <!-- 1. Танцующая банка кваса Очаково -->
+          <svg id="och-mascot-can" class="och-dancing-can" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="20" width="50" height="75" rx="6" fill="#D50032" stroke="#A00024" stroke-width="2"/>
+            <ellipse cx="50" cy="20" rx="25" ry="8" fill="#F59E0B"/>
+            <ellipse cx="50" cy="95" rx="25" ry="8" fill="#82001E"/>
+            <rect x="25" y="42" width="50" height="24" fill="#F8FAFC"/>
+            <text x="50" y="58" font-size="10" font-weight="900" fill="#D50032" text-anchor="middle" font-family="sans-serif">ОЧАКОВО</text>
+            <rect x="34" y="28" width="14" height="9" rx="2" fill="#0F172A"/>
+            <rect x="52" y="28" width="14" height="9" rx="2" fill="#0F172A"/>
+            <line x1="48" y1="32" x2="52" y2="32" stroke="#0F172A" stroke-width="2"/>
+            <path d="M25 45 C10 40 12 25 5 35" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
+            <path d="M75 45 C90 40 88 25 95 35" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
+            <path d="M38 100 L32 114" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+            <path d="M62 100 L68 114" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+
+          <!-- 2. Танцующая килька с кружкой кваса -->
+          <svg id="och-mascot-sprat" class="och-dancing-sprat" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 50 C30 30 75 35 95 50 C75 65 30 70 15 50 Z" fill="#94A3B8" stroke="#475569" stroke-width="2"/>
+            <path d="M15 50 L2 36 L6 50 L2 64 Z" fill="#64748B"/>
+            <path d="M85 38 C90 32 98 32 104 38 L92 38 Z" fill="#D50032"/>
+            <ellipse cx="98" cy="38" rx="8" ry="3" fill="#D50032"/>
+            <circle cx="88" cy="46" r="3" fill="#0F172A"/>
+            <circle cx="89" cy="45" r="1" fill="#FFFFFF"/>
+            <path d="M92 53 C90 56 84 56 82 53" stroke="#0F172A" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M55 52 C50 62 42 60 40 50" stroke="#64748B" stroke-width="3" stroke-linecap="round"/>
+            <rect x="32" y="44" width="10" height="13" rx="2" fill="#F59E0B" stroke="#B45309" stroke-width="1"/>
+            <ellipse cx="37" cy="44" rx="6" ry="3" fill="#FFFFFF"/>
+          </svg>
+
+          <!-- 3. Чайный гриб в банке -->
+          <svg id="och-mascot-kombucha" class="och-mascot-kombucha" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <rect x="20" y="30" width="60" height="70" rx="8" fill="rgba(224, 242, 254, 0.4)" stroke="#38BDF8" stroke-width="2"/>
+            <path d="M28 30 L28 20 L72 20 L72 30" stroke="#38BDF8" stroke-width="2" fill="none"/>
+            <ellipse cx="50" cy="18" rx="26" ry="6" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5"/>
+            <line x1="24" y1="22" x2="76" y2="22" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+            <rect x="22" y="42" width="56" height="56" rx="6" fill="rgba(217, 119, 6, 0.25)"/>
+            <ellipse cx="50" cy="62" rx="22" ry="10" fill="#B45309"/>
+            <ellipse cx="50" cy="58" rx="20" ry="8" fill="#D97706"/>
+            <ellipse cx="50" cy="55" rx="18" ry="6" fill="#F59E0B"/>
+            <circle cx="44" cy="56" r="2.5" fill="#0F172A"/>
+            <circle cx="56" cy="56" r="2.5" fill="#0F172A"/>
+            <circle cx="45" cy="55" r="0.8" fill="#FFFFFF"/>
+            <circle cx="57" cy="55" r="0.8" fill="#FFFFFF"/>
+            <path d="M48 61 C50 63 52 63 54 61" stroke="#0F172A" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+
+          <!-- 4. Жёлтая бочка кваса -->
+          <svg id="och-mascot-barrel" class="och-mascot-barrel" viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <rect x="25" y="24" width="60" height="48" rx="12" fill="#FBBF24" stroke="#D97706" stroke-width="2"/>
+            <ellipse cx="85" cy="48" rx="8" ry="24" fill="#F59E0B" stroke="#D97706" stroke-width="2"/>
+            <line x1="42" y1="24" x2="42" y2="72" stroke="#B45309" stroke-width="2"/>
+            <line x1="68" y1="24" x2="68" y2="72" stroke="#B45309" stroke-width="2"/>
+            <text x="55" y="52" font-size="10" font-weight="900" fill="#D50032" text-anchor="middle" font-family="sans-serif">КВАС</text>
+            <path d="M25 54 L12 54 L12 62" stroke="#78350F" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="12" cy="66" r="2.5" fill="#FBBF24"/>
+            <circle cx="42" cy="76" r="12" fill="#334155" stroke="#0F172A" stroke-width="2"/>
+            <circle cx="74" cy="76" r="12" fill="#334155" stroke="#0F172A" stroke-width="2"/>
+          </svg>
+
+          <!-- 5. Роборука Krones -->
+          <svg id="och-mascot-robot" class="och-mascot-robot" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <rect x="35" y="78" width="30" height="14" rx="3" fill="#334155" stroke="#0F172A" stroke-width="2"/>
+            <circle cx="50" cy="76" r="8" fill="#EA580C" stroke="#9A3412" stroke-width="2"/>
+            <path d="M50 76 L40 45" stroke="#F97316" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="40" cy="45" r="7" fill="#334155" stroke="#0F172A" stroke-width="2"/>
+            <circle cx="40" cy="45" r="3" fill="#38BDF8"/>
+            <path d="M40 45 L68 30" stroke="#F97316" stroke-width="5" stroke-linecap="round"/>
+            <rect x="74" y="22" width="12" height="18" rx="2" fill="#D50032"/>
+          </svg>
+        </div>
+
+        <div class="och-mascot-speech" id="och-mascot-comment">
+          «Килька в деле — квас в теле! Следим за балансом брожения!»
+        </div>
+      </div>
+
+      <!-- Наставник цеха справа -->
+      <div class="och-vn-character mentor" id="vn-actor-mentor">
+        <div class="och-vn-card-wrap">
+          <img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="{{ scenario.mentor_name }}" class="och-vn-card-img" id="vn-sprite-mentor">
+        </div>
+        <div class="och-comic-nametag mentor-tag" id="vn-tag-mentor">
+          <i data-lucide="award" style="width: 12px; height: 12px;"></i>
+          <span>{{ scenario.mentor_name }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ДИАЛОГОВАЯ КОМИКС-КОНСОЛЬ ВИЗУАЛЬНОЙ НОВЕЛЛЫ -->
+  <div class="och-vn-console">
+    <!-- Плашка говорящего и аудиоплеер реплики -->
+    <div class="och-vn-console-header">
+      <div class="och-vn-speaker-badge mentor" id="och-vn-speaker-badge">
+        <img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="" id="och-vn-speaker-avatar" style="width: 26px; height: 26px; border-radius: 4px; object-fit: cover; border: 1.5px solid #1E293B;">
+        <span id="och-vn-speaker-name">{{ current_node.speaker_name }}</span>
+        <span class="och-speaker-role-pill" id="och-vn-speaker-role">Наставник</span>
+      </div>
+
+      <div class="och-vn-console-tools">
+        <button type="button" class="och-comic-btn-audio" id="och-vn-audio-replay-btn" onclick="simulator.playMentorVoice('{{ current_node.dialogue_text|escapejs }}', this)" title="Озвучить текущую реплику наставника">
+          <i data-lucide="volume-2" style="width: 14px; height: 14px;"></i>
+          <span>Озвучить</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Текстовое поле текущей реплики (Visual Novel Typewriter Box) -->
+    <div class="och-vn-text-box">
+      <div class="och-vn-active-text" id="och-vn-active-text">{{ current_node.dialogue_text }}</div>
+      {% if current_node.narrative_context %}
+      <div class="och-vn-context-note" id="och-vn-active-sub">
+        <i data-lucide="info" style="width: 14px; height: 14px; color: #B45309;"></i>
+        <span>{{ current_node.narrative_context }}</span>
+      </div>
+      {% else %}
+      <div class="och-vn-context-note" id="och-vn-active-sub" style="display: none;"></div>
+      {% endif %}
+    </div>
+
+    <!-- Интерактивно всплывающие чипы действий (Action Chips) -->
+    <div class="och-action-chips-wrapper" id="och-action-chips-wrapper">
+      <div class="och-action-chips-header">
+        <span>Быстрые действия и тактические решения смены:</span>
+        <button type="button" class="och-action-chip och-action-chip-tool" onclick="simulator.toggleToolDrawer()" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+          <i data-lucide="wrench" style="width: 13px; height: 13px;"></i>
+          <span>Оборудование цеха (8)</span>
+        </button>
+      </div>
+
+      <div class="och-action-chips-row" id="och-choices-container">
+        {% for choice in choices %}
+        <button type="button" class="och-action-chip" onclick="simulator.chooseAction({{ choice.id }}, this)">
+          <i data-lucide="zap" style="width: 15px; height: 15px; color: var(--och-red);"></i>
+          <span>{{ choice.choice_text }}</span>
+        </button>
+        {% empty %}
+        <button type="button" class="och-action-chip" onclick="simulator.useEquipment('valve_cooling', 'Охлаждение рубашки ЦКТ')">
+          <i data-lucide="snowflake" style="width: 15px; height: 15px; color: var(--och-cyan);"></i>
+          <span>Охладить сусло гликолем (-3°C)</span>
+        </button>
+        <button type="button" class="och-action-chip" onclick="simulator.useEquipment('starter_culture', 'Закваска натурального брожения 1978')">
+          <i data-lucide="flask-conical" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
+          <span>Добавить закваску 1978</span>
+        </button>
+        <button type="button" class="och-action-chip och-action-chip-hint" onclick="simulator.requestHint()">
+          <i data-lucide="help-circle" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
+          <span>Спросить совет {{ scenario.mentor_name }}</span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Всплывающий ящик оборудования цеха -->
+    <div class="och-tool-drawer" id="och-tool-drawer">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <div style="font-size: 0.85rem; font-weight: 800; color: var(--och-text-heading); display: flex; align-items: center; gap: 0.4rem;">
+          <i data-lucide="wrench" style="width: 16px; height: 16px; color: var(--och-cyan);"></i>
+          <span>Панель управления цехом и приборы мастера</span>
+        </div>
+        <button type="button" onclick="simulator.toggleToolDrawer()" style="background: none; border: none; font-size: 0.8rem; color: var(--och-text-dim); cursor: pointer;">
+          Закрыть ✕
+        </button>
+      </div>
+
+      <div class="och-tool-drawer-grid">
+        <div class="och-tool-mini-card" onclick="simulator.useEquipment('valve_cooling', 'Клапан охлаждения рубашки ЦКТ')">
+          <img src="{% static 'img/brand_icons/cooling_pipe.png' %}" onerror="this.src='{% static 'img/equipment/valve_cooling.svg' %}'" alt="Охлаждение" class="och-tool-mini-svg">
+          <div class="och-tool-mini-name">Охлаждение ЦКТ</div>
+        </div>
+
+        <div class="och-tool-mini-card" onclick="simulator.useEquipment('starter_culture', 'Закваска натурального брожения 1978')">
+          <img src="{% static 'img/brand_icons/yeast_culture.png' %}" onerror="this.src='{% static 'img/equipment/starter_culture.svg' %}'" alt="Закваска" class="och-tool-mini-svg">
+          <div class="och-tool-mini-name">Закваска 1978</div>
+        </div>
+
+        <div class="och-tool-mini-card" onclick="simulator.useEquipment('cip_wash', 'Пульт контура CIP-мойки')">
+          <img src="{% static 'img/brand_icons/boiler_valve.png' %}" onerror="this.src='{% static 'img/equipment/cip_wash.svg' %}'" alt="CIP-мойка" class="och-tool-mini-svg">
+          <div class="och-tool-mini-name">CIP-мойка</div>
+        </div>
+
+        <div class="och-tool-mini-card" onclick="simulator.useEquipment('emergency_stop', 'Кнопка аварийного останова конвейера')">
+          <img src="{% static 'img/brand_icons/conveyor_bottles.png' %}" onerror="this.src='{% static 'img/equipment/emergency_stop.svg' %}'" alt="Стоп" class="och-tool-mini-svg">
+          <div class="och-tool-mini-name">Аварийный стоп</div>
+        </div>
+
+        <div class="och-tool-mini-card" onclick="simulator.useEquipment('refractometer', 'Оптический рефрактометр сахаров Brix')">
+          <img src="{% static 'img/brand_icons/thermometer.png' %}" onerror="this.src='{% static 'img/equipment/refractometer.svg' %}'" alt="Рефрактометр" class="och-tool-mini-svg">
+          <div class="och-tool-mini-name">Рефрактометр</div>
+        </div>
+
+        <div class="och-tool-mini-card" onclick="simulator.useEquipment('tasting_mug', 'Органолептическая проба кваса')">
+          <img src="{% static 'img/brand_icons/cup_tasting.png' %}" onerror="this.src='{% static 'img/equipment/tasting_mug.svg' %}'" alt="Дегустация" class="och-tool-mini-svg">
+          <div class="och-tool-mini-name">Дегустация</div>
+        </div>
+
+        <div class="och-tool-mini-card" onclick="simulator.useEquipment('intercom_radio', 'Интерком диспетчера производства')">
+          <img src="{% static 'img/brand_icons/fermentation_cct.png' %}" onerror="this.src='{% static 'img/equipment/intercom_radio.svg' %}'" alt="Интерком" class="och-tool-mini-svg">
+          <div class="och-tool-mini-name">Интерком связи</div>
+        </div>
+
+        <div class="och-tool-mini-card" onclick="simulator.useEquipment('ph_meter', 'Лабораторный экспресс pH-метр')">
+          <img src="{% static 'img/brand_icons/lab_flask.png' %}" onerror="this.src='{% static 'img/equipment/ph_meter.svg' %}'" alt="pH-метр" class="och-tool-mini-svg">
+          <div class="och-tool-mini-name">pH-метр</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Нижняя панель ввода стажёра -->
+    <div class="och-sim-input-bar">
+      <!-- Баннер активной голосовой записи / рации -->
+      <div id="och-mic-banner" class="och-mic-banner" style="display: none;">
+        <div class="och-mic-banner-left">
+          <div class="och-mic-pulse-dot"></div>
+          <div class="och-mic-waves">
+            <div class="och-mic-wave-bar"></div>
+            <div class="och-mic-wave-bar"></div>
+            <div class="och-mic-wave-bar"></div>
+            <div class="och-mic-wave-bar"></div>
+          </div>
+          <span id="och-mic-banner-text">Рация мастера активна... Говорите в микрофон</span>
+        </div>
+        <button type="button" class="och-mic-banner-btn" onclick="simulator.stopVoiceRecording()">
+          <span>Завершить</span>
+        </button>
+      </div>
+
+      <div class="och-sim-input-row">
+        <button type="button" id="och-mic-btn" class="och-ptt-mini-btn" onclick="simulator.toggleVoiceRecording()" title="Нажмите для голосовой передачи (Push-to-Talk)">
+          <i data-lucide="mic" style="width: 20px; height: 20px;"></i>
+        </button>
+
+        <form onsubmit="simulator.sendTextTurn(event)" style="display: flex; gap: 0.65rem; flex: 1; min-width: 0;">
+          <input type="text" id="och-sim-text-input" class="och-text-input" placeholder="Решение или вопрос наставнику..." autocomplete="off">
+          <button type="submit" class="och-text-submit-btn">
+            <span>Сказать</span>
+            <i data-lucide="send" style="width: 15px; height: 15px;"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Скрытый контейнер для совместимости ленты реплик -->
+    <div class="och-sim-dialogue-feed" id="och-chat-feed" data-mentor-avatar="{{ scenario.mentor_avatar }}" style="display: none;"></div>
+  </div>
+
+</div>
+
+<!-- ВЫЕЗДНОЙ ЖУРНАЛ ИСТОРИИ ПЕРЕГОВОРОВ СМЕНЫ -->
+<div id="och-history-drawer-backdrop" class="och-history-drawer-backdrop" onclick="simulator.toggleHistoryDrawer()" style="display: none;"></div>
+
+<div id="och-history-drawer" class="och-history-drawer">
+  <div class="och-history-drawer-header">
+    <div>
+      <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--och-red);">АО МПБК «Очаково»</div>
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: #1E293B;">Журнал переговоров смены</h3>
+    </div>
+    <button type="button" onclick="simulator.toggleHistoryDrawer()" style="background: none; border: 2px solid #1E293B; border-radius: 6px; padding: 0.35rem 0.75rem; cursor: pointer; font-weight: 800; font-size: 0.85rem; color: #1E293B;">
+      ✕ Закрыть
+    </button>
+  </div>
+  <div class="och-history-drawer-body" id="och-history-drawer-list">
+    <div class="och-chat-row mentor">
+      <div class="och-speaker-col">
+        <img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="{{ scenario.mentor_name }}" class="och-speaker-avatar">
+        <span class="och-speaker-role-pill">Наставник</span>
+      </div>
+      <div class="och-bubble">
+        <div class="och-bubble-head">
+          <span class="och-speaker-name">{{ current_node.speaker_name }}</span>
+          <button type="button" class="och-bubble-audio-btn" onclick="simulator.playMentorVoice('{{ current_node.dialogue_text|escapejs }}', this)">
+            <i data-lucide="volume-2" style="width: 14px; height: 14px;"></i>
+            <span>Озвучить</span>
+          </button>
+        </div>
+        <div class="och-bubble-text">{{ current_node.dialogue_text }}</div>
+        {% if current_node.narrative_context %}
+        <div class="och-bubble-sub">
+          <i data-lucide="info" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+          <span>{{ current_node.narrative_context }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- МОДАЛЬНОЕ ОКНО УСПЕХА СМЕНЫ И КАРЬЕРНОГО МЭТЧА -->
+<div id="och-success-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeModals()">
+  <div class="och-modal-box" style="border: 2px solid var(--och-green);">
+    <div class="och-modal-header" style="background: #ECFDF5;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: #10b981; color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <i data-lucide="check-circle" style="width: 26px; height: 26px;"></i>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: #047857;">Смена принята на отлично!</div>
+          <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">Партия напитка спасена</h3>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.85rem;">
+        <div style="text-align: right;">
+          <div style="font-size: 0.72rem; color: var(--och-text-dim);">Результат</div>
+          <div style="font-size: 1.45rem; font-weight: 900; color: #10b981;"><span id="och-modal-score">95</span> / 100</div>
+        </div>
+        <button type="button" class="och-modal-close-btn" onclick="simulator.closeModals()" aria-label="Закрыть окно" title="Закрыть окно">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <div class="och-modal-body">
+      <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-md); padding: 1.15rem; margin-bottom: 1.25rem;">
+        <div style="font-size: 0.8rem; font-weight: 800; color: var(--och-red); margin-bottom: 0.35rem;">Разбор наставника:</div>
+        <p id="och-modal-feedback" style="font-size: 0.92rem; line-height: 1.5; color: var(--och-text); margin: 0;">
+          Технологический норматив выдержан. Двойное брожение завершилось в идеальном балансе.
+        </p>
+      </div>
+
+      <!-- Баннер серии успешных смен (Оверклокинг) -->
+      <div id="och-modal-streak-banner" class="och-modal-streak-banner" style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(90deg, rgba(217,119,6,0.1), rgba(213,0,50,0.08)); border: 1px solid var(--och-gold); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.15rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.4rem;">🔥</span>
+          <div>
+            <div style="color: var(--och-text-heading); font-size: 0.9rem; font-weight: 800;">
+              Серия смен без брака: <span id="och-modal-streak-val">1</span> подряд!
+            </div>
+            <div style="font-size: 0.76rem; color: var(--och-gold-light); font-weight: 600;">
+              Множитель очков активен: <strong id="och-modal-mult-val">x1.2</strong>
+            </div>
+          </div>
+        </div>
+        {% if next_scenario %}
+        <a href="{% url 'careers:game_play' scenario_slug=next_scenario.slug %}" class="och-btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; white-space: nowrap;">
+          <span>В следующий цех ▶</span>
+        </a>
+        {% endif %}
+      </div>
+
+      <div style="margin-bottom: 1.25rem;">
+        <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--och-gold-light); margin-bottom: 0.35rem;">
+          Рекомендованная оплачиваемая вакансия сезона:
+        </div>
+        <div id="och-modal-vac-title" style="font-size: 1.1rem; font-weight: 800; color: var(--och-text-heading);">
+          {{ scenario.target_vacancy.title|default:"Мастер-технолог бродильного производства" }}
+        </div>
+      </div>
+
+      <!-- Форма фаст-трек отклика -->
+      <form id="och-success-apply-form" onsubmit="window.submitFastApplication(event, 'och-success-apply-form')" style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+        <input type="hidden" name="session_id" value="{{ session.session_uuid }}">
+        <input type="hidden" name="vacancy_slug" value="{{ scenario.target_vacancy.slug }}">
+
+        <div class="och-modal-form-row">
+          <input type="text" name="full_name" required placeholder="Ваше Имя и Фамилия" class="och-text-input">
+          <input type="tel" name="phone" required placeholder="Телефон для связи" class="och-text-input">
+        </div>
+
+        <div class="och-modal-form-row">
+          <input type="text" name="university" placeholder="ВУЗ или Колледж" class="och-text-input">
+          <input type="text" name="telegram" placeholder="Telegram @username" class="och-text-input">
+        </div>
+
+        <button type="submit" class="och-btn-primary" style="justify-content: center; padding: 0.85rem; width: 100%;">
+          <i data-lucide="send" style="width: 16px; height: 16px;"></i>
+          <span>Отправить заявку на практику с этим баллом</span>
+        </button>
+
+        <div class="och-modal-actions">
+          <button type="button" class="och-btn-secondary" onclick="simulator.closeModals()">
+            <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+            <span>Закрыть окно</span>
+          </button>
+          {% if next_scenario %}
+          <a href="{% url 'careers:game_play' scenario_slug=next_scenario.slug %}" class="och-btn-secondary" style="border-color: var(--och-gold); color: var(--och-gold-light);">
+            <i data-lucide="arrow-right-circle" style="width: 14px; height: 14px;"></i>
+            <span>В следующий цех ({{ next_scenario.mentor_name }})</span>
+          </a>
+          {% endif %}
+          <a href="{% url 'careers:vacancies_list' %}" class="och-btn-secondary">
+            <i data-lucide="briefcase" style="width: 14px; height: 14px;"></i>
+            <span>В каталог вакансий</span>
+          </a>
+          <a href="{% url 'careers:game_select' %}" class="och-btn-secondary">
+            <i data-lucide="layout-grid" style="width: 14px; height: 14px;"></i>
+            <span>Другой цех</span>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ПРОВАЛА СМЕНЫ -->
+<div id="och-failure-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeModals()">
+  <div class="och-modal-box" style="border: 2px solid var(--och-red);">
+    <div class="och-modal-header" style="background: #FEF2F2;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: #ef4444; color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <i data-lucide="alert-triangle" style="width: 24px; height: 24px;"></i>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: #b91c1c;">Инцидент не урегулирован</div>
+          <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">Смена сорвана</h3>
+        </div>
+      </div>
+      <button type="button" class="och-modal-close-btn" onclick="simulator.closeModals()" aria-label="Закрыть окно" title="Закрыть окно">
+        ✕
+      </button>
+    </div>
+
+    <div class="och-modal-body">
+      <div style="background: #FEF2F2; border-left: 4px solid #ef4444; padding: 1rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-bottom: 1.5rem;">
+        <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #b91c1c; margin-bottom: 0.35rem;">Причина остановки:</div>
+        <p id="och-fail-feedback" style="font-size: 0.92rem; line-height: 1.5; color: var(--och-text);">
+          Допущен перегрев сусла или заклинивание конвейера без своевременного включения охлаждения.
+        </p>
+      </div>
+
+      <div class="och-modal-actions">
+        <a href="{% url 'careers:game_play' scenario_slug=scenario.slug %}" class="och-btn-primary">
+          <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i>
+          <span>Переиграть смену</span>
+        </a>
+        <a href="{% url 'careers:game_select' %}" class="och-btn-secondary">
+          <span>Другой цех</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ПРЕДСМЕННОГО ИНСТРУКТАЖА И ПОДКЛЮЧЕНИЯ ИИ -->
+<div id="och-briefing-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeModals()">
+  <div class="och-modal-box och-briefing-modal-box">
+    <div class="och-modal-header">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div class="och-briefing-modal-icon">
+          <i data-lucide="cpu" style="width: 24px; height: 24px; color: var(--och-red);"></i>
+        </div>
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: var(--och-red); letter-spacing: 0.05em;">Предсменный инструктаж комбината</div>
+          <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">Подключение ИИ-наставника</h3>
+        </div>
+      </div>
+      <button type="button" class="och-modal-close-btn" onclick="simulator.closeModals()" aria-label="Закрыть окно" title="Закрыть окно">
+        ✕
+      </button>
+    </div>
+
+    <div class="och-modal-body">
+      <!-- Навигация по вкладкам -->
+      <div class="och-briefing-tabs">
+        <button type="button" class="och-briefing-tab-btn active" id="tab-btn-gigachat" onclick="simulator.switchBriefingTab('gigachat')">
+          <i data-lucide="zap" style="width: 15px; height: 15px;"></i>
+          <span>Сбер GigaChat API</span>
+          <span class="och-briefing-badge-rec">Онлайн</span>
+        </button>
+        <button type="button" class="och-briefing-tab-btn" id="tab-btn-offline" onclick="simulator.switchBriefingTab('offline')">
+          <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i>
+          <span>Офлайн-движок цеха</span>
+          <span class="och-briefing-badge-offline">Smart</span>
+        </button>
+      </div>
+
+      <!-- Вкладка 1: GigaChat API -->
+      <div class="och-briefing-tab-content" id="tab-content-gigachat">
+        <div class="och-briefing-info-card">
+          <div style="display: flex; gap: 0.65rem; align-items: flex-start;">
+            <i data-lucide="info" style="width: 18px; height: 18px; color: #2563EB; flex-shrink: 0; margin-top: 2px;"></i>
+            <div style="font-size: 0.84rem; line-height: 1.45; color: var(--och-text);">
+              Для живого диалога с наставниками от первого лица и свободного ввода решений введите ключи из личного кабинета 
+              <a href="https://developers.sber.ru/" target="_blank" rel="noopener noreferrer" style="color: #2563EB; font-weight: 700; text-decoration: underline;">Studio Salute (GigaChat API)</a>.
+              Для физических лиц сервис предоставляет <strong>1 000 000 бесплатных токенов в месяц</strong>.
+            </div>
+          </div>
+        </div>
+
+        <form id="och-gigachat-form" onsubmit="event.preventDefault(); simulator.submitGigaChatCredentials();">
+          <div class="och-briefing-fields">
+            <div class="och-form-group">
+              <label for="och-input-client-id" class="och-form-label">
+                Client ID
+                <span class="och-form-required">*</span>
+              </label>
+              <input type="text" id="och-input-client-id" name="client_id" class="och-text-input" placeholder="например: a1b2c3d4-e5f6-7890-abcd-ef0123456789" autocomplete="off" spellcheck="false">
+            </div>
+
+            <div class="och-form-group">
+              <label for="och-input-client-secret" class="och-form-label">
+                Client Secret
+                <span class="och-form-required">*</span>
+              </label>
+              <input type="password" id="och-input-client-secret" name="client_secret" class="och-text-input" placeholder="секретный ключ доступа" autocomplete="off" spellcheck="false">
+            </div>
+
+            <!-- Альтернатива: готовый Base64 Auth Key -->
+            <details class="och-briefing-details">
+              <summary class="och-briefing-summary">Или ввести готовый Авторизационный ключ (Base64 Auth Key)</summary>
+              <div style="padding-top: 0.65rem;">
+                <input type="password" id="och-input-auth-key" name="auth_key" class="och-text-input" placeholder="Basic Auth Key (Base64 client_id:client_secret)" autocomplete="off" spellcheck="false">
+                <small style="color: var(--och-text-dim); font-size: 0.74rem; display: block; margin-top: 0.35rem;">Если указан данный ключ, он имеет приоритет над полями Client ID и Client Secret.</small>
+              </div>
+            </details>
+          </div>
+
+          <div id="och-briefing-status" class="och-briefing-status" style="display: none;"></div>
+
+          <div class="och-briefing-actions">
+            <button type="submit" class="och-btn-primary" id="och-btn-connect-gigachat" style="flex: 1; justify-content: center;">
+              <i data-lucide="key" style="width: 16px; height: 16px;"></i>
+              <span id="och-btn-connect-text">Проверить и заступить на смену</span>
+            </button>
+            <button type="button" class="och-btn-secondary" onclick="simulator.useSmartOfflineMode()">
+              <span>Играть офлайн</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Вкладка 2: Офлайн-режим -->
+      <div class="och-briefing-tab-content" id="tab-content-offline" style="display: none;">
+        <div class="och-briefing-offline-card">
+          <div class="och-briefing-offline-badge">100% автономный контур</div>
+          <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--och-text-heading); margin: 0.5rem 0 0.35rem;">Умный локальный биохимический движок «Очаково»</h4>
+          <p style="font-size: 0.86rem; color: var(--och-text); line-height: 1.5; margin-bottom: 1rem;">
+            Симулятор полностью работоспособен без внешних подключений к интернет-сервисам и сторонних API:
+          </p>
+          <ul class="och-briefing-feature-list">
+            <li><i data-lucide="check" style="width: 15px; height: 15px; color: var(--och-green);"></i><span>Полная база из 20 промышленных ситуаций и регламентов цехов</span></li>
+            <li><i data-lucide="check" style="width: 15px; height: 15px; color: var(--och-green);"></i><span>Биохимическая физика брожения ЦКТ, температур и плотности Brix</span></li>
+            <li><i data-lucide="check" style="width: 15px; height: 15px; color: var(--och-green);"></i><span>Локальная озвучка реплик наставников цеха Михалыча и Елены</span></li>
+            <li><i data-lucide="check" style="width: 15px; height: 15px; color: var(--och-green);"></i><span>Выдача персонального Сертификата готовности с защитным кодом</span></li>
+          </ul>
+
+          <div class="och-briefing-actions" style="margin-top: 1.25rem;">
+            <button type="button" class="och-btn-primary" onclick="simulator.useSmartOfflineMode()" style="width: 100%; justify-content: center;">
+              <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+              <span>Заступить на смену в офлайн-режиме</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ВИДЕО-ИНСТРУКТАЖА МАСТЕРА -->
+<div id="och-video-briefing-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeVideoBriefingModal()">
+  <div class="och-modal-box" style="max-width: 680px; border: 2px solid var(--och-red);">
+    <div class="och-modal-header" style="background: #FFF5F6;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--och-red); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <i data-lucide="play-circle" style="width: 22px; height: 22px;"></i>
+        </div>
+        <div>
+          <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--och-red);">Видео-инструктаж мастера цеха</div>
+          <h3 style="font-size: 1.15rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">{{ scenario.workshop_name }}</h3>
+        </div>
+      </div>
+      <button type="button" class="och-modal-close-btn" onclick="simulator.closeVideoBriefingModal()" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="och-modal-body" style="padding: 1.25rem;">
+      <div style="position: relative; border-radius: var(--radius-md); overflow: hidden; background: #000; box-shadow: var(--shadow-md); margin-bottom: 1rem;">
+        <video id="och-briefing-video-player" controls preload="metadata" style="width: 100%; height: auto; max-height: 380px; display: block;">
+          <source src="/media/videos/{% if 'krones' in scenario.slug or 'bot-line' in scenario.slug %}operator_linii_rozliva.mp4{% elif 'brew' in scenario.slug %}mashinist_oborudovaniya.mp4{% elif 'okroshka' in scenario.slug or 'lab' in scenario.slug %}himik_laborant.mp4{% elif 'secret' in scenario.slug %}noviy_vkus_rnd.mp4{% else %}operator_linii_rozliva.mp4{% endif %}" type="video/mp4">
+          Ваш браузер не поддерживает видео.
+        </video>
+      </div>
+      <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-sm); padding: 0.85rem; font-size: 0.88rem; color: var(--och-text); line-height: 1.5;">
+        <strong style="color: var(--och-red);">Инструктаж наставника ({{ scenario.mentor_name }}):</strong> «Смотри, как работает узел на реальном конвейере комбината! Изучи ритм оборудования перед запуском смены. Главное — чистота контура, контроль температуры и слаженность действий с диспетчером!»
+      </div>
+      <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+        <button type="button" class="och-btn-primary" onclick="simulator.closeVideoBriefingModal()" style="padding: 0.65rem 1.25rem;">
+          <i data-lucide="check" style="width: 16px; height: 16px;"></i>
+          <span>Всё понятно, приступить к смене!</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/simulator.js' %}"></script>
+{% endblock %}

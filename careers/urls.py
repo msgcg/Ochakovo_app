@@ -24,6 +24,10 @@ urlpatterns = [
     path('vacancies/<slug:slug>/', views.vacancy_detail_view, name='vacancy_detail'),
     path('story/', views.story_view, name='story'),
     
+    # Видеопотоки цехов завода с поддержкой Range 206 для аудиодорожек
+    path('media/videos/<str:filename>', views.video_stream_view, name='video_stream_media'),
+    path('video/<str:filename>', views.video_stream_view, name='video_stream'),
+    
     # PWA service files
     path('offline/', views.offline_view, name='offline'),
     path('manifest.json', views.manifest_view, name='manifest'),

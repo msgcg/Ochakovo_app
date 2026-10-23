@@ -1,6 +1,7 @@
 import json
 import uuid
 import re
+from pathlib import Path
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
@@ -470,11 +471,21 @@ def game_credentials_api(request):
     return JsonResponse({'ok': False, 'status': 'error', 'message': 'Неизвестное действие.'}, status=400)
 
 
-@require_GET
+@csrf_exempt
 def game_tts_api(request):
-    """Генерация аудио реплики наставника через Edge-TTS"""
-    text = request.GET.get('text', '').strip()
-    voice = request.GET.get('voice', 'male')
+    """Генерация аудио реплики наставника через Edge-TTS / Google TTS"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            text = (data.get('text') or '').strip()
+            voice = (data.get('voice') or data.get('speaker_gender') or 'male').strip()
+        except Exception:
+            text = request.POST.get('text', '').strip()
+            voice = request.POST.get('voice', 'male').strip()
+    else:
+        text = request.GET.get('text', '').strip()
+        voice = request.GET.get('voice', 'male').strip()
+
     if not text:
         return HttpResponse(b'', content_type='audio/mpeg')
 
@@ -930,6 +941,51 @@ def manifest_view(request):
         return HttpResponse(content, content_type='application/manifest+json; charset=utf-8')
     except Exception:
         return JsonResponse({'error': 'manifest not found'}, status=404)
+
+
+def video_stream_view(request, filename):
+    """
+    Потоковая выдача видеороликов вакансий и инструктажей цеха завода «Очаково».
+    Поддерживает стандартные HTTP Range-запросы (HTTP 206 Partial Content, Accept-Ranges: bytes),
+    что критически важно для браузеров (Chromium, Firefox, Safari) для воспроизведения AAC-аудиодорожки
+    и плавной перемотки без потери звука.
+    """
+    from django.http import Http404, HttpResponse, FileResponse
+    video_dir = Path(settings.MEDIA_ROOT) / 'videos'
+    video_path = video_dir / filename
+    if not video_path.exists() or not video_path.is_file():
+        raise Http404("Видеоролик не найден")
+
+    file_size = video_path.stat().st_size
+    range_header = request.headers.get('Range', '').strip()
+
+    if range_header and range_header.startswith('bytes='):
+        range_val = range_header.replace('bytes=', '').strip()
+        parts = range_val.split('-')
+        start = int(parts[0]) if parts[0] else 0
+        end = int(parts[1]) if len(parts) > 1 and parts[1] else file_size - 1
+        if end >= file_size:
+            end = file_size - 1
+        if start > end:
+            start = 0
+
+        length = end - start + 1
+        with open(video_path, 'rb') as f:
+            f.seek(start)
+            data = f.read(length)
+
+        resp = HttpResponse(data, status=206, content_type='video/mp4')
+        resp['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+        resp['Accept-Ranges'] = 'bytes'
+        resp['Content-Length'] = str(length)
+        resp['Cache-Control'] = 'public, max-age=86400'
+        return resp
+    else:
+        resp = FileResponse(open(video_path, 'rb'), content_type='video/mp4')
+        resp['Accept-Ranges'] = 'bytes'
+        resp['Content-Length'] = str(file_size)
+        resp['Cache-Control'] = 'public, max-age=86400'
+        return resp
 
 
 def service_worker_view(request):

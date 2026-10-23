@@ -815,6 +815,39 @@ window.simulator = (function () {
     feed.appendChild(row);
     feed.scrollTop = feed.scrollHeight;
 
+    // Обновляем диалоговую консоль визуальной новеллы
+    currentActiveSpeech = text || '';
+    const vnSpeakerBadge = document.getElementById('och-vn-speaker-badge');
+    const vnSpeakerName = document.getElementById('och-vn-speaker-name');
+    const vnSpeakerRole = document.getElementById('och-vn-speaker-role');
+    const vnSpeakerAvatar = document.getElementById('och-vn-speaker-avatar');
+    const vnActiveText = document.getElementById('och-vn-active-text');
+    const vnActiveSub = document.getElementById('och-vn-active-sub');
+
+    if (vnSpeakerBadge) {
+      vnSpeakerBadge.className = `och-vn-speaker-badge ${role === 'candidate' ? 'intern' : 'mentor'}`;
+    }
+    if (vnSpeakerName) vnSpeakerName.innerText = name;
+    if (vnSpeakerRole) vnSpeakerRole.innerText = role === 'candidate' ? 'Стажёр' : 'Наставник';
+    if (vnSpeakerAvatar) vnSpeakerAvatar.src = avatarSrc;
+    if (vnActiveText) vnActiveText.innerText = text;
+    if (vnActiveSub) {
+      if (subtext) {
+        vnActiveSub.style.display = 'flex';
+        vnActiveSub.innerHTML = `<i data-lucide="info" style="width: 14px; height: 14px; color: #B45309;"></i><span>${subtext}</span>`;
+      } else {
+        vnActiveSub.style.display = 'none';
+      }
+    }
+
+    // Добавляем реплику в выдвижной журнал переговоров смены
+    const histList = document.getElementById('och-history-drawer-list');
+    if (histList) {
+      const cloned = row.cloneNode(true);
+      histList.appendChild(cloned);
+      histList.scrollTop = histList.scrollHeight;
+    }
+
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
       window.lucide.createIcons();
     }
@@ -1042,7 +1075,9 @@ window.simulator = (function () {
     closeVideoBriefingModal();
   }
 
-  // Управление видео-инструктажем мастера цеха
+  // Управление видео-инструктажем мастера цеха (с поддержкой звука и Range 206)
+  let currentActiveSpeech = '';
+
   function openVideoBriefingModal() {
     const modal = document.getElementById('och-video-briefing-modal');
     if (!modal) return;
@@ -1050,8 +1085,18 @@ window.simulator = (function () {
     const video = document.getElementById('och-briefing-video-player');
     if (video) {
       try {
-        video.play().catch(() => {});
-      } catch (e) {}
+        video.muted = false;
+        video.volume = 1.0;
+        video.currentTime = 0;
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.log('[Video] Browser autoplay policy required user click:', err);
+          });
+        }
+      } catch (e) {
+        console.warn('[Video] Play error:', e);
+      }
     }
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
       window.lucide.createIcons();
@@ -1063,7 +1108,37 @@ window.simulator = (function () {
     if (modal) modal.style.display = 'none';
     const video = document.getElementById('och-briefing-video-player');
     if (video) {
-      video.pause();
+      try {
+        video.pause();
+      } catch (e) {}
+    }
+  }
+
+  function toggleHistoryDrawer() {
+    const drawer = document.getElementById('och-history-drawer');
+    const backdrop = document.getElementById('och-history-drawer-backdrop');
+    if (!drawer) return;
+    const isOpen = drawer.classList.toggle('open');
+    if (backdrop) {
+      backdrop.style.display = isOpen ? 'block' : 'none';
+    }
+    if (isOpen) {
+      const list = document.getElementById('och-history-drawer-list');
+      if (list) list.scrollTop = list.scrollHeight;
+    }
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+
+  function replayCurrentSpeech(btn) {
+    if (currentActiveSpeech) {
+      playMentorVoice(currentActiveSpeech, btn);
+    } else {
+      const activeTextEl = document.getElementById('och-vn-active-text');
+      if (activeTextEl && activeTextEl.innerText.trim()) {
+        playMentorVoice(activeTextEl.innerText.trim(), btn);
+      }
     }
   }
 
@@ -1072,10 +1147,10 @@ window.simulator = (function () {
     const sprite = document.getElementById('vn-sprite-student');
     if (!sprite) return;
     const moodMap = {
-      'neutral': '/static/img/vn_sprites/student_neutral.png',
-      'talking': '/static/img/vn_sprites/student_talking.png',
-      'thinking': '/static/img/vn_sprites/student_thinking.png',
-      'success': '/static/img/vn_sprites/student_success.png'
+      'neutral': '/static/img/avatar_student_boy.jpg',
+      'talking': '/static/img/avatar_student_boy.jpg',
+      'thinking': '/static/img/avatar_student_boy.jpg',
+      'success': '/static/img/avatar_student_girl.jpg'
     };
     if (moodMap[mood]) {
       sprite.src = moodMap[mood];
@@ -1351,6 +1426,16 @@ window.simulator = (function () {
 
     // Инициализируем стрик и начальные значения датчиков
     renderStreakBadge();
+
+    // Автоматически предлагаем обучающий видео-инструктаж перед началом смены
+    const pathSlug = window.location.pathname.split('/').filter(Boolean).pop() || 'shift';
+    const videoStorageKey = 'och_video_offered_' + pathSlug;
+    if (!sessionStorage.getItem(videoStorageKey)) {
+      setTimeout(() => {
+        openVideoBriefingModal();
+        sessionStorage.setItem(videoStorageKey, 'true');
+      }, 500);
+    }
     const tempEl = document.getElementById('val-temp');
     if (tempEl) {
       const parsedTemp = parseFloat(tempEl.innerText);
@@ -1417,6 +1502,8 @@ window.simulator = (function () {
     useSmartOfflineMode,
     openVideoBriefingModal,
     closeVideoBriefingModal,
+    toggleHistoryDrawer,
+    replayCurrentSpeech,
     updateStudentSprite
   };
 })();

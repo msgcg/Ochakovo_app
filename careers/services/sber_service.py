@@ -1658,12 +1658,17 @@ class OchakovoAIService:
     @classmethod
     def synthesize_speech(cls, text: str, voice_type: str = "male") -> tuple[bytes | None, str]:
         """
-        Синтезирует речь наставника цеха через Edge-TTS (нейросетевой голос).
-        voice_type: 'male' (DmitryNeural для Михалыча/Романа) или 'female' (SvetlanaNeural для Анны/Елены).
-        Использует локальный дисковый кэш (media/tts_cache) для мгновенного ответа и офлайн-работы внутри Docker.
+        Синтезирует речь наставника цеха через Edge-TTS (нейросетевой голос)
+        с надежным фоллбэком на Google TTS и дисковым кэшированием (media/tts_cache).
         """
         if not text:
             return None, "audio/mpeg"
+
+        import re
+        import hashlib
+        import urllib.request
+        import urllib.parse
+        from django.conf import settings
 
         # Очистка текста от лишних скобок и служебных символов
         clean_text = re.sub(r'\(.*?\)|\[.*?\]', '', str(text))
@@ -1673,11 +1678,9 @@ class OchakovoAIService:
 
         voice_name = "ru-RU-SvetlanaNeural" if voice_type == "female" else "ru-RU-DmitryNeural"
 
-        # 1. Проверяем локальный дисковый кэш
+        # 1. Проверяем локальный дисковый кэш (media/tts_cache)
         cache_file = None
         try:
-            import hashlib
-            from django.conf import settings
             cache_dir = Path(settings.BASE_DIR) / 'media' / 'tts_cache'
             cache_dir.mkdir(parents=True, exist_ok=True)
             cache_key = hashlib.md5(f"{voice_name}:{clean_text}".encode('utf-8')).hexdigest()
@@ -1688,34 +1691,68 @@ class OchakovoAIService:
         except Exception as cache_err:
             print(f"[OchakovoAIService] Ошибка доступа к TTS кэшу: {cache_err}")
 
-        if not HAS_EDGE_TTS:
-            return None, "audio/mpeg"
-
-        try:
-            audio_data = bytearray()
-
-            async def _stream():
-                communicate = edge_tts.Communicate(clean_text, voice_name)
-                async for chunk in communicate.stream():
-                    if chunk["type"] == "audio":
-                        audio_data.extend(chunk["data"])
-
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # 2. Попытка Edge-TTS (высококачественный нейросетевой голос Дмитрия/Светланы)
+        if HAS_EDGE_TTS:
             try:
-                loop.run_until_complete(_stream())
-            finally:
-                loop.close()
+                audio_data = bytearray()
 
-            if len(audio_data) > 100:
-                audio_bytes = bytes(audio_data)
+                async def _stream():
+                    communicate = edge_tts.Communicate(clean_text, voice_name)
+                    async for chunk in communicate.stream():
+                        if chunk["type"] == "audio":
+                            audio_data.extend(chunk["data"])
+
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(asyncio.wait_for(_stream(), timeout=4.0))
+                finally:
+                    loop.close()
+
+                if len(audio_data) > 100:
+                    audio_bytes = bytes(audio_data)
+                    if cache_file:
+                        try:
+                            cache_file.write_bytes(audio_bytes)
+                        except Exception:
+                            pass
+                    return audio_bytes, "audio/mpeg"
+            except Exception as exc:
+                print(f"[OchakovoAIService] Edge-TTS не ответил ({exc}), подключаем надежный Google TTS фоллбэк...")
+
+        # 3. Надежный Google Translate TTS фоллбэк (живой естественный русский голос)
+        try:
+            chunks = []
+            parts = re.split(r'([.!?\n]+)', clean_text)
+            buf = ''
+            for p in parts:
+                if len(buf) + len(p) < 180:
+                    buf += p
+                else:
+                    if buf.strip():
+                        chunks.append(buf.strip())
+                    buf = p
+            if buf.strip():
+                chunks.append(buf.strip())
+
+            full_audio = bytearray()
+            for chunk in chunks:
+                if not chunk.strip():
+                    continue
+                url = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ru&q=' + urllib.parse.quote(chunk)
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                with urllib.request.urlopen(req, timeout=5) as r:
+                    full_audio.extend(r.read())
+
+            if len(full_audio) > 100:
+                audio_bytes = bytes(full_audio)
                 if cache_file:
                     try:
                         cache_file.write_bytes(audio_bytes)
                     except Exception:
                         pass
                 return audio_bytes, "audio/mpeg"
-        except Exception as exc:
-            print(f"[OchakovoAIService] Ошибка Edge-TTS синтеза: {exc}")
+        except Exception as g_err:
+            print(f"[OchakovoAIService] Ошибка Google TTS фоллбэка: {g_err}")
 
         return None, "audio/mpeg"
