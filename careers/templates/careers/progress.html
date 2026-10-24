@@ -1,580 +1,642 @@
-{% extends "base.html" %}
-{% load static %}
-
-{% block title %}Мой карьерный прогресс и сертификат стажёра | Очаково{% endblock %}
-{% block description %}Отслеживайте заработанные баллы мастерства, пройденные цеховые кейсы, квалификационный разряд и подавайте отклик на вакансии завода «Очаково» через hh.ru с подтвержденным сертификатом.{% endblock %}
-
-{% block content %}
-<div class="och-progress-page-wrapper">
-  <!-- 1. HERO ХЕДЕР ЛИЧНОГО КАБИНЕТА СТАЖЁРА -->
-  <section class="och-progress-hero">
-    <div class="container">
-      <div class="och-progress-hero-inner">
-        <div class="och-progress-hero-left">
-          <div class="och-hero-tag">
-            <i data-lucide="award" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
-            <span>Личный кабинет и квалификация стажёра</span>
-          </div>
-          <h1 class="och-progress-title">
-            Мой карьерный прогресс в «Очаково»
-          </h1>
-          <p class="och-progress-desc">
-            Здесь фиксируются все ваши практические решения на производственных линиях комбината: от бродильных танков ЦКТ до скоростных роботов Krones и логистических комплексов. Ваши результаты формируют официальный сертификат для отклика на hh.ru.
-          </p>
-
-          <div class="och-progress-actions">
-            {% if request.session.vk_user %}
-            <div style="background: #EFF6FF; border: 2px solid #0077FF; box-shadow: 2.5px 2.5px 0px #1E293B; border-radius: 10px; padding: 0.55rem 0.95rem; display: inline-flex; align-items: center; gap: 0.65rem; font-size: 0.84rem;">
-              <span style="width: 10px; height: 10px; border-radius: 50%; background: #0077FF; display: inline-block;"></span>
-              <span>Авторизован: <strong>{{ request.session.vk_user.full_name }}</strong></span>
-              <a href="{% url 'careers:candidate_logout' %}?next=/progress/" style="color: #DC2626; font-size: 0.74rem; font-weight: 700; margin-left: 0.35rem;">[Выйти]</a>
-            </div>
-            {% else %}
-            <a href="{% url 'careers:vk_login' %}?next=/progress/" style="background: #0077FF; color: #FFFFFF; border: 2px solid #1E293B; box-shadow: 3px 3px 0px #1E293B; border-radius: 10px; padding: 0.6rem 1rem; font-size: 0.88rem; font-weight: 900; text-decoration: none; display: inline-flex; align-items: center; gap: 0.45rem;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15.684 0H8.316C3.723 0 0 3.723 0 8.316v7.368C0 20.277 3.723 24 8.316 24h7.368C20.277 24 24 20.277 24 15.684V8.316C24 3.723 20.277 0 15.684 0z" fill="#0077FF"/><path d="M12.923 17.065c-4.946 0-7.77-3.385-7.892-9.015h2.477c.084 4.131 1.908 5.885 3.354 6.246V8.05h2.33v3.562c1.424-.154 2.893-1.777 3.4-3.562h2.331c-.392 2.215-2.023 3.838-3.177 4.5 1.154.538 3.015 1.954 3.63 4.515h-2.576c-.485-1.507-1.7-2.677-3.477-2.854v2.854h-.392z" fill="#FFF"/></svg>
-              <span>Привязать VK ID профиль</span>
-            </a>
-            {% endif %}
-            <a href="{% url 'careers:export_skills_pdf' %}" class="och-btn-outline" style="border: 2px solid #1E293B; box-shadow: 3px 3px 0px #1E293B; background: #FFFFFF; font-weight: 900; color: #0F172A; text-decoration: none; padding: 0.6rem 1rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.45rem;">
-              <i data-lucide="file-text" style="width: 16px; height: 16px; color: #D50032;"></i>
-              <span>Скачать PDF-паспорт</span>
-            </a>
-            <button type="button" class="och-btn-primary" onclick="openProgressApplyModal()">
-              <i data-lucide="send" style="width: 16px; height: 16px;"></i>
-              <span>Откликнуться на hh.ru с сертификатом</span>
-            </button>
-            <a href="{% url 'careers:game_select' %}" class="och-btn-secondary">
-              <i data-lucide="play-circle" style="width: 16px; height: 16px; color: var(--och-red);"></i>
-              <span>Перейти в цеха ({{ total_cases_label }})</span>
-            </a>
-          </div>
-        </div>
-
-        <!-- КАРТОЧКА КАРЬЕРНОГО СТАТУСА И РАЗРЯДА (HUD PROFILE) -->
-        <div class="och-progress-profile-card">
-          <div class="och-profile-card-header">
-            <div class="och-profile-avatar-wrap">
-              <img src="{% static 'img/ochakovo_emblem.svg' %}" alt="Стажёр" class="och-profile-avatar">
-              <span class="och-profile-online-dot"></span>
-            </div>
-            <div>
-              <div style="font-size: 0.76rem; text-transform: uppercase; font-weight: 800; color: var(--och-text-dim);">Квалификация:</div>
-              <div id="prog-rank-title" class="och-profile-rank-name">Кандидат-практикант</div>
-            </div>
-          </div>
-
-          <div class="och-profile-metrics-row">
-            <div class="och-profile-metric">
-              <div class="och-pmetric-val"><span id="prog-total-score">0</span> <small>XP</small></div>
-              <div class="och-pmetric-lbl">Общий рейтинг</div>
-            </div>
-            <div class="och-profile-metric">
-              <div class="och-pmetric-val"><span id="prog-streak-val">0</span> <small id="prog-mult-val">x1.0</small></div>
-              <div class="och-pmetric-lbl">Стрик без брака</div>
-            </div>
-            <div class="och-profile-metric">
-              <div class="och-pmetric-val"><span id="prog-cases-count">0</span> / <span id="prog-total-cases">{{ total_cases_count }}</span></div>
-              <div class="och-pmetric-lbl">Пройдено цехов</div>
-            </div>
-          </div>
-
-          <!-- XP PROGRESS BAR ДО СЛЕДУЮЩЕГО РАЗРЯДА -->
-          <div class="och-profile-xp-section">
-            <div class="och-xp-labels">
-              <span>Прогресс до звания «Инженер-технолог»:</span>
-              <strong id="prog-xp-percent">0%</strong>
-            </div>
-            <div class="och-xp-bar-track">
-              <div id="prog-xp-bar-fill" class="och-xp-bar-fill" style="width: 0%;"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 2. ИНТЕРАКТИВНАЯ КАРТА ПРОИЗВОДСТВЕННЫХ КЕЙСОВ ({{ total_cases_label }}) -->
-  <section class="och-section" style="background: #FAFAFA; border-top: 1px solid var(--och-border); border-bottom: 1px solid var(--och-border);">
-    <div class="container">
-      <div class="och-section-head">
-        <div class="och-hero-tag" style="background: rgba(213,0,50,0.06); color: var(--och-red); border-color: rgba(213,0,50,0.15);">
-          <i data-lucide="factory" style="width: 14px; height: 14px;"></i>
-          <span>Производственная программа комбината</span>
-        </div>
-        <h2 style="font-size: 1.85rem; font-weight: 900; color: var(--och-text-heading); margin-bottom: 0.5rem;">
-          Цеха и кейсы смен завода «Очаково»
-        </h2>
-        <p style="color: var(--och-text-dim); max-width: 640px; margin: 0 auto; font-size: 0.95rem;">
-          Пройдите все {{ total_cases_count }} практических ситуаций, чтобы получить максимальный рейтинг {{ max_possible_score }} XP и рекомендацию на должность мастера цеха с окладом от 95 000 ₽.
-        </p>
-      </div>
-
-      <div class="och-progress-cases-grid">
-        {% for sc in scenarios %}
-        <div class="och-progress-case-card" id="case-card-{{ sc.slug }}" data-scenario-slug="{{ sc.slug }}">
-          <div class="och-pcase-head">
-            <div class="och-pcase-mentor">
-              <img src="{% static 'img/' %}{{ sc.mentor_avatar }}" alt="{{ sc.mentor_name }}" class="och-pcase-avatar">
-              <div>
-                <div class="och-pcase-mentor-name">{{ sc.mentor_name }}</div>
-                <div class="och-pcase-mentor-role">{{ sc.mentor_role }}</div>
-              </div>
-            </div>
-            <span class="och-pcase-status-badge badge-todo" id="badge-status-{{ sc.slug }}">
-              Не пройден
-            </span>
-          </div>
-
-          <div class="och-pcase-body">
-            <div class="och-pcase-workshop">
-              <i data-lucide="map-pin" style="width: 13px; height: 13px; color: var(--och-red);"></i>
-              <span>{{ sc.workshop_name }}</span>
-            </div>
-            <h3 class="och-pcase-title">{{ sc.title }}</h3>
-            <p class="och-pcase-desc">{{ sc.description|truncatewords:20 }}</p>
-          </div>
-
-          <div class="och-pcase-footer">
-            <div class="och-pcase-score-display">
-              <span class="lbl">Лучший балл:</span>
-              <strong id="best-score-{{ sc.slug }}" class="score-val">—</strong>
-            </div>
-            <a href="{% url 'careers:game_play' scenario_slug=sc.slug %}" class="och-btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" id="btn-play-{{ sc.slug }}">
-              <span>Пройти смену</span>
-              <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-            </a>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-
-  <!-- 3. ЗАЛ ДОСТИЖЕНИЙ И БЕЙДЖЕЙ ЗАВОДА (АЧИВКИ) -->
-  <section class="och-section och-achieve-section" style="padding: clamp(3.5rem, 5vw, 5rem) 0 4.5rem;">
-    <div class="container">
-      <div class="och-section-head">
-        <div class="och-hero-tag">
-          <i data-lucide="medal" style="width: 14px; height: 14px; color: var(--och-gold);"></i>
-          <span>Заводской зал славы</span>
-        </div>
-        <h2 style="font-size: 1.85rem; font-weight: 900; color: var(--och-text-heading); margin-bottom: 0.5rem;">
-          Квалификационные достижения комбината
-        </h2>
-        <p style="color: var(--och-text-dim); max-width: 600px; margin: 0 auto; font-size: 0.95rem;">
-          Бейджи начисляются за образцовые инженерные решения и соблюдение золотого стандарта Очаково с 1978 года.
-        </p>
-      </div>
-
-      <div class="och-achieve-grid">
-        <div class="och-achieve-card" id="achieve-cooling">
-          <div class="och-achieve-icon-box icon-cooling">
-            <i data-lucide="snowflake" style="width: 24px; height: 24px;"></i>
-          </div>
-          <div class="och-achieve-info">
-            <div class="och-achieve-name">Повелитель гликоля</div>
-            <div class="och-achieve-desc">Успешное охлаждение сусла до нормы (-3°C) и спасение закваски 1978.</div>
-            <div class="och-achieve-status" id="achieve-status-cooling">🔒 Заблокировано</div>
-          </div>
-        </div>
-
-        <div class="och-achieve-card" id="achieve-krones">
-          <div class="och-achieve-icon-box icon-krones">
-            <i data-lucide="bot" style="width: 24px; height: 24px;"></i>
-          </div>
-          <div class="och-achieve-info">
-            <div class="och-achieve-name">Укротитель Krones</div>
-            <div class="och-achieve-desc">Устранение затора банки и очистка оптического датчика на скорости 35к банок/ч.</div>
-            <div class="och-achieve-status" id="achieve-status-krones">🔒 Заблокировано</div>
-          </div>
-        </div>
-
-        <div class="och-achieve-card" id="achieve-warehouse">
-          <div class="och-achieve-icon-box icon-warehouse">
-            <i data-lucide="truck" style="width: 24px; height: 24px;"></i>
-          </div>
-          <div class="och-achieve-info">
-            <div class="och-achieve-name">Логистический ас</div>
-            <div class="och-achieve-desc">Фиксация паллеты стретчем и отгрузка в рампу №14 без аварий и дрифта.</div>
-            <div class="och-achieve-status" id="achieve-status-warehouse">🔒 Заблокировано</div>
-          </div>
-        </div>
-
-        <div class="och-achieve-card" id="achieve-lab">
-          <div class="och-achieve-icon-box icon-lab">
-            <i data-lucide="flask-conical" style="width: 24px; height: 24px;"></i>
-          </div>
-          <div class="och-achieve-info">
-            <div class="och-achieve-name">Лабораторный глаз</div>
-            <div class="och-achieve-desc">Замер сахаров оптическим рефрактометром Brix и контроль кислотности pH.</div>
-            <div class="och-achieve-status" id="achieve-status-lab">🔒 Заблокировано</div>
-          </div>
-        </div>
-
-        <div class="och-achieve-card" id="achieve-retro">
-          <div class="och-achieve-icon-box icon-retro">
-            <i data-lucide="sparkles" style="width: 24px; height: 24px;"></i>
-          </div>
-          <div class="och-achieve-info">
-            <div class="och-achieve-name">Золотой рецепт 1978</div>
-            <div class="och-achieve-desc">Восстановление исторической рецептуры олимпийского кваса двойного брожения.</div>
-            <div class="och-achieve-status" id="achieve-status-retro">🔒 Заблокировано</div>
-          </div>
-        </div>
-
-        <div class="och-achieve-card" id="achieve-streak">
-          <div class="och-achieve-icon-box icon-streak">
-            <i data-lucide="flame" style="width: 24px; height: 24px;"></i>
-          </div>
-          <div class="och-achieve-info">
-            <div class="och-achieve-name">Оверклокер смены</div>
-            <div class="och-achieve-desc">Серия из 3 и более успешных смен подряд без единого брака и простоя.</div>
-            <div class="och-achieve-status" id="achieve-status-streak">🔒 Заблокировано</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 4. ПРОИЗВОДСТВЕННЫЙ СЕРТИФИКАТ СТАЖЁРА ДЛЯ HH.RU -->
-  <section class="och-section och-cert-section" style="background: #F8FAFC; border-top: 1px solid var(--och-border); padding: clamp(4.5rem, 6vw, 6.5rem) 0;">
-    <div class="container">
-      <div class="och-cert-wrapper" style="margin-top: 1.5rem;">
-        <div class="och-cert-card">
-          <div class="och-cert-header">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <img src="{% static 'img/ochakovo_logo.svg' %}" alt="Очаково" style="height: 38px;">
-              <div>
-                <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--och-red); letter-spacing: 0.08em;">
-                  АО «Очаково» • Программа оплачиваемой практики 2026
-                </div>
-                <div style="font-size: 1.15rem; font-weight: 900; color: var(--och-text-heading);">
-                  Сертификат готовности к производственной смене
-                </div>
-              </div>
-            </div>
-            <div class="och-cert-badge">
-              <i data-lucide="award" style="width: 20px; height: 20px; color: var(--och-gold);"></i>
-              <span id="cert-badge-score">0 XP</span>
-            </div>
-          </div>
-
-          <div class="och-cert-body">
-            <p style="font-size: 0.95rem; line-height: 1.6; color: var(--och-text); margin-bottom: 1.25rem;">
-              Настоящим подтверждается, что соискатель успешно освоил базовые технологические регламенты завода «Очаково» (Москва, ул. Рябиновая, 44), подтвердил навыки предотвращения аварийных ситуаций, контроля плотности сусла и взаимодействия с автоматизированными системами Krones.
-            </p>
-
-            <!-- ОФИЦИАЛЬНО РАЗБЛОКИРОВАННЫЕ БОНУСЫ И ПРЕИМУЩЕСТВА СТАЖИРОВКИ -->
-            <div style="background: #FEF3C7; border: 2px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; border-radius: 12px; padding: 1.15rem; margin-bottom: 1.5rem;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
-                <div style="font-size: 0.8rem; font-weight: 900; text-transform: uppercase; color: #92400E; display: flex; align-items: center; gap: 0.45rem;">
-                  <i data-lucide="gift" style="width: 16px; height: 16px; color: #D97706;"></i>
-                  <span>Бонусы кандидата, подтверждённые в симуляторе завода:</span>
-                </div>
-                <span style="background: #F59E0B; color: #FFFFFF; font-size: 0.7rem; font-weight: 900; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #1E293B;">HR-АКСЕЛЕРАЦИЯ</span>
-              </div>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem;">
-                <div style="background: #FFFFFF; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.65rem 0.85rem;">
-                  <div style="font-weight: 900; font-size: 0.88rem; color: #0F172A; margin-bottom: 0.2rem;">⏱️ Сокращение стажировки</div>
-                  <div style="font-size: 0.78rem; color: #475569; line-height: 1.4;">Срок вводной адаптации сокращён <strong>с 3 мес. до 1 месяца</strong> благодаря практическим навыкам.</div>
-                </div>
-                <div style="background: #FFFFFF; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.65rem 0.85rem;">
-                  <div style="font-weight: 900; font-size: 0.88rem; color: #0F172A; margin-bottom: 0.2rem;">🏆 Допуск ко 2 категории</div>
-                  <div style="font-size: 0.78rem; color: #475569; line-height: 1.4;">Право претендовать на позиции Мастера смены / Технолога с окладом <strong>от 80 000 до 110 000 ₽</strong>.</div>
-                </div>
-                <div style="background: #FFFFFF; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.65rem 0.85rem;">
-                  <div style="font-weight: 900; font-size: 0.88rem; color: #0F172A; margin-bottom: 0.2rem;">🚀 Зелёный коридор HR</div>
-                  <div style="font-size: 0.78rem; color: #475569; line-height: 1.4;">Прямой вызов на очное собеседование с Главным технологом комбината без тестов.</div>
-                </div>
-              </div>
-            </div>
-
-<div class="och-cert-table-wrap">
-              <table class="och-cert-table">
-                <thead>
-                  <tr>
-                    <th>Цех / Участок</th>
-                    <th>Решённый инцидент</th>
-                    <th>Оценка</th>
-                    <th>Статус</th>
-                  </tr>
-                </thead>
-                <tbody id="cert-cases-tbody">
-                  <tr>
-                    <td colspan="4" style="text-align: center; color: var(--och-text-dim); padding: 1.5rem;">
-                      Пройдите хотя бы один цеховой кейс, чтобы наполнить сертификат реальными баллами.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="och-cert-footer">
-            <div class="och-cert-sign">
-              <div style="font-size: 0.75rem; color: var(--och-text-dim);">Главный технолог-наставник:</div>
-              <div style="font-weight: 800; color: var(--och-text-heading); font-family: monospace;">Михалыч (Цех №1)</div>
-            </div>
-            <div class="och-cert-actions">
-              <a href="{% url 'careers:export_skills_pdf' %}" class="och-btn-secondary" style="border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.95rem; font-weight: 800; border-radius: 10px;" title="Скачать официальный PDF-паспорт компетенций">
-                <i data-lucide="download" style="width: 15px; height: 15px; color: var(--och-red);"></i>
-                <span>Скачать PDF-паспорт</span>
-              </a>
-              <button type="button" class="och-btn-primary" onclick="openProgressApplyModal()">
-                <i data-lucide="external-link" style="width: 15px; height: 15px;"></i>
-                <span>Отправить на hh.ru</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-</div>
-
-<!-- МОДАЛЬНОЕ ОКНО ПОДАЧИ ЗАЯВКИ С РЕАЛЬНЫМ ПЕРЕХОДОМ НА HH.RU -->
-<div id="och-progress-apply-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) closeProgressApplyModal()">
-  <div class="och-modal-box" style="max-width: 580px;">
-    <div class="och-modal-header">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div style="width: 42px; height: 42px; border-radius: var(--radius-sm); background: var(--och-red-subtle); border: 1px solid var(--och-border-red); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <img src="{% static 'img/ochakovo_emblem.svg' %}" alt="Очаково" style="width: 24px; height: 24px;">
-        </div>
-        <div>
-          <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--och-red);">Официальный отклик</div>
-          <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">
-            Отклик на практику через hh.ru
-          </h3>
-        </div>
-      </div>
-      <button type="button" class="och-modal-close-btn" onclick="closeProgressApplyModal()">✕</button>
-    </div>
-
-    <div class="och-modal-body">
-      <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
-        <div style="font-size: 0.8rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 0.25rem;">
-          💼 Как работает отклик с симулятора:
-        </div>
-        <div style="font-size: 0.84rem; color: var(--och-text); line-height: 1.45;">
-          Ваша заявка регистрируется в HR-отделе комбината «Очаково», а сформированное сопроводительное письмо с подтвержденным сертификатом (<strong id="modal-cert-score">0 XP</strong>) копируется в буфер обмена для прямой вставки на hh.ru.
-        </div>
-      </div>
-
-      <form id="och-progress-apply-form" onsubmit="window.submitFastApplication(event, 'och-progress-apply-form')" style="display: flex; flex-direction: column; gap: 0.85rem;">
-        <div>
-          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--och-text); margin-bottom: 0.35rem;">
-            Выберите желаемую сезонную вакансию:
-          </label>
-          <select name="vacancy_slug" class="och-text-input" style="width: 100%;">
-            {% for v in vacancies %}
-            <option value="{{ v.slug }}">{{ v.title }} ({{ v.salary_text }})</option>
-            {% endfor %}
-            <option value="">Общая оплачиваемая практика (любой цех)</option>
-          </select>
-        </div>
-
-        <div class="och-modal-form-row">
-          <div>
-            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Ваше ФИО *</label>
-            <input type="text" name="full_name" required placeholder="Иван Петров" class="och-text-input">
-          </div>
-          <div>
-            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Телефон для связи *</label>
-            <input type="tel" name="phone" required placeholder="+7 (999) 000-00-00" class="och-text-input">
-          </div>
-        </div>
-
-        <div class="och-modal-form-row">
-          <div>
-            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Email</label>
-            <input type="email" name="email" placeholder="student@edu.ru" class="och-text-input">
-          </div>
-          <div>
-            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Telegram</label>
-            <input type="text" name="telegram" placeholder="@username" class="och-text-input">
-          </div>
-        </div>
-
-        <div class="och-modal-form-row">
-          <div>
-            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">ВУЗ / Колледж</label>
-            <input type="text" name="university" placeholder="МГУПП, РГАУ-МСХА или др." class="och-text-input">
-          </div>
-          <div>
-            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Курс / статус</label>
-            <input type="text" name="course_or_status" placeholder="3 курс" value="3 курс" class="och-text-input">
-          </div>
-        </div>
-
-        <div>
-          <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Комментарий к отклику</label>
-          <textarea name="comment" rows="2" placeholder="Хочу пройти оплачиваемую практику в цехе брожения Очаково..." class="och-text-input" style="width: 100%; resize: vertical;"></textarea>
-        </div>
-
-        <button type="submit" class="och-btn-primary" style="justify-content: center; padding: 0.9rem; font-size: 0.95rem; margin-top: 0.35rem;">
-          <i data-lucide="send" style="width: 16px; height: 16px;"></i>
-          <span>Зарегистрировать и перейти к отклику на hh.ru</span>
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
-{% endblock %}
-
-{% block extra_scripts %}
-<script>
-  function openProgressApplyModal() {
-    const modal = document.getElementById('och-progress-apply-modal');
-    if (modal) modal.style.display = 'flex';
-  }
-
-  function closeProgressApplyModal() {
-    const modal = document.getElementById('och-progress-apply-modal');
-    if (modal) modal.style.display = 'none';
-  }
-
-  // Загрузка и рендер прогресса соискателя из localStorage
-  document.addEventListener('DOMContentLoaded', () => {
-    renderCandidateProgress();
-  });
-
-  function renderCandidateProgress() {
-    const progress = JSON.parse(localStorage.getItem('ochakovo_career_progress') || '{}');
-    const cases = progress.completedCases || [];
-    const streak = parseInt(localStorage.getItem('ochakovo_shift_streak_count') || '0', 10);
-
-    // Считаем суммарный балл
-    let totalScore = 0;
-    const casesMap = {};
-    cases.forEach(c => {
-      totalScore += (c.score || 0);
-      casesMap[c.slug] = c;
-    });
-
-    // Динамический расчет разрядов на основе количества кейсов
-    const totalCasesCount = parseInt(document.getElementById('prog-total-cases')?.innerText || '{{ total_cases_count|default:8 }}', 10) || 8;
-    const maxScore = totalCasesCount * 100;
-    const rank1Threshold = Math.round(maxScore * 0.25);
-    const rank2Threshold = Math.round(maxScore * 0.50);
-    const rank3Threshold = Math.round(maxScore * 0.75);
-
-    let rank = 'Кандидат-практикант';
-    let nextThreshold = rank1Threshold;
-    if (totalScore >= rank3Threshold) {
-      rank = 'Шеф-наставник комбината';
-      nextThreshold = maxScore;
-    } else if (totalScore >= rank2Threshold) {
-      rank = 'Инженер-технолог смены';
-      nextThreshold = rank3Threshold;
-    } else if (totalScore >= rank1Threshold) {
-      rank = 'Младший сменный мастер';
-      nextThreshold = rank2Threshold;
-    }
-
-    // Множитель стрика
-    let mult = 'x1.0';
-    if (streak >= 4) mult = 'x2.0';
-    else if (streak === 3) mult = 'x1.5';
-    else if (streak === 2) mult = 'x1.2';
-    else if (streak === 1) mult = 'x1.1';
-
-    // Заполняем профиль
-    const scoreEl = document.getElementById('prog-total-score');
-    if (scoreEl) scoreEl.innerText = totalScore;
-
-    const rankEl = document.getElementById('prog-rank-title');
-    if (rankEl) rankEl.innerText = rank;
-
-    const streakEl = document.getElementById('prog-streak-val');
-    if (streakEl) streakEl.innerText = streak;
-
-    const multEl = document.getElementById('prog-mult-val');
-    if (multEl) multEl.innerText = mult;
-
-    const countEl = document.getElementById('prog-cases-count');
-    if (countEl) countEl.innerText = cases.length;
-
-    const certScoreEl = document.getElementById('cert-badge-score');
-    if (certScoreEl) certScoreEl.innerText = `${totalScore} XP`;
-
-    const modalScoreEl = document.getElementById('modal-cert-score');
-    if (modalScoreEl) modalScoreEl.innerText = `${totalScore} XP`;
-
-    // XP Bar fill
-    const pct = Math.min(100, Math.round((totalScore / nextThreshold) * 100));
-    const xpPct = document.getElementById('prog-xp-percent');
-    if (xpPct) xpPct.innerText = `${pct}% (${totalScore}/${nextThreshold} XP)`;
-
-    const xpFill = document.getElementById('prog-xp-bar-fill');
-    if (xpFill) xpFill.style.width = `${pct}%`;
-
-    // Обновляем карточки цехов
-    document.querySelectorAll('.och-progress-case-card').forEach(card => {
-      const slug = card.dataset.scenarioSlug;
-      const badge = document.getElementById(`badge-status-${slug}`);
-      const scoreTxt = document.getElementById(`best-score-${slug}`);
-      const btn = document.getElementById(`btn-play-${slug}`);
-
-      if (casesMap[slug]) {
-        const item = casesMap[slug];
-        if (badge) {
-          badge.className = 'och-pcase-status-badge badge-done';
-          badge.innerHTML = `<i data-lucide="check" style="width: 12px; height: 12px;"></i> Сдано: ${item.score} XP`;
-        }
-        if (scoreTxt) scoreTxt.innerText = `${item.score} / 100`;
-        if (btn) btn.innerHTML = '<span>Переиграть</span>';
-      }
-    });
-
-    // Обновляем бейджи достижений
-    if (casesMap['brew-yeast-flex']) {
-      unlockAchievement('cooling', 'Мастер охлаждения (-3°C гликоль)');
-    }
-    if (casesMap['krones-robot-tilt']) {
-      unlockAchievement('krones', 'Затор устранён без повреждения тары');
-    }
-    if (casesMap['warehouse-drift']) {
-      unlockAchievement('warehouse', 'Паллетирование и WMS в норме');
-    }
-    if (casesMap['lab-qa-crisis']) {
-      unlockAchievement('lab', 'Brix и кислотность проверены');
-    }
-    if (casesMap['secret-drop-1978'] || casesMap['okroshka-detective']) {
-      unlockAchievement('retro', 'Золотой стандарт Очаково 1978');
-    }
-    if (streak >= 3) {
-      unlockAchievement('streak', `Серия из ${streak} смен подряд!`);
-    }
-
-    // Заполняем таблицу сертификата
-    const tbody = document.getElementById('cert-cases-tbody');
-    if (tbody && cases.length > 0) {
-      let rowsHtml = '';
-      cases.forEach(c => {
-        rowsHtml += `
-          <tr>
-            <td><strong>${c.workshop || 'Производственный цех'}</strong></td>
-            <td>${c.title || 'Смена'}</td>
-            <td><strong style="color: var(--och-red);">${c.score}/100</strong></td>
-            <td><span class="och-cert-check">✓ Зачтено (${c.mentor || 'Наставник'})</span></td>
-          </tr>
-        `;
-      });
-      tbody.innerHTML = rowsHtml;
-    }
-
-    if (window.lucide) window.lucide.createIcons();
-  }
-
-  function unlockAchievement(id, note) {
-    const card = document.getElementById(`achieve-${id}`);
-    const status = document.getElementById(`achieve-status-${id}`);
-    if (card) card.classList.add('unlocked');
-    if (status) {
-      status.innerText = `✓ Получено: ${note}`;
-      status.style.color = '#059669';
-      status.style.fontWeight = '700';
-    }
-  }
-</script>
-{% endblock %}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Мой карьерный прогресс и сертификат стажёра | Очаково{% endblock %}
+{% block description %}Отслеживайте заработанные баллы мастерства, пройденные цеховые кейсы, квалификационный разряд и подавайте отклик на вакансии завода «Очаково» через hh.ru с подтвержденным сертификатом.{% endblock %}
+
+{% block content %}
+<div class="och-progress-page-wrapper">
+  <!-- 1. HERO ХЕДЕР ЛИЧНОГО КАБИНЕТА СТАЖЁРА -->
+  <section class="och-progress-hero">
+    <div class="container">
+      <div class="och-progress-hero-inner">
+        <div class="och-progress-hero-left">
+          <div class="och-hero-tag">
+            <i data-lucide="award" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
+            <span>Личный кабинет и квалификация стажёра</span>
+          </div>
+          <h1 class="och-progress-title">
+            Мой карьерный прогресс в «Очаково»
+          </h1>
+          <p class="och-progress-desc">
+            Здесь фиксируются все ваши практические решения на производственных линиях комбината: от бродильных танков ЦКТ до скоростных роботов Krones и логистических комплексов. Ваши результаты формируют официальный сертификат для отклика на hh.ru.
+          </p>
+
+          <div class="och-progress-actions">
+            {% if request.session.vk_user %}
+            <div style="background: #EFF6FF; border: 2px solid #0077FF; box-shadow: 2.5px 2.5px 0px #1E293B; border-radius: 10px; padding: 0.55rem 0.95rem; display: inline-flex; align-items: center; gap: 0.65rem; font-size: 0.84rem;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: #0077FF; display: inline-block;"></span>
+              <span>Авторизован: <strong>{{ request.session.vk_user.full_name }}</strong></span>
+              <a href="{% url 'careers:candidate_logout' %}?next=/progress/" style="color: #DC2626; font-size: 0.74rem; font-weight: 700; margin-left: 0.35rem;">[Выйти]</a>
+            </div>
+            {% else %}
+            <a href="{% url 'careers:vk_login' %}?next=/progress/" style="background: #0077FF; color: #FFFFFF; border: 2px solid #1E293B; box-shadow: 3px 3px 0px #1E293B; border-radius: 10px; padding: 0.6rem 1rem; font-size: 0.88rem; font-weight: 900; text-decoration: none; display: inline-flex; align-items: center; gap: 0.45rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15.684 0H8.316C3.723 0 0 3.723 0 8.316v7.368C0 20.277 3.723 24 8.316 24h7.368C20.277 24 24 20.277 24 15.684V8.316C24 3.723 20.277 0 15.684 0z" fill="#0077FF"/><path d="M12.923 17.065c-4.946 0-7.77-3.385-7.892-9.015h2.477c.084 4.131 1.908 5.885 3.354 6.246V8.05h2.33v3.562c1.424-.154 2.893-1.777 3.4-3.562h2.331c-.392 2.215-2.023 3.838-3.177 4.5 1.154.538 3.015 1.954 3.63 4.515h-2.576c-.485-1.507-1.7-2.677-3.477-2.854v2.854h-.392z" fill="#FFF"/></svg>
+              <span>Привязать VK ID профиль</span>
+            </a>
+            {% endif %}
+            <a href="{% url 'careers:export_skills_pdf' %}" class="och-btn-outline" style="border: 2px solid #1E293B; box-shadow: 3px 3px 0px #1E293B; background: #FFFFFF; font-weight: 900; color: #0F172A; text-decoration: none; padding: 0.6rem 1rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.45rem;">
+              <i data-lucide="file-text" style="width: 16px; height: 16px; color: #D50032;"></i>
+              <span>Скачать PDF-паспорт</span>
+            </a>
+            <button type="button" class="och-btn-primary" onclick="openProgressApplyModal()">
+              <i data-lucide="send" style="width: 16px; height: 16px;"></i>
+              <span>Откликнуться на hh.ru с сертификатом</span>
+            </button>
+            <a href="{% url 'careers:game_select' %}" class="och-btn-secondary">
+              <i data-lucide="play-circle" style="width: 16px; height: 16px; color: var(--och-red);"></i>
+              <span>Перейти в цеха ({{ total_cases_label }})</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- КАРТОЧКА КАРЬЕРНОГО СТАТУСА И РАЗРЯДА (HUD PROFILE) -->
+        <div class="och-progress-profile-card">
+          <div class="och-profile-card-header">
+            <div class="och-profile-avatar-wrap">
+              <img src="{% static 'img/ochakovo_emblem.svg' %}" alt="Стажёр" class="och-profile-avatar">
+              <span class="och-profile-online-dot"></span>
+            </div>
+            <div>
+              <div style="font-size: 0.76rem; text-transform: uppercase; font-weight: 800; color: var(--och-text-dim);">Квалификация:</div>
+              <div id="prog-rank-title" class="och-profile-rank-name">Кандидат-практикант</div>
+            </div>
+          </div>
+
+          <div class="och-profile-metrics-row">
+            <div class="och-profile-metric">
+              <div class="och-pmetric-val"><span id="prog-total-score">0</span> <small>XP</small></div>
+              <div class="och-pmetric-lbl">Общий рейтинг</div>
+            </div>
+            <div class="och-profile-metric">
+              <div class="och-pmetric-val"><span id="prog-streak-val">0</span> <small id="prog-mult-val">x1.0</small></div>
+              <div class="och-pmetric-lbl">Стрик без брака</div>
+            </div>
+            <div class="och-profile-metric">
+              <div class="och-pmetric-val"><span id="prog-cases-count">0</span> / <span id="prog-total-cases">{{ total_cases_count }}</span></div>
+              <div class="och-pmetric-lbl">Пройдено цехов</div>
+            </div>
+          </div>
+
+          <!-- XP PROGRESS BAR ДО СЛЕДУЮЩЕГО РАЗРЯДА -->
+          <div class="och-profile-xp-section">
+            <div class="och-xp-labels">
+              <span>Прогресс до звания «Инженер-технолог»:</span>
+              <strong id="prog-xp-percent">0%</strong>
+            </div>
+            <div class="och-xp-bar-track">
+              <div id="prog-xp-bar-fill" class="och-xp-bar-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. ИНТЕРАКТИВНАЯ КАРТА ПРОИЗВОДСТВЕННЫХ КЕЙСОВ ({{ total_cases_label }}) -->
+  <section class="och-section" style="background: #FAFAFA; border-top: 1px solid var(--och-border); border-bottom: 1px solid var(--och-border);">
+    <div class="container">
+      <div class="och-section-head">
+        <div class="och-hero-tag" style="background: rgba(213,0,50,0.06); color: var(--och-red); border-color: rgba(213,0,50,0.15);">
+          <i data-lucide="factory" style="width: 14px; height: 14px;"></i>
+          <span>Производственная программа комбината</span>
+        </div>
+        <h2 style="font-size: 1.85rem; font-weight: 900; color: var(--och-text-heading); margin-bottom: 0.5rem;">
+          Цеха и кейсы смен завода «Очаково»
+        </h2>
+        <p style="color: var(--och-text-dim); max-width: 640px; margin: 0 auto; font-size: 0.95rem;">
+          Пройдите все {{ total_cases_count }} практических ситуаций, чтобы получить максимальный рейтинг {{ max_possible_score }} XP и рекомендацию на должность мастера цеха с окладом от 95 000 ₽.
+        </p>
+      </div>
+
+      <div class="och-progress-cases-grid">
+        {% for sc in scenarios %}
+        <div class="och-progress-case-card" id="case-card-{{ sc.slug }}" data-scenario-slug="{{ sc.slug }}">
+          <div class="och-pcase-head">
+            <div class="och-pcase-mentor">
+              <img src="{% static 'img/' %}{{ sc.mentor_avatar }}" alt="{{ sc.mentor_name }}" class="och-pcase-avatar">
+              <div>
+                <div class="och-pcase-mentor-name">{{ sc.mentor_name }}</div>
+                <div class="och-pcase-mentor-role">{{ sc.mentor_role }}</div>
+              </div>
+            </div>
+            <span class="och-pcase-status-badge badge-todo" id="badge-status-{{ sc.slug }}">
+              Не пройден
+            </span>
+          </div>
+
+          <div class="och-pcase-body">
+            <div class="och-pcase-workshop">
+              <i data-lucide="map-pin" style="width: 13px; height: 13px; color: var(--och-red);"></i>
+              <span>{{ sc.workshop_name }}</span>
+            </div>
+            <h3 class="och-pcase-title">{{ sc.title }}</h3>
+            <p class="och-pcase-desc">{{ sc.description|truncatewords:20 }}</p>
+          </div>
+
+          <div class="och-pcase-footer">
+            <div class="och-pcase-score-display">
+              <span class="lbl">Лучший балл:</span>
+              <strong id="best-score-{{ sc.slug }}" class="score-val">—</strong>
+            </div>
+            <a href="{% url 'careers:game_play' scenario_slug=sc.slug %}" class="och-btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" id="btn-play-{{ sc.slug }}">
+              <span>Пройти смену</span>
+              <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. ЗАЛ ДОСТИЖЕНИЙ И БЕЙДЖЕЙ ЗАВОДА (АЧИВКИ) -->
+  <section class="och-section och-achieve-section" style="padding: clamp(3.5rem, 5vw, 5rem) 0 4.5rem;">
+    <div class="container">
+      <div class="och-section-head">
+        <div class="och-hero-tag">
+          <i data-lucide="medal" style="width: 14px; height: 14px; color: var(--och-gold);"></i>
+          <span>Заводской зал славы</span>
+        </div>
+        <h2 style="font-size: 1.85rem; font-weight: 900; color: var(--och-text-heading); margin-bottom: 0.5rem;">
+          Квалификационные достижения комбината
+        </h2>
+        <p style="color: var(--och-text-dim); max-width: 600px; margin: 0 auto; font-size: 0.95rem;">
+          Бейджи начисляются за образцовые инженерные решения и соблюдение золотого стандарта Очаково с 1978 года.
+        </p>
+      </div>
+
+      <div class="och-achieve-grid">
+        <div class="och-achieve-card" id="achieve-cooling">
+          <div class="och-achieve-icon-box icon-cooling">
+            <i data-lucide="snowflake" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div class="och-achieve-info">
+            <div class="och-achieve-name">Повелитель гликоля</div>
+            <div class="och-achieve-desc">Успешное охлаждение сусла до нормы (-3°C) и спасение закваски 1978.</div>
+            <div class="och-achieve-status" id="achieve-status-cooling">🔒 Заблокировано</div>
+          </div>
+        </div>
+
+        <div class="och-achieve-card" id="achieve-krones">
+          <div class="och-achieve-icon-box icon-krones">
+            <i data-lucide="bot" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div class="och-achieve-info">
+            <div class="och-achieve-name">Укротитель Krones</div>
+            <div class="och-achieve-desc">Устранение затора банки и очистка оптического датчика на скорости 35к банок/ч.</div>
+            <div class="och-achieve-status" id="achieve-status-krones">🔒 Заблокировано</div>
+          </div>
+        </div>
+
+        <div class="och-achieve-card" id="achieve-warehouse">
+          <div class="och-achieve-icon-box icon-warehouse">
+            <i data-lucide="truck" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div class="och-achieve-info">
+            <div class="och-achieve-name">Логистический ас</div>
+            <div class="och-achieve-desc">Фиксация паллеты стретчем и отгрузка в рампу №14 без аварий и дрифта.</div>
+            <div class="och-achieve-status" id="achieve-status-warehouse">🔒 Заблокировано</div>
+          </div>
+        </div>
+
+        <div class="och-achieve-card" id="achieve-lab">
+          <div class="och-achieve-icon-box icon-lab">
+            <i data-lucide="flask-conical" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div class="och-achieve-info">
+            <div class="och-achieve-name">Лабораторный глаз</div>
+            <div class="och-achieve-desc">Замер сахаров оптическим рефрактометром Brix и контроль кислотности pH.</div>
+            <div class="och-achieve-status" id="achieve-status-lab">🔒 Заблокировано</div>
+          </div>
+        </div>
+
+        <div class="och-achieve-card" id="achieve-retro">
+          <div class="och-achieve-icon-box icon-retro">
+            <i data-lucide="sparkles" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div class="och-achieve-info">
+            <div class="och-achieve-name">Золотой рецепт 1978</div>
+            <div class="och-achieve-desc">Восстановление исторической рецептуры олимпийского кваса двойного брожения.</div>
+            <div class="och-achieve-status" id="achieve-status-retro">🔒 Заблокировано</div>
+          </div>
+        </div>
+
+        <div class="och-achieve-card" id="achieve-streak">
+          <div class="och-achieve-icon-box icon-streak">
+            <i data-lucide="flame" style="width: 24px; height: 24px;"></i>
+          </div>
+          <div class="och-achieve-info">
+            <div class="och-achieve-name">Оверклокер смены</div>
+            <div class="och-achieve-desc">Серия из 3 и более успешных смен подряд без единого брака и простоя.</div>
+            <div class="och-achieve-status" id="achieve-status-streak">🔒 Заблокировано</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <!-- НОВЫЙ БЛОК: РЕКОМЕНДАЦИИ ВАКАНСИЙ ПО СУММЕ ОБЩИХ УСПЕХОВ -->
+  <section class="och-section och-cumulative-vacancies-section" style="background: #F0FDF4; border-top: 2.5px solid #1E293B; border-bottom: 2.5px solid #1E293B; padding: clamp(3rem, 4vw, 4.5rem) 0;">
+    <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 1rem;">
+      <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap;">
+        <div>
+          <div class="och-comic-tape-tag" style="background: #16A34A; color: #FFFFFF; font-weight: 900; font-size: 0.75rem; padding: 0.25rem 0.65rem; border: 2px solid #1E293B; border-radius: 6px; box-shadow: 2px 2px 0px #1E293B; display: inline-flex; align-items: center; gap: 0.4rem; text-transform: uppercase; margin-bottom: 0.5rem;">
+            <span>★ КАРЬЕРНЫЙ МЭТЧИНГ ПО ВСЕМ ЦЕХАМ</span>
+          </div>
+          <h2 style="font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 900; color: #0F172A; margin: 0; text-transform: uppercase; letter-spacing: -0.01em;">
+            Рекомендованные вакансии по сумме успехов
+          </h2>
+          <p style="font-size: 0.95rem; color: #475569; margin: 0.4rem 0 0; line-height: 1.45;">
+            Алгоритм проанализировал ваш общий счёт (<strong style="color: #166534;" id="och-prog-total-score-label">{{ cumulative_profile.total_xp|default:95 }} XP</strong>), квалификационный разряд и подтверждённые навыки по всем сменам завода:
+          </p>
+        </div>
+
+        <div style="background: #FFFFFF; border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; border-radius: 12px; padding: 0.75rem 1.15rem; text-align: right;">
+          <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #64748B;">Квалификационный статус</div>
+          <div style="font-size: 1.05rem; font-weight: 900; color: #16A34A;" id="och-prog-rank-badge">{{ cumulative_profile.rank|default:"Техник-практикант 2-го разряда" }}</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: #D97706; margin-top: 0.15rem;">{{ cumulative_profile.bonus_badge|default:"Сокращение стажировки на 50%" }}</div>
+        </div>
+      </div>
+
+      <!-- Сетка вакансий по общим успехам -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+        {% for rec in cumulative_profile.all_recommendations %}
+        <div class="och-cum-vac-card" style="background: #FFFFFF; border: 3px solid #1E293B; box-shadow: 5px 5px 0px #1E293B; border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.15s, box-shadow 0.15s;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.65rem;">
+              <span style="background: #DCFCE7; color: #166534; border: 1.5px solid #16A34A; border-radius: 6px; font-size: 0.72rem; font-weight: 900; padding: 0.2rem 0.5rem;">
+                🎯 {{ rec.match_score }}% совпадение
+              </span>
+              <span style="background: #FEF3C7; color: #92400E; border: 1.5px solid #D97706; border-radius: 6px; font-size: 0.68rem; font-weight: 900; padding: 0.2rem 0.45rem;">
+                {{ rec.bonus_badge }}
+              </span>
+            </div>
+
+            <h3 style="font-size: 1.15rem; font-weight: 900; color: #0F172A; margin: 0 0 0.35rem; line-height: 1.3;">
+              {{ rec.title }}
+            </h3>
+            <div style="font-size: 0.95rem; font-weight: 900; color: #059669; margin-bottom: 0.65rem;">
+              {{ rec.salary_text }} • {{ rec.city }}
+            </div>
+            <p style="font-size: 0.82rem; color: #475569; line-height: 1.45; margin: 0 0 1rem; background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 8px; padding: 0.5rem 0.75rem;">
+              💡 <strong>Обоснование наставников:</strong> {{ rec.reason }}
+            </p>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem; border-top: 2px solid #E2E8F0; padding-top: 0.85rem;">
+            <button type="button" onclick="openProgressApplyModal('{{ rec.slug }}', '{{ rec.title|escapejs }}')" style="flex: 1; background: #D50032; color: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2.5px 2.5px 0px #1E293B; border-radius: 8px; padding: 0.6rem; font-size: 0.82rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+              <span>Откликнуться с моим счётом</span>
+            </button>
+            <a href="{{ rec.hh_url }}" target="_blank" rel="noopener" style="background: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; padding: 0.6rem 0.85rem; font-size: 0.82rem; font-weight: 800; color: #1E293B; text-decoration: none; display: flex; align-items: center; justify-content: center;" title="Смотреть на hh.ru">
+              <i data-lucide="external-link" style="width: 15px; height: 15px;"></i>
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. ПРОИЗВОДСТВЕННЫЙ СЕРТИФИКАТ СТАЖЁРА ДЛЯ HH.RU -->
+  <section class="och-section och-cert-section" style="background: #F8FAFC; border-top: 1px solid var(--och-border); padding: clamp(4.5rem, 6vw, 6.5rem) 0;">
+    <div class="container">
+      <div class="och-cert-wrapper" style="margin-top: 1.5rem;">
+        <div class="och-cert-card">
+          <div class="och-cert-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <img src="{% static 'img/ochakovo_logo.svg' %}" alt="Очаково" style="height: 38px;">
+              <div>
+                <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--och-red); letter-spacing: 0.08em;">
+                  АО «Очаково» • Программа оплачиваемой практики 2026
+                </div>
+                <div style="font-size: 1.15rem; font-weight: 900; color: var(--och-text-heading);">
+                  Сертификат готовности к производственной смене
+                </div>
+              </div>
+            </div>
+            <div class="och-cert-badge">
+              <i data-lucide="award" style="width: 20px; height: 20px; color: var(--och-gold);"></i>
+              <span id="cert-badge-score">0 XP</span>
+            </div>
+          </div>
+
+          <div class="och-cert-body">
+            <p style="font-size: 0.95rem; line-height: 1.6; color: var(--och-text); margin-bottom: 1.25rem;">
+              Настоящим подтверждается, что соискатель успешно освоил базовые технологические регламенты завода «Очаково» (Москва, ул. Рябиновая, 44), подтвердил навыки предотвращения аварийных ситуаций, контроля плотности сусла и взаимодействия с автоматизированными системами Krones.
+            </p>
+
+            <!-- ОФИЦИАЛЬНО РАЗБЛОКИРОВАННЫЕ БОНУСЫ И ПРЕИМУЩЕСТВА СТАЖИРОВКИ -->
+            <div style="background: #FEF3C7; border: 2px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; border-radius: 12px; padding: 1.15rem; margin-bottom: 1.5rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
+                <div style="font-size: 0.8rem; font-weight: 900; text-transform: uppercase; color: #92400E; display: flex; align-items: center; gap: 0.45rem;">
+                  <i data-lucide="gift" style="width: 16px; height: 16px; color: #D97706;"></i>
+                  <span>Бонусы кандидата, подтверждённые в симуляторе завода:</span>
+                </div>
+                <span style="background: #F59E0B; color: #FFFFFF; font-size: 0.7rem; font-weight: 900; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #1E293B;">HR-АКСЕЛЕРАЦИЯ</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem;">
+                <div style="background: #FFFFFF; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.65rem 0.85rem;">
+                  <div style="font-weight: 900; font-size: 0.88rem; color: #0F172A; margin-bottom: 0.2rem;">⏱️ Сокращение стажировки</div>
+                  <div style="font-size: 0.78rem; color: #475569; line-height: 1.4;">Срок вводной адаптации сокращён <strong>с 3 мес. до 1 месяца</strong> благодаря практическим навыкам.</div>
+                </div>
+                <div style="background: #FFFFFF; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.65rem 0.85rem;">
+                  <div style="font-weight: 900; font-size: 0.88rem; color: #0F172A; margin-bottom: 0.2rem;">🏆 Допуск ко 2 категории</div>
+                  <div style="font-size: 0.78rem; color: #475569; line-height: 1.4;">Право претендовать на позиции Мастера смены / Технолога с окладом <strong>от 80 000 до 110 000 ₽</strong>.</div>
+                </div>
+                <div style="background: #FFFFFF; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.65rem 0.85rem;">
+                  <div style="font-weight: 900; font-size: 0.88rem; color: #0F172A; margin-bottom: 0.2rem;">🚀 Зелёный коридор HR</div>
+                  <div style="font-size: 0.78rem; color: #475569; line-height: 1.4;">Прямой вызов на очное собеседование с Главным технологом комбината без тестов.</div>
+                </div>
+              </div>
+            </div>
+
+<div class="och-cert-table-wrap">
+              <table class="och-cert-table">
+                <thead>
+                  <tr>
+                    <th>Цех / Участок</th>
+                    <th>Решённый инцидент</th>
+                    <th>Оценка</th>
+                    <th>Статус</th>
+                  </tr>
+                </thead>
+                <tbody id="cert-cases-tbody">
+                  <tr>
+                    <td colspan="4" style="text-align: center; color: var(--och-text-dim); padding: 1.5rem;">
+                      Пройдите хотя бы один цеховой кейс, чтобы наполнить сертификат реальными баллами.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="och-cert-footer">
+            <div class="och-cert-sign">
+              <div style="font-size: 0.75rem; color: var(--och-text-dim);">Главный технолог-наставник:</div>
+              <div style="font-weight: 800; color: var(--och-text-heading); font-family: monospace;">Михалыч (Цех №1)</div>
+            </div>
+            <div class="och-cert-actions">
+              <a href="{% url 'careers:export_skills_pdf' %}" class="och-btn-secondary" style="border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.95rem; font-weight: 800; border-radius: 10px;" title="Скачать официальный PDF-паспорт компетенций">
+                <i data-lucide="download" style="width: 15px; height: 15px; color: var(--och-red);"></i>
+                <span>Скачать PDF-паспорт</span>
+              </a>
+              <button type="button" class="och-btn-primary" onclick="openProgressApplyModal()">
+                <i data-lucide="external-link" style="width: 15px; height: 15px;"></i>
+                <span>Отправить на hh.ru</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ПОДАЧИ ЗАЯВКИ С РЕАЛЬНЫМ ПЕРЕХОДОМ НА HH.RU -->
+<div id="och-progress-apply-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) closeProgressApplyModal()">
+  <div class="och-modal-box" style="max-width: 580px;">
+    <div class="och-modal-header">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 42px; height: 42px; border-radius: var(--radius-sm); background: var(--och-red-subtle); border: 1px solid var(--och-border-red); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <img src="{% static 'img/ochakovo_emblem.svg' %}" alt="Очаково" style="width: 24px; height: 24px;">
+        </div>
+        <div>
+          <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--och-red);">Официальный отклик</div>
+          <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">
+            Отклик на практику через hh.ru
+          </h3>
+        </div>
+      </div>
+      <button type="button" class="och-modal-close-btn" onclick="closeProgressApplyModal()">✕</button>
+    </div>
+
+    <div class="och-modal-body">
+      <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
+        <div style="font-size: 0.8rem; font-weight: 800; color: var(--och-text-heading); margin-bottom: 0.25rem;">
+          💼 Как работает отклик с симулятора:
+        </div>
+        <div style="font-size: 0.84rem; color: var(--och-text); line-height: 1.45;">
+          Ваша заявка регистрируется в HR-отделе комбината «Очаково», а сформированное сопроводительное письмо с подтвержденным сертификатом (<strong id="modal-cert-score">0 XP</strong>) копируется в буфер обмена для прямой вставки на hh.ru.
+        </div>
+      </div>
+
+      <form id="och-progress-apply-form" onsubmit="window.submitFastApplication(event, 'och-progress-apply-form')" style="display: flex; flex-direction: column; gap: 0.85rem;">
+        <div>
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--och-text); margin-bottom: 0.35rem;">
+            Выберите желаемую сезонную вакансию:
+          </label>
+          <select name="vacancy_slug" class="och-text-input" style="width: 100%;">
+            {% for v in vacancies %}
+            <option value="{{ v.slug }}">{{ v.title }} ({{ v.salary_text }})</option>
+            {% endfor %}
+            <option value="">Общая оплачиваемая практика (любой цех)</option>
+          </select>
+        </div>
+
+        <div class="och-modal-form-row">
+          <div>
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Ваше ФИО *</label>
+            <input type="text" name="full_name" required placeholder="Иван Петров" class="och-text-input">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Телефон для связи *</label>
+            <input type="tel" name="phone" required placeholder="+7 (999) 000-00-00" class="och-text-input">
+          </div>
+        </div>
+
+        <div class="och-modal-form-row">
+          <div>
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Email</label>
+            <input type="email" name="email" placeholder="student@edu.ru" class="och-text-input">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Telegram</label>
+            <input type="text" name="telegram" placeholder="@username" class="och-text-input">
+          </div>
+        </div>
+
+        <div class="och-modal-form-row">
+          <div>
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">ВУЗ / Колледж</label>
+            <input type="text" name="university" placeholder="МГУПП, РГАУ-МСХА или др." class="och-text-input">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Курс / статус</label>
+            <input type="text" name="course_or_status" placeholder="3 курс" value="3 курс" class="och-text-input">
+          </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 0.25rem;">Комментарий к отклику</label>
+          <textarea name="comment" rows="2" placeholder="Хочу пройти оплачиваемую практику в цехе брожения Очаково..." class="och-text-input" style="width: 100%; resize: vertical;"></textarea>
+        </div>
+
+        <button type="submit" class="och-btn-primary" style="justify-content: center; padding: 0.9rem; font-size: 0.95rem; margin-top: 0.35rem;">
+          <i data-lucide="send" style="width: 16px; height: 16px;"></i>
+          <span>Зарегистрировать и перейти к отклику на hh.ru</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function openProgressApplyModal() {
+    const modal = document.getElementById('och-progress-apply-modal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeProgressApplyModal() {
+    const modal = document.getElementById('och-progress-apply-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  // Загрузка и рендер прогресса соискателя из localStorage
+  document.addEventListener('DOMContentLoaded', () => {
+    renderCandidateProgress();
+  });
+
+  function renderCandidateProgress() {
+    const progress = JSON.parse(localStorage.getItem('ochakovo_career_progress') || '{}');
+    const cases = progress.completedCases || [];
+    const streak = parseInt(localStorage.getItem('ochakovo_shift_streak_count') || '0', 10);
+
+    // Считаем суммарный балл
+    let totalScore = 0;
+    const casesMap = {};
+    cases.forEach(c => {
+      totalScore += (c.score || 0);
+      casesMap[c.slug] = c;
+    });
+
+    // Динамический расчет разрядов на основе количества кейсов
+    const totalCasesCount = parseInt(document.getElementById('prog-total-cases')?.innerText || '{{ total_cases_count|default:8 }}', 10) || 8;
+    const maxScore = totalCasesCount * 100;
+    const rank1Threshold = Math.round(maxScore * 0.25);
+    const rank2Threshold = Math.round(maxScore * 0.50);
+    const rank3Threshold = Math.round(maxScore * 0.75);
+
+    let rank = 'Кандидат-практикант';
+    let nextThreshold = rank1Threshold;
+    if (totalScore >= rank3Threshold) {
+      rank = 'Шеф-наставник комбината';
+      nextThreshold = maxScore;
+    } else if (totalScore >= rank2Threshold) {
+      rank = 'Инженер-технолог смены';
+      nextThreshold = rank3Threshold;
+    } else if (totalScore >= rank1Threshold) {
+      rank = 'Младший сменный мастер';
+      nextThreshold = rank2Threshold;
+    }
+
+    // Множитель стрика
+    let mult = 'x1.0';
+    if (streak >= 4) mult = 'x2.0';
+    else if (streak === 3) mult = 'x1.5';
+    else if (streak === 2) mult = 'x1.2';
+    else if (streak === 1) mult = 'x1.1';
+
+    // Заполняем профиль
+    const scoreEl = document.getElementById('prog-total-score');
+    if (scoreEl) scoreEl.innerText = totalScore;
+
+    const rankEl = document.getElementById('prog-rank-title');
+    if (rankEl) rankEl.innerText = rank;
+
+    const streakEl = document.getElementById('prog-streak-val');
+    if (streakEl) streakEl.innerText = streak;
+
+    const multEl = document.getElementById('prog-mult-val');
+    if (multEl) multEl.innerText = mult;
+
+    const countEl = document.getElementById('prog-cases-count');
+    if (countEl) countEl.innerText = cases.length;
+
+    const certScoreEl = document.getElementById('cert-badge-score');
+    if (certScoreEl) certScoreEl.innerText = `${totalScore} XP`;
+
+    const modalScoreEl = document.getElementById('modal-cert-score');
+    if (modalScoreEl) modalScoreEl.innerText = `${totalScore} XP`;
+
+    // XP Bar fill
+    const pct = Math.min(100, Math.round((totalScore / nextThreshold) * 100));
+    const xpPct = document.getElementById('prog-xp-percent');
+    if (xpPct) xpPct.innerText = `${pct}% (${totalScore}/${nextThreshold} XP)`;
+
+    const xpFill = document.getElementById('prog-xp-bar-fill');
+    if (xpFill) xpFill.style.width = `${pct}%`;
+
+    // Обновляем карточки цехов
+    document.querySelectorAll('.och-progress-case-card').forEach(card => {
+      const slug = card.dataset.scenarioSlug;
+      const badge = document.getElementById(`badge-status-${slug}`);
+      const scoreTxt = document.getElementById(`best-score-${slug}`);
+      const btn = document.getElementById(`btn-play-${slug}`);
+
+      if (casesMap[slug]) {
+        const item = casesMap[slug];
+        if (badge) {
+          badge.className = 'och-pcase-status-badge badge-done';
+          badge.innerHTML = `<i data-lucide="check" style="width: 12px; height: 12px;"></i> Сдано: ${item.score} XP`;
+        }
+        if (scoreTxt) scoreTxt.innerText = `${item.score} / 100`;
+        if (btn) btn.innerHTML = '<span>Переиграть</span>';
+      }
+    });
+
+    // Обновляем бейджи достижений
+    if (casesMap['brew-yeast-flex']) {
+      unlockAchievement('cooling', 'Мастер охлаждения (-3°C гликоль)');
+    }
+    if (casesMap['krones-robot-tilt']) {
+      unlockAchievement('krones', 'Затор устранён без повреждения тары');
+    }
+    if (casesMap['warehouse-drift']) {
+      unlockAchievement('warehouse', 'Паллетирование и WMS в норме');
+    }
+    if (casesMap['lab-qa-crisis']) {
+      unlockAchievement('lab', 'Brix и кислотность проверены');
+    }
+    if (casesMap['secret-drop-1978'] || casesMap['okroshka-detective']) {
+      unlockAchievement('retro', 'Золотой стандарт Очаково 1978');
+    }
+    if (streak >= 3) {
+      unlockAchievement('streak', `Серия из ${streak} смен подряд!`);
+    }
+
+    // Заполняем таблицу сертификата
+    const tbody = document.getElementById('cert-cases-tbody');
+    if (tbody && cases.length > 0) {
+      let rowsHtml = '';
+      cases.forEach(c => {
+        rowsHtml += `
+          <tr>
+            <td><strong>${c.workshop || 'Производственный цех'}</strong></td>
+            <td>${c.title || 'Смена'}</td>
+            <td><strong style="color: var(--och-red);">${c.score}/100</strong></td>
+            <td><span class="och-cert-check">✓ Зачтено (${c.mentor || 'Наставник'})</span></td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = rowsHtml;
+    }
+
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  function unlockAchievement(id, note) {
+    const card = document.getElementById(`achieve-${id}`);
+    const status = document.getElementById(`achieve-status-${id}`);
+    if (card) card.classList.add('unlocked');
+    if (status) {
+      status.innerText = `✓ Получено: ${note}`;
+      status.style.color = '#059669';
+      status.style.fontWeight = '700';
+    }
+  }
+</script>
+{% endblock %}
