@@ -13,6 +13,12 @@ DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'http://0.0.0.0:8080',
+]
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',

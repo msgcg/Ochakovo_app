@@ -60,10 +60,31 @@ def game_play_view(request, scenario_slug):
         'brewing_emergency': 'brew-yeast-flex',
         'brewing-emergency': 'brew-yeast-flex',
         'brew_yeast_flex': 'brew-yeast-flex',
+        'brew-yeast-flex': 'brew-yeast-flex',
+        'yeast_flex': 'brew-yeast-flex',
+        'yeast-flex': 'brew-yeast-flex',
         'krones_robot_tilt': 'krones-robot-tilt',
+        'krones-robot-tilt': 'krones-robot-tilt',
+        'robot_tilt': 'krones-robot-tilt',
+        'robot-tilt': 'krones-robot-tilt',
         'okroshka_detective': 'okroshka-detective',
+        'okroshka-detective': 'okroshka-detective',
+        'okroshka': 'okroshka-detective',
         'warehouse_drift': 'warehouse-drift',
+        'warehouse-drift': 'warehouse-drift',
+        'drift': 'warehouse-drift',
         'secret_drop_1978': 'secret-drop-1978',
+        'secret-drop-1978': 'secret-drop-1978',
+        'secret_drop': 'secret-drop-1978',
+        'secret-drop': 'secret-drop-1978',
+        'brew_double_fermentation': 'brew-double-fermentation',
+        'brew-double-fermentation': 'brew-double-fermentation',
+        'double_fermentation': 'brew-double-fermentation',
+        'double-fermentation': 'brew-double-fermentation',
+        'bot_line_glitch': 'bot-line-glitch',
+        'bot-line-glitch': 'bot-line-glitch',
+        'line_glitch': 'bot-line-glitch',
+        'line-glitch': 'bot-line-glitch',
     }
     resolved_slug = SLUG_ALIASES.get(scenario_slug, scenario_slug)
     scenario = GameScenario.objects.filter(slug=resolved_slug).first()
@@ -859,8 +880,14 @@ def story_view(request):
     perks = CompanyPerk.objects.all().order_by('order')
     return render(request, 'careers/story.html', {'milestones': milestones, 'perks': perks})
 def offline_view(request):
-    """Офлайн-страница для PWA"""
-    return render(request, 'careers/offline.html')
+    """Офлайн-страница для PWA с прямым доступом ко всем 7 кейсам симулятора"""
+    scenarios = GameScenario.objects.all().order_by('order', 'id')
+    vacancies = Vacancy.objects.filter(is_active=True).order_by('-salary_max')[:4]
+    return render(request, 'careers/offline.html', {
+        'scenarios': scenarios,
+        'vacancies': vacancies,
+        'page_title': 'Автономный режим | Очаково 2026',
+    })
 def manifest_view(request):
     """Выдача PWA Web App Manifest с корректным Content-Type"""
     manifest_path = settings.BASE_DIR / 'static' / 'manifest.json'

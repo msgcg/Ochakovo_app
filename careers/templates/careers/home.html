@@ -272,6 +272,66 @@
           </a>
         </div>
       </div>
+
+      <!-- 5. Логистический комплекс WMS -->
+      <div class="och-video-card">
+        <div class="och-video-wrapper">
+          <video controls preload="metadata" poster="{% static 'img/vn_bg/bg_warehouse.png' %}">
+            <source src="/media/videos/operator_linii_rozliva.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="och-video-body">
+          <div>
+            <span class="och-video-tag">Логистический хаб • от 65 000 ₽</span>
+            <h3 class="och-video-title">Управление WMS и электрокарами</h3>
+            <p class="och-video-desc">Отгрузка тысяч паллет кваса и лимонадов в летний зной. Координация штабелёров и автопоездов в реальном времени.</p>
+          </div>
+          <a href="{% url 'careers:game_play' scenario_slug='warehouse-drift' %}" class="och-btn-secondary" style="justify-content: center; font-size: 0.85rem; padding: 0.55rem 0.85rem; margin-top: 0.75rem;">
+            <i data-lucide="play" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+            <span>Пройти тест-смену логиста</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 6. Двойное брожение: Секрет белого кваса -->
+      <div class="och-video-card">
+        <div class="och-video-wrapper">
+          <video controls preload="metadata" poster="{% static 'img/vn_bg/bg_brewhouse_cct.jpg' %}">
+            <source src="/media/videos/mashinist_oborudovaniya.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="och-video-body">
+          <div>
+            <span class="och-video-tag">Цех брожения • от 72 000 ₽</span>
+            <h3 class="och-video-title">Двойное брожение: Белый квас</h3>
+            <p class="och-video-desc">Секрет деревенского белого окрошечного кваса: баланс чистой дрожжевой закваски и молочнокислых культур в ЦКТ.</p>
+          </div>
+          <a href="{% url 'careers:game_play' scenario_slug='brew-double-fermentation' %}" class="och-btn-secondary" style="justify-content: center; font-size: 0.85rem; padding: 0.55rem 0.85rem; margin-top: 0.75rem;">
+            <i data-lucide="play" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+            <span>Пройти смену брожения</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 7. Линия розлива: Затор на этикетировочном автомате -->
+      <div class="och-video-card">
+        <div class="och-video-wrapper">
+          <video controls preload="metadata" poster="{% static 'img/vn_bg/bg_bottling_conveyor.jpg' %}">
+            <source src="/media/videos/operator_linii_rozliva.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="och-video-body">
+          <div>
+            <span class="och-video-tag">Автоматизация розлива • от 70 000 ₽</span>
+            <h3 class="och-video-title">Затор на этикетировочной линии</h3>
+            <p class="och-video-desc">Экстренная юстировка фотодатчиков и аппликатора этикеток на скоростном конвейере при скорости 50 000 банок в час.</p>
+          </div>
+          <a href="{% url 'careers:game_play' scenario_slug='bot-line-glitch' %}" class="och-btn-secondary" style="justify-content: center; font-size: 0.85rem; padding: 0.55rem 0.85rem; margin-top: 0.75rem;">
+            <i data-lucide="play" style="width: 14px; height: 14px; color: var(--och-red);"></i>
+            <span>Устранить сбой автомата</span>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
