@@ -2,7 +2,15 @@
 
 
 
+
+
+
+
 {% load static %}
+
+
+
+
 
 
 
@@ -10,7 +18,570 @@
 
 
 
+
+
+
+
 {% block content %}
+
+<style>
+
+  /* Фон цеха Очаково устанавливается как глобальный фон всей страницы */
+
+  body {
+
+    background-image: url('{% static "img/" %}{{ scenario.bg_image }}') !important;
+
+    background-size: cover !important;
+
+    background-position: center center !important;
+
+    background-attachment: fixed !important;
+
+    background-repeat: no-repeat !important;
+
+  }
+
+
+
+  /* Контейнер страницы делаем прозрачным, чтобы фон цеха просвечивал везде */
+
+  .och-sim-container {
+
+    background: transparent !important;
+
+    position: relative;
+
+    z-index: 1;
+
+    padding-top: 0.75rem;
+
+    padding-bottom: 2rem;
+
+  }
+
+
+
+  /* Компактный полупрозрачный бейдж сцены — убираем лишнее пустое пространство */
+
+  .och-vn-stage {
+
+    background-image: none !important;
+
+    background-color: rgba(15, 23, 42, 0.48) !important;
+
+    backdrop-filter: blur(6px) !important;
+
+    -webkit-backdrop-filter: blur(6px) !important;
+
+    border: 3.5px solid #1E293B !important;
+
+    box-shadow: 6px 6px 0px #1E293B !important;
+
+    height: 250px !important;
+
+    min-height: unset !important;
+
+    border-radius: 16px 16px 0 0 !important;
+
+  }
+
+
+
+  .och-comic-frame-box {
+
+    width: clamp(135px, 16vw, 175px) !important;
+
+    height: clamp(160px, 20vh, 185px) !important;
+
+  }
+
+
+
+  .och-vn-stage-floor {
+
+    height: 100% !important;
+
+    padding: 0 1.5rem !important;
+
+  }
+
+
+
+  @media (max-width: 640px) {
+    .och-vn-stage {
+      height: 280px !important;
+    }
+    .och-vn-stage-top {
+      padding: 0.5rem 0.65rem !important;
+      gap: 0.35rem !important;
+    }
+    .och-comic-caption-box {
+      font-size: 0.68rem !important;
+      padding: 0.2rem 0.45rem !important;
+      max-width: 100% !important;
+    }
+    .och-comic-frame-box {
+      width: 125px !important;
+      height: 155px !important;
+    }
+    .och-vn-stage-floor {
+      padding: 0 0.65rem !important;
+    }
+    .och-hud-video-btn,
+    .och-comic-btn-log {
+      padding: 0.25rem 0.5rem !important;
+      font-size: 0.72rem !important;
+    }
+  }
+
+    .och-comic-frame-box {
+
+      width: 120px !important;
+
+      height: 155px !important;
+
+    }
+
+    .och-vn-stage-floor {
+
+      padding: 0 0.75rem !important;
+
+    }
+
+  }
+
+
+
+  /* ВЫЕЗДНОЙ ЖУРНАЛ ИСТОРИИ ПЕРЕГОВОРОВ В СТИЛЕ КОМИКСА */
+
+  .och-history-drawer-backdrop {
+
+    position: fixed !important;
+
+    inset: 0 !important;
+
+    background: rgba(15, 23, 42, 0.6) !important;
+
+    backdrop-filter: blur(4px) !important;
+
+    -webkit-backdrop-filter: blur(4px) !important;
+
+    z-index: 9998 !important;
+
+  }
+
+
+
+  .och-history-drawer {
+
+    position: fixed !important;
+
+    top: 0 !important;
+
+    right: 0 !important;
+
+    bottom: 0 !important;
+
+    width: min(480px, 94vw) !important;
+
+    background: #FFFDF8 !important;
+
+    border-left: 3.5px solid #1E293B !important;
+
+    box-shadow: -10px 0px 30px rgba(15, 23, 42, 0.5) !important;
+
+    z-index: 9999 !important;
+
+    display: flex !important;
+
+    flex-direction: column !important;
+
+    transform: translateX(100%) !important;
+
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s !important;
+
+    visibility: hidden !important;
+
+    pointer-events: none !important;
+
+  }
+
+
+
+  .och-history-drawer.open {
+
+    transform: translateX(0) !important;
+
+    visibility: visible !important;
+
+    pointer-events: auto !important;
+
+  }
+
+
+
+  .och-history-drawer-header {
+
+    background: #FEF3C7 !important;
+
+    border-bottom: 3px solid #1E293B !important;
+
+    padding: 1.25rem 1.5rem !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: space-between !important;
+
+    box-shadow: 0 3px 0 rgba(30, 41, 59, 0.08) !important;
+
+  }
+
+
+
+  .och-history-drawer-body {
+
+    flex: 1 !important;
+
+    overflow-y: auto !important;
+
+    padding: 1.25rem !important;
+
+    display: flex !important;
+
+    flex-direction: column !important;
+
+    gap: 1rem !important;
+
+  }
+
+
+
+  /* Карточки реплик в журнале */
+
+  .och-comic-history-entry {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 0.45rem;
+
+    animation: fadeIn 0.2s ease;
+
+  }
+
+
+
+  .och-comic-history-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+  }
+
+
+
+  .och-comic-history-author {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 0.5rem;
+
+  }
+
+
+
+  .och-comic-history-avatar {
+
+    width: 28px;
+
+    height: 28px;
+
+    border-radius: 8px;
+
+    border: 2px solid #1E293B;
+
+    box-shadow: 1.5px 1.5px 0 #1E293B;
+
+    object-fit: cover;
+
+    background: #FFFFFF;
+
+  }
+
+
+
+  .och-comic-history-badge {
+
+    font-size: 0.7rem;
+
+    font-weight: 900;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.03em;
+
+    padding: 0.2rem 0.5rem;
+
+    border: 1.5px solid #1E293B;
+
+    border-radius: 6px;
+
+    box-shadow: 1.5px 1.5px 0 #1E293B;
+
+  }
+
+
+
+  .och-comic-history-badge.mentor {
+
+    background: #D50032;
+
+    color: #FFFFFF;
+
+  }
+
+
+
+  .och-comic-history-badge.intern {
+
+    background: #0284C7;
+
+    color: #FFFFFF;
+
+  }
+
+
+
+  .och-comic-history-badge.equipment {
+
+    background: #D97706;
+
+    color: #FFFFFF;
+
+  }
+
+
+
+  .och-comic-history-audio-btn {
+
+    background: #FFFFFF;
+
+    border: 1.5px solid #1E293B;
+
+    box-shadow: 1.5px 1.5px 0 #1E293B;
+
+    border-radius: 6px;
+
+    padding: 0.2rem 0.5rem;
+
+    font-size: 0.72rem;
+
+    font-weight: 800;
+
+    color: #1E293B;
+
+    cursor: pointer;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 0.3rem;
+
+    transition: transform 0.1s, box-shadow 0.1s;
+
+  }
+
+
+
+  .och-comic-history-audio-btn:hover {
+
+    transform: translate(-1px, -1px);
+
+    box-shadow: 2.5px 2.5px 0 #1E293B;
+
+  }
+
+
+
+  .och-comic-history-bubble {
+
+    background: #FFFFFF;
+
+    border: 2.5px solid #1E293B;
+
+    box-shadow: 3.5px 3.5px 0px #1E293B;
+
+    border-radius: 12px;
+
+    padding: 0.85rem 1rem;
+
+  }
+
+
+
+  .och-comic-history-entry.intern .och-comic-history-bubble {
+
+    background: #F0FDF4;
+
+    border-color: #1E293B;
+
+  }
+
+
+
+  .och-comic-history-entry.equipment .och-comic-history-bubble {
+
+    background: #FEF9C3;
+
+    border-color: #1E293B;
+
+  }
+
+
+
+  .och-comic-history-text {
+
+    font-size: 0.9rem;
+
+    font-weight: 700;
+
+    line-height: 1.45;
+
+    color: #0F172A;
+
+    word-break: break-word;
+
+  }
+
+
+
+  .och-comic-history-note {
+
+    margin-top: 0.5rem;
+
+    padding-top: 0.5rem;
+
+    border-top: 1.5px dashed #CBD5E1;
+
+    font-size: 0.78rem;
+
+    font-weight: 700;
+
+    color: #92400E;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 0.4rem;
+
+  }
+
+
+
+  .och-vn-stage-halftone {
+
+    opacity: 0.14 !important;
+
+  }
+
+
+
+  /* Виджет верхнего HUD датчиков плавает на фоне цеха с матовым стеклом */
+
+  .och-sim-compact-hud {
+
+    background: rgba(255, 255, 255, 0.94) !important;
+
+    backdrop-filter: blur(8px) !important;
+
+    -webkit-backdrop-filter: blur(8px) !important;
+
+    border: 3px solid #1E293B !important;
+
+    box-shadow: 4px 4px 0px #1E293B !important;
+
+  }
+
+
+
+  /* Зона сброса карт */
+
+  .och-comic-drop-target {
+
+    background: rgba(254, 243, 199, 0.95) !important;
+
+    backdrop-filter: blur(6px) !important;
+
+  }
+
+
+
+  /* Колода карт оборудования цеха плавает поверх фона страницы */
+
+  .och-comic-deck-section {
+
+    background: rgba(255, 255, 255, 0.93) !important;
+
+    backdrop-filter: blur(8px) !important;
+
+    -webkit-backdrop-filter: blur(8px) !important;
+
+    border: 3px solid #1E293B !important;
+
+    box-shadow: 6px 6px 0px #1E293B !important;
+
+  }
+
+
+
+  /* Нижняя панель ввода плавает поверх фона страницы */
+
+  .och-sim-input-bar {
+
+    background: rgba(255, 255, 255, 0.96) !important;
+
+    backdrop-filter: blur(8px) !important;
+
+    -webkit-backdrop-filter: blur(8px) !important;
+
+    border: 3px solid #1E293B !important;
+
+    box-shadow: 6px 6px 0px #1E293B !important;
+
+  }
+
+
+
+  /* Навигация карусели сценариев */
+
+  .och-scenario-carousel-bar {
+
+    background: rgba(255, 255, 255, 0.92) !important;
+
+    backdrop-filter: blur(6px) !important;
+
+    border: 2px solid #1E293B !important;
+
+    box-shadow: 3px 3px 0px #1E293B !important;
+
+  }
+
+</style>
+
+
+
+
 
 
 
@@ -18,7 +589,15 @@
 
 
 
+
+
+
+
 <!-- 1. ВЕРХНИЙ КОМПАКТНЫЙ СТАТУС-БАР ТЕЛЕМЕТРИИ ЦЕХА С ДИНАМИЧЕСКИМИ ДАТЧИКАМИ -->
+
+
+
+
 
 
 
@@ -26,7 +605,15 @@
 
 
 
+
+
+
+
 data-session-id="{{ session.session_uuid }}"
+
+
+
+
 
 
 
@@ -34,7 +621,15 @@ data-mentor-name="{{ scenario.mentor_name }}"
 
 
 
+
+
+
+
 data-scenario-slug="{{ scenario.slug }}"
+
+
+
+
 
 
 
@@ -42,7 +637,15 @@ data-scenario-title="{{ scenario.title }}"
 
 
 
+
+
+
+
 data-workshop-name="{{ scenario.workshop_name }}"
+
+
+
+
 
 
 
@@ -50,7 +653,15 @@ data-temp-min="{{ scenario.target_temp_min }}"
 
 
 
+
+
+
+
 data-temp-max="{{ scenario.target_temp_max }}"
+
+
+
+
 
 
 
@@ -58,7 +669,15 @@ data-brix-min="{{ scenario.target_brix_min }}"
 
 
 
+
+
+
+
 data-brix-max="{{ scenario.target_brix_max }}"
+
+
+
+
 
 
 
@@ -66,7 +685,15 @@ data-ai-mode="{{ ai_mode }}"
 
 
 
+
+
+
+
 data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
+
+
+
+
 
 
 
@@ -74,11 +701,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="{{ scenario.mentor_name }}" class="och-speaker-avatar" style="width: 44px; height: 44px;">
 
 
 
+
+
+
+
 <div>
+
+
+
+
 
 
 
@@ -86,7 +725,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span class="och-sim-hud-title">{{ scenario.workshop_name }}</span>
+
+
+
+
 
 
 
@@ -94,7 +741,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span class="och-live-dot"></span> LIVE 100мс
+
+
+
+
 
 
 
@@ -102,7 +757,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -110,11 +773,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -122,7 +797,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-sim-telemetry-strip">
+
+
+
+
 
 
 
@@ -130,7 +813,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="thermometer" id="icon-temp" style="width: 15px; height: 15px; color: var(--och-red);"></i>
+
+
+
+
 
 
 
@@ -138,7 +829,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span id="val-temp" class="och-gauge-chip-val" style="color: var(--och-red);">{{ session.temperature|floatformat:1 }}°C</span>
+
+
+
+
 
 
 
@@ -146,7 +845,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -154,7 +861,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="droplet" id="icon-brix" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
+
+
+
+
 
 
 
@@ -162,7 +877,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span id="val-brix" class="och-gauge-chip-val" style="color: var(--och-gold-light);">{{ session.brix|floatformat:1 }}°Bx</span>
+
+
+
+
 
 
 
@@ -170,7 +893,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -178,7 +909,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="gauge" style="width: 15px; height: 15px; color: var(--och-purple);"></i>
+
+
+
+
 
 
 
@@ -186,11 +925,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span id="val-speed" class="och-gauge-chip-val" style="color: var(--och-purple);">{{ session.line_speed }} б/ч</span>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -198,7 +949,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-streak-badge-hud" id="och-streak-container" title="Серия смен без брака (накопительный множитель)">
+
+
+
+
 
 
 
@@ -206,7 +965,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span class="och-streak-text">Стрик: <strong id="val-streak-count">0</strong></span>
+
+
+
+
 
 
 
@@ -214,7 +981,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -222,7 +997,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="award" style="width: 18px; height: 18px; color: var(--och-gold);"></i>
+
+
+
+
 
 
 
@@ -230,11 +1013,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div id="och-score-delta-floater" class="och-score-delta-floater"></div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -242,7 +1037,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <button type="button" class="och-hud-video-btn" onclick="simulator.openVideoBriefingModal()" title="Смотреть реальный видео-инструктаж наставника (30 сек)">
+
+
+
+
 
 
 
@@ -250,11 +1053,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Видео цеха</span>
 
 
 
+
+
+
+
 </button>
+
+
+
+
 
 
 
@@ -262,7 +1077,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <button type="button" class="och-hud-ai-badge" id="och-hud-ai-badge"  title="Нажмите для настройки Сбер GigaChat или офлайн-движка">
+
+
+
+
 
 
 
@@ -270,7 +1093,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span id="och-hud-ai-label">{% if ai_mode == 'gigachat' %}GigaChat AI{% else %}Офлайн AI{% endif %}</span>
+
+
+
+
 
 
 
@@ -278,15 +1109,31 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </button>
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -294,7 +1141,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-sim-carousel-bar">
+
+
+
+
 
 
 
@@ -302,7 +1157,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <a href="{% url 'careers:game_play' scenario_slug=prev_scenario.slug %}" class="och-carousel-nav-btn" title="Перейти в: {{ prev_scenario.workshop_name }}">
+
+
+
+
 
 
 
@@ -310,7 +1173,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span class="carousel-btn-text">Пред. цех: {{ prev_scenario.mentor_name }}</span>
+
+
+
+
 
 
 
@@ -318,7 +1189,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 {% else %}
+
+
+
+
 
 
 
@@ -326,7 +1205,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 {% endif %}
+
+
+
+
 
 
 
@@ -334,7 +1221,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span class="och-carousel-tag">ЦЕХ {{ carousel_position }}</span>
+
+
+
+
 
 
 
@@ -342,11 +1237,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 {% if next_scenario %}
+
+
+
+
 
 
 
@@ -354,7 +1261,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span class="carousel-btn-text">След. цех: {{ next_scenario.mentor_name }}</span>
+
+
+
+
 
 
 
@@ -362,11 +1277,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </a>
 
 
 
+
+
+
+
 {% else %}
+
+
+
+
 
 
 
@@ -374,11 +1301,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 {% endif %}
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -386,16 +1325,33 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-vn-stage" id="och-comic-stage"
+
      ondragenter="simulator.onDropZoneDragEnter(event)"
+
      ondragover="simulator.onDropZoneDragOver(event)"
+
      ondragleave="simulator.onDropZoneDragLeave(event)"
+
      ondrop="simulator.onEquipmentDrop(event)"
+
      style="background-image: url('{% static 'img/' %}{{ scenario.bg_image }}');">
 
+
+
 <div class="och-stage-drop-overlay" id="och-stage-drop-overlay">
+
   <div class="och-stage-drop-badge">🎯 ОТПУСТИТЕ КАРТУ НА СЦЕНУ ДЛЯ ПРИМЕНЕНИЯ</div>
+
 </div>
+
+
+
+
 
 
 
@@ -403,7 +1359,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <!-- Анимированные пузырьки брожения Очаково -->
+
+
+
+
 
 
 
@@ -411,7 +1375,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-fizzy-bubble" style="left: 12%; width: 14px; height: 14px; animation-duration: 7s; animation-delay: 0s;"></div>
+
+
+
+
 
 
 
@@ -419,7 +1391,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-fizzy-bubble" style="left: 48%; width: 12px; height: 12px; animation-duration: 6s; animation-delay: 1s;"></div>
+
+
+
+
 
 
 
@@ -427,11 +1407,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-fizzy-bubble" style="left: 84%; width: 24px; height: 24px; animation-duration: 10s; animation-delay: 1.5s;"></div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -439,17 +1431,35 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-vn-stage-top">
+
+
+
+
 
 
 
 <div class="och-comic-caption-box">
 
+
+
         <span class="och-caption-star">★</span>
+
+
 
         <span class="och-caption-text">{{ scenario.workshop_name|upper }}: {{ scenario.title|upper }}</span>
 
+
+
       </div>
+
+
+
+
 
 
 
@@ -457,7 +1467,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <button type="button" class="och-hud-video-btn" onclick="simulator.openVideoBriefingModal()" title="Смотреть реальный видео-инструктаж наставника (30 сек)" style="background: rgba(255,255,255,0.95);">
+
+
+
+
 
 
 
@@ -465,11 +1483,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Видео цеха</span>
 
 
 
+
+
+
+
 </button>
+
+
+
+
 
 
 
@@ -477,7 +1507,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="book-open" style="width: 14px; height: 14px;"></i>
+
+
+
+
 
 
 
@@ -485,15 +1523,31 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </button>
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -501,7 +1555,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-vn-stage-floor">
+
+
+
+
 
 
 
@@ -509,27 +1571,55 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-vn-character intern" id="vn-actor-student">
+
+
 
         <div class="och-comic-frame-box intern">
 
+
+
           <div class="och-comic-tape-tag intern">
+
+
 
             <i data-lucide="user" style="width: 13px; height: 13px;"></i>
 
+
+
             <span>СТАЖЁР (ВЫ)</span>
 
+
+
           </div>
+
+
 
           <div class="och-comic-img-container">
 
+
+
             <img src="{% static 'img/avatar_student_boy.jpg' %}" alt="Стажёр" class="och-comic-char-img" id="vn-sprite-student">
+
+
 
           </div>
 
+
+
         </div>
 
+
+
       </div>
+
+
+
+
 
 
 
@@ -537,7 +1627,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-vn-stage-center-mascot">
+
+
+
+
 
 
 
@@ -545,7 +1643,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <!-- 1. Танцующая банка кваса Очаково -->
+
+
+
+
 
 
 
@@ -553,7 +1659,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <rect x="25" y="20" width="50" height="75" rx="6" fill="#D50032" stroke="#A00024" stroke-width="2"/>
+
+
+
+
 
 
 
@@ -561,7 +1675,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <ellipse cx="50" cy="95" rx="25" ry="8" fill="#82001E"/>
+
+
+
+
 
 
 
@@ -569,7 +1691,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <text x="50" y="58" font-size="10" font-weight="900" fill="#D50032" text-anchor="middle" font-family="sans-serif">ОЧАКОВО</text>
+
+
+
+
 
 
 
@@ -577,7 +1707,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <rect x="52" y="28" width="14" height="9" rx="2" fill="#0F172A"/>
+
+
+
+
 
 
 
@@ -585,7 +1723,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <path d="M25 45 C10 40 12 25 5 35" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
+
+
+
+
 
 
 
@@ -593,7 +1739,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <path d="M38 100 L32 114" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+
+
+
+
 
 
 
@@ -601,7 +1755,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </svg>
+
+
+
+
 
 
 
@@ -609,7 +1771,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <svg id="och-mascot-sprat" class="och-dancing-sprat" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+
+
+
 
 
 
@@ -617,7 +1787,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <path d="M15 50 L2 36 L6 50 L2 64 Z" fill="#64748B"/>
+
+
+
+
 
 
 
@@ -625,7 +1803,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <ellipse cx="98" cy="38" rx="8" ry="3" fill="#D50032"/>
+
+
+
+
 
 
 
@@ -633,7 +1819,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <circle cx="89" cy="45" r="1" fill="#FFFFFF"/>
+
+
+
+
 
 
 
@@ -641,7 +1835,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <path d="M55 52 C50 62 42 60 40 50" stroke="#64748B" stroke-width="3" stroke-linecap="round"/>
+
+
+
+
 
 
 
@@ -649,11 +1851,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <ellipse cx="37" cy="44" rx="6" ry="3" fill="#FFFFFF"/>
 
 
 
+
+
+
+
 </svg>
+
+
+
+
 
 
 
@@ -661,7 +1875,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <svg id="och-mascot-kombucha" class="och-mascot-kombucha" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+
+
+
+
 
 
 
@@ -669,7 +1891,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <path d="M28 30 L28 20 L72 20 L72 30" stroke="#38BDF8" stroke-width="2" fill="none"/>
+
+
+
+
 
 
 
@@ -677,7 +1907,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <line x1="24" y1="22" x2="76" y2="22" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+
+
+
+
 
 
 
@@ -685,7 +1923,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <ellipse cx="50" cy="62" rx="22" ry="10" fill="#B45309"/>
+
+
+
+
 
 
 
@@ -693,7 +1939,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <ellipse cx="50" cy="55" rx="18" ry="6" fill="#F59E0B"/>
+
+
+
+
 
 
 
@@ -701,7 +1955,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <circle cx="56" cy="56" r="2.5" fill="#0F172A"/>
+
+
+
+
 
 
 
@@ -709,7 +1971,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <circle cx="57" cy="55" r="0.8" fill="#FFFFFF"/>
+
+
+
+
 
 
 
@@ -717,7 +1987,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </svg>
+
+
+
+
 
 
 
@@ -725,7 +2003,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <svg id="och-mascot-barrel" class="och-mascot-barrel" viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+
+
+
+
 
 
 
@@ -733,7 +2019,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <ellipse cx="85" cy="48" rx="8" ry="24" fill="#F59E0B" stroke="#D97706" stroke-width="2"/>
+
+
+
+
 
 
 
@@ -741,7 +2035,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <line x1="68" y1="24" x2="68" y2="72" stroke="#B45309" stroke-width="2"/>
+
+
+
+
 
 
 
@@ -749,7 +2051,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <path d="M25 54 L12 54 L12 62" stroke="#78350F" stroke-width="3" stroke-linecap="round"/>
+
+
+
+
 
 
 
@@ -757,7 +2067,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <circle cx="42" cy="76" r="12" fill="#334155" stroke="#0F172A" stroke-width="2"/>
+
+
+
+
 
 
 
@@ -765,7 +2083,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </svg>
+
+
+
+
 
 
 
@@ -773,7 +2099,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <svg id="och-mascot-robot" class="och-mascot-robot" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+
+
+
+
 
 
 
@@ -781,7 +2115,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <circle cx="50" cy="76" r="8" fill="#EA580C" stroke="#9A3412" stroke-width="2"/>
+
+
+
+
 
 
 
@@ -789,7 +2131,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <circle cx="40" cy="45" r="7" fill="#334155" stroke="#0F172A" stroke-width="2"/>
+
+
+
+
 
 
 
@@ -797,7 +2147,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <path d="M40 45 L68 30" stroke="#F97316" stroke-width="5" stroke-linecap="round"/>
+
+
+
+
 
 
 
@@ -805,11 +2163,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </svg>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -817,15 +2187,31 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 «Килька в деле — квас в теле! Следим за балансом брожения!»
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -833,35 +2219,71 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-vn-character mentor active-speaker" id="vn-actor-mentor">
+
+
 
         <div class="och-comic-frame-box mentor">
 
+
+
           <div class="och-comic-tape-tag mentor">
+
+
 
             <i data-lucide="award" style="width: 13px; height: 13px;"></i>
 
+
+
             <span>{{ scenario.mentor_name|upper }}</span>
 
+
+
           </div>
+
+
 
           <div class="och-comic-img-container">
 
+
+
             <img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="{{ scenario.mentor_name }}" class="och-comic-char-img" id="vn-sprite-mentor">
+
+
 
           </div>
 
+
+
         </div>
+
+
 
       </div>
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -869,21 +2291,43 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-vn-console speaker-mentor">
+
+
 
     <!-- ХВОСТИК КОМИКСНОГО ОБЛАЧКА РЕПЛИКИ (SPEECH BALLOON POINTER TAIL) -->
 
+
+
     <div class="och-comic-balloon-tail" id="och-comic-balloon-tail">
+
+
 
       <svg viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 
+
+
         <path d="M0 24 L18 0 L36 24" fill="#FFFFFF" stroke="#1E293B" stroke-width="3.5" stroke-linejoin="round"/>
+
+
 
         <line x1="1" y1="23.5" x2="35" y2="23.5" stroke="#FFFFFF" stroke-width="5"/>
 
+
+
       </svg>
 
+
+
     </div>
+
+
+
+
 
 
 
@@ -891,7 +2335,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-vn-console-header">
+
+
+
+
 
 
 
@@ -899,7 +2351,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="" id="och-vn-speaker-avatar" style="width: 26px; height: 26px; border-radius: 4px; object-fit: cover; border: 1.5px solid #1E293B;">
+
+
+
+
 
 
 
@@ -907,11 +2367,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span class="och-speaker-role-pill" id="och-vn-speaker-role">Наставник</span>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -919,7 +2391,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <button type="button" class="och-comic-btn-audio" id="och-vn-audio-replay-btn" onclick="simulator.playMentorVoice('{{ current_node.dialogue_text|escapejs }}', this)" title="Озвучить текущую реплику наставника">
+
+
+
+
 
 
 
@@ -927,7 +2407,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Озвучить</span>
+
+
+
+
 
 
 
@@ -935,11 +2423,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -947,7 +2447,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-vn-text-box">
+
+
+
+
 
 
 
@@ -955,7 +2463,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 {% if current_node.narrative_context %}
+
+
+
+
 
 
 
@@ -963,7 +2479,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="info" style="width: 14px; height: 14px; color: #B45309;"></i>
+
+
+
+
 
 
 
@@ -971,7 +2495,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -979,7 +2511,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-vn-context-note" id="och-vn-active-sub" style="display: none;"></div>
+
+
+
+
 
 
 
@@ -987,22 +2527,45 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
+
 
 
 
 
 <!-- ЗОНА ДЛЯ СБРОСА КАРТ ОБОРУДОВАНИЯ ЦЕХА -->
+
 <div class="och-comic-drop-target" id="och-comic-drop-target"
+
      ondragenter="simulator.onDropZoneDragEnter(event)"
+
      ondragover="simulator.onDropZoneDragOver(event)"
+
      ondragleave="simulator.onDropZoneDragLeave(event)"
+
      ondrop="simulator.onEquipmentDrop(event)">
+
   <i data-lucide="sparkles" style="width: 16px; height: 16px; color: #D97706;"></i>
+
   <span>🎯 ЗОНА ДЕЙСТВИЯ: ПЕРЕТАЩИТЕ КАРТУ ОБОРУДОВАНИЯ СЮДА ДЛЯ ПРИМЕНЕНИЯ</span>
+
 </div>
 
+
+
 <!-- Интерактивно всплывающие чипы действий (Action Chips) -->
+
+
+
+
 
 
 
@@ -1010,7 +2573,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-action-chips-header">
+
+
+
+
 
 
 
@@ -1018,7 +2589,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <button type="button" class="och-action-chip och-action-chip-tool" onclick="const p = document.getElementById('och-comic-cards-panel'); if(p){p.scrollIntoView({behavior:'smooth'}); p.classList.add('pulse-deck'); setTimeout(()=>p.classList.remove('pulse-deck'), 1500);}" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+
+
+
+
 
 
 
@@ -1026,7 +2605,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Оборудование цеха (8)</span>
+
+
+
+
 
 
 
@@ -1034,7 +2621,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1042,7 +2637,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 {% for choice in choices %}
+
+
+
+
 
 
 
@@ -1050,7 +2653,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="zap" style="width: 15px; height: 15px; color: var(--och-red);"></i>
+
+
+
+
 
 
 
@@ -1058,7 +2669,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </button>
+
+
+
+
 
 
 
@@ -1066,7 +2685,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <button type="button" class="och-action-chip" onclick="simulator.useEquipment('valve_cooling', 'Охлаждение рубашки ЦКТ')">
+
+
+
+
 
 
 
@@ -1074,11 +2701,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Охладить сусло гликолем (-3°C)</span>
 
 
 
+
+
+
+
 </button>
+
+
+
+
 
 
 
@@ -1086,7 +2725,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="flask-conical" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
+
+
+
+
 
 
 
@@ -1094,7 +2741,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </button>
+
+
+
+
 
 
 
@@ -1102,7 +2757,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="help-circle" style="width: 15px; height: 15px; color: var(--och-gold);"></i>
+
+
+
+
 
 
 
@@ -1110,7 +2773,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </button>
+
+
+
+
 
 
 
@@ -1118,149 +2789,299 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
+
 
 
 
 
 <!-- ПАНЕЛЬ КАРТ ОБОРУДОВАНИЯ ЦЕХА В СТИЛЕ КОМИКС-АВАТАРОК -->
+
 <div class="och-comic-deck-section" id="och-comic-cards-panel">
+
   <div class="och-comic-deck-header">
+
     <div class="och-comic-deck-title">
+
       <span class="och-comic-deck-badge">🎴 АРСЕНАЛ ОБОРУДОВАНИЯ ЦЕХА</span>
+
       <span class="och-comic-deck-hint">Перетащите карту на сцену или нажмите для применения:</span>
+
     </div>
+
   </div>
+
+
 
   <div class="och-comic-cards-deck">
+
     <!-- Карта 1: Охлаждение гликолем -->
+
     <div class="och-comic-card och-card-cyan" draggable="true"
+
          data-code="valve_cooling" data-title="Клапан охлаждения рубашки ЦКТ (-3°C)" ondragstart="simulator.onEquipmentDragStart(event, 'valve_cooling', 'Клапан охлаждения рубашки ЦКТ (-3°C)')"
+
          ondragend="simulator.onEquipmentDragEnd(event)"
+
          onclick="simulator.useEquipment('valve_cooling', 'Клапан охлаждения рубашки ЦКТ (-3°C)')"
+
          title="Перетащите на сцену или нажмите">
+
       <div class="och-comic-card-tag tag-cyan">ОХЛАЖДЕНИЕ</div>
+
       <div class="och-comic-card-art">
+
         <img src="{% static 'img/brand_icons/cooling_pipe.png' %}" onerror="this.src='{% static 'img/equipment/valve_cooling.svg' %}'" alt="Охлаждение" class="och-comic-card-img">
+
       </div>
+
       <div class="och-comic-card-name">Клапан ЦКТ</div>
+
       <div class="och-comic-card-desc">Гликоль -3°C • Сбить нагрев сусла</div>
+
       <div class="och-comic-card-drag-hint">✋ Тянуть / Тап</div>
+
     </div>
+
+
 
     <!-- Карта 2: Закваска Очаково 1978 -->
+
     <div class="och-comic-card och-card-gold" draggable="true"
+
          data-code="starter_culture" data-title="Закваска натурального брожения 1978" ondragstart="simulator.onEquipmentDragStart(event, 'starter_culture', 'Закваска натурального брожения 1978')"
+
          ondragend="simulator.onEquipmentDragEnd(event)"
+
          onclick="simulator.useEquipment('starter_culture', 'Закваска натурального брожения 1978')"
+
          title="Перетащите на сцену или нажмите">
+
       <div class="och-comic-card-tag tag-gold">ЗАКВАСКА</div>
+
       <div class="och-comic-card-art">
+
         <img src="{% static 'img/brand_icons/yeast_culture.png' %}" onerror="this.src='{% static 'img/equipment/starter_culture.svg' %}'" alt="Закваска" class="och-comic-card-img">
+
       </div>
+
       <div class="och-comic-card-name">Штамм 1978</div>
+
       <div class="och-comic-card-desc">Молочнокислое + дрожжи</div>
+
       <div class="och-comic-card-drag-hint">✋ Тянуть / Тап</div>
+
     </div>
+
+
 
     <!-- Карта 3: CIP-мойка -->
+
     <div class="och-comic-card och-card-blue" draggable="true"
+
          data-code="cip_wash" data-title="Пульт контура CIP-мойки" ondragstart="simulator.onEquipmentDragStart(event, 'cip_wash', 'Пульт контура CIP-мойки')"
+
          ondragend="simulator.onEquipmentDragEnd(event)"
+
          onclick="simulator.useEquipment('cip_wash', 'Пульт контура CIP-мойки')"
+
          title="Перетащите на сцену или нажмите">
+
       <div class="och-comic-card-tag tag-blue">САНИТАРИЯ</div>
+
       <div class="och-comic-card-art">
+
         <img src="{% static 'img/brand_icons/boiler_valve.png' %}" onerror="this.src='{% static 'img/equipment/cip_wash.svg' %}'" alt="CIP-мойка" class="och-comic-card-img">
+
       </div>
+
       <div class="och-comic-card-name">Контур CIP</div>
+
       <div class="och-comic-card-desc">Щелочь 85°C • Стерильность</div>
+
       <div class="och-comic-card-drag-hint">✋ Тянуть / Тап</div>
+
     </div>
+
+
 
     <!-- Карта 4: Рефрактометр Brix -->
+
     <div class="och-comic-card och-card-amber" draggable="true"
+
          data-code="refractometer" data-title="Оптический рефрактометр сахаров Brix" ondragstart="simulator.onEquipmentDragStart(event, 'refractometer', 'Оптический рефрактометр сахаров Brix')"
+
          ondragend="simulator.onEquipmentDragEnd(event)"
+
          onclick="simulator.useEquipment('refractometer', 'Оптический рефрактометр сахаров Brix')"
+
          title="Перетащите на сцену или нажмите">
+
       <div class="och-comic-card-tag tag-amber">АНАЛИЗ BRIX</div>
+
       <div class="och-comic-card-art">
+
         <img src="{% static 'img/brand_icons/thermometer.png' %}" onerror="this.src='{% static 'img/equipment/refractometer.svg' %}'" alt="Рефрактометр" class="och-comic-card-img">
+
       </div>
+
       <div class="och-comic-card-name">Рефрактометр</div>
+
       <div class="och-comic-card-desc">Плотность сусла 8.4°Bx</div>
+
       <div class="och-comic-card-drag-hint">✋ Тянуть / Тап</div>
+
     </div>
+
+
 
     <!-- Карта 5: Аварийный стоп конвейера -->
+
     <div class="och-comic-card och-card-red" draggable="true"
+
          data-code="emergency_stop" data-title="Кнопка аварийного останова конвейера Krones" ondragstart="simulator.onEquipmentDragStart(event, 'emergency_stop', 'Кнопка аварийного останова конвейера Krones')"
+
          ondragend="simulator.onEquipmentDragEnd(event)"
+
          onclick="simulator.useEquipment('emergency_stop', 'Кнопка аварийного останова конвейера Krones')"
+
          title="Перетащите на сцену или нажмите">
+
       <div class="och-comic-card-tag tag-red">СТОП-ЛИНИЯ</div>
+
       <div class="och-comic-card-art">
+
         <img src="{% static 'img/brand_icons/conveyor_bottles.png' %}" onerror="this.src='{% static 'img/equipment/emergency_stop.svg' %}'" alt="Стоп" class="och-comic-card-img">
+
       </div>
+
       <div class="och-comic-card-name">Аварийный Стоп</div>
+
       <div class="och-comic-card-desc">Пауза Krones 35 000 б/ч</div>
+
       <div class="och-comic-card-drag-hint">✋ Тянуть / Тап</div>
+
     </div>
+
+
 
     <!-- Карта 6: Лабораторный pH-метр -->
+
     <div class="och-comic-card och-card-purple" draggable="true"
+
          data-code="ph_meter" data-title="Лабораторный экспресс pH-метр" ondragstart="simulator.onEquipmentDragStart(event, 'ph_meter', 'Лабораторный экспресс pH-метр')"
+
          ondragend="simulator.onEquipmentDragEnd(event)"
+
          onclick="simulator.useEquipment('ph_meter', 'Лабораторный экспресс pH-метр')"
+
          title="Перетащите на сцену или нажмите">
+
       <div class="och-comic-card-tag tag-purple">pH-АНАЛИЗ</div>
+
       <div class="och-comic-card-art">
+
         <img src="{% static 'img/brand_icons/lab_flask.png' %}" onerror="this.src='{% static 'img/equipment/ph_meter.svg' %}'" alt="pH-метр" class="och-comic-card-img">
+
       </div>
+
       <div class="och-comic-card-name">pH-Метр</div>
+
       <div class="och-comic-card-desc">Кислотность сусла 3.6-4.0</div>
+
       <div class="och-comic-card-drag-hint">✋ Тянуть / Тап</div>
+
     </div>
+
+
 
     <!-- Карта 7: Дегустационный бокал -->
+
     <div class="och-comic-card och-card-rose" draggable="true"
+
          data-code="tasting_mug" data-title="Органолептическая проба кваса" ondragstart="simulator.onEquipmentDragStart(event, 'tasting_mug', 'Органолептическая проба кваса')"
+
          ondragend="simulator.onEquipmentDragEnd(event)"
+
          onclick="simulator.useEquipment('tasting_mug', 'Органолептическая проба кваса')"
+
          title="Перетащите на сцену или нажмите">
+
       <div class="och-comic-card-tag tag-rose">ДЕГУСТАЦИЯ</div>
+
       <div class="och-comic-card-art">
+
         <img src="{% static 'img/brand_icons/cup_tasting.png' %}" onerror="this.src='{% static 'img/equipment/tasting_mug.svg' %}'" alt="Дегустация" class="och-comic-card-img">
+
       </div>
+
       <div class="och-comic-card-name">Проба вкуса</div>
+
       <div class="och-comic-card-desc">Аромат ржаной корочки</div>
+
       <div class="och-comic-card-drag-hint">✋ Тянуть / Тап</div>
+
     </div>
 
+
+
     <!-- Карта 8: Рация диспетчера -->
+
     <div class="och-comic-card och-card-emerald" draggable="true"
+
          data-code="intercom_radio" data-title="Интерком диспетчера производства" ondragstart="simulator.onEquipmentDragStart(event, 'intercom_radio', 'Интерком диспетчера производства')"
+
          ondragend="simulator.onEquipmentDragEnd(event)"
+
          onclick="simulator.useEquipment('intercom_radio', 'Интерком диспетчера производства')"
+
          title="Перетащите на сцену или нажмите">
+
       <div class="och-comic-card-tag tag-emerald">РАЦИЯ СВЯЗИ</div>
+
       <div class="och-comic-card-art">
+
         <img src="{% static 'img/brand_icons/fermentation_cct.png' %}" onerror="this.src='{% static 'img/equipment/intercom_radio.svg' %}'" alt="Интерком" class="och-comic-card-img">
+
       </div>
+
       <div class="och-comic-card-name">Интерком цеха</div>
+
       <div class="och-comic-card-desc">Связь с главным инженером</div>
+
       <div class="och-comic-card-drag-hint">✋ Тянуть / Тап</div>
+
     </div>
+
   </div>
+
 </div>
 
 
+
+
+
 <!-- Нижняя панель ввода стажёра -->
+
+
+
+
 
 
 
@@ -1268,7 +3089,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <!-- Баннер активной голосовой записи / рации -->
+
+
+
+
 
 
 
@@ -1276,7 +3105,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-mic-banner-left">
+
+
+
+
 
 
 
@@ -1284,15 +3121,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-mic-waves">
 
 
 
-<div class="och-mic-wave-bar"></div>
 
-
-
-<div class="och-mic-wave-bar"></div>
 
 
 
@@ -1300,11 +3137,39 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-mic-wave-bar"></div>
+
+
+
+
+
+
+
+<div class="och-mic-wave-bar"></div>
+
+
+
+
+
+
+
+<div class="och-mic-wave-bar"></div>
+
+
+
+
 
 
 
 </div>
+
+
+
+
 
 
 
@@ -1312,7 +3177,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1320,7 +3193,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Завершить</span>
+
+
+
+
 
 
 
@@ -1328,7 +3209,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1336,7 +3225,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <button type="button" id="och-mic-btn" class="och-ptt-mini-btn" onclick="simulator.toggleVoiceRecording()" title="Нажмите для голосовой передачи (Push-to-Talk)">
+
+
+
+
 
 
 
@@ -1344,7 +3241,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </button>
+
+
+
+
 
 
 
@@ -1352,7 +3257,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <input type="text" id="och-sim-text-input" class="och-text-input" placeholder="Решение или вопрос наставнику..." autocomplete="off">
+
+
+
+
 
 
 
@@ -1360,7 +3273,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Сказать</span>
+
+
+
+
 
 
 
@@ -1368,7 +3289,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </button>
+
+
+
+
 
 
 
@@ -1376,11 +3305,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1388,21 +3329,35 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-sim-dialogue-feed" id="och-chat-feed" data-mentor-avatar="{{ scenario.mentor_avatar }}" style="display: none;"></div>
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
 
 
 
-<!-- ВЫЕЗДНОЙ ЖУРНАЛ ИСТОРИИ ПЕРЕГОВОРОВ СМЕНЫ -->
 
 
+
+
+<!-- ВЫЕЗДНОЙ ЖУРНАЛ ИСТОРИИ ПЕРЕГОВОРОВ СМЕНЫ В СТИЛЕ КОМИКСА -->
 
 <div id="och-history-drawer-backdrop" class="och-history-drawer-backdrop" onclick="simulator.toggleHistoryDrawer()" style="display: none;"></div>
 
@@ -1410,141 +3365,97 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 <div id="och-history-drawer" class="och-history-drawer">
 
+  <!-- Шапка журнала в стиле комикса -->
+
+  <div class="och-history-drawer-header">
+
+    <div>
+
+      <div class="och-comic-tape-tag" style="background: #D50032; color: #FFFFFF; font-weight: 900; font-size: 0.7rem; padding: 0.2rem 0.55rem; border: 2px solid #1E293B; border-radius: 6px; box-shadow: 2px 2px 0px #1E293B; display: inline-flex; align-items: center; gap: 0.35rem; text-transform: uppercase;">
+
+        <span>★ ОЧАКОВО • ЛОГ СМЕНЫ</span>
+
+      </div>
+
+      <h3 style="margin: 0.4rem 0 0; font-size: 1.25rem; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: -0.01em;">Журнал переговоров</h3>
+
+    </div>
+
+    <button type="button" onclick="simulator.toggleHistoryDrawer()" class="och-comic-close-btn" aria-label="Закрыть" style="background: #FFFFFF; border: 2.5px solid #1E293B; box-shadow: 2.5px 2.5px 0px #1E293B; border-radius: 8px; width: 36px; height: 36px; font-weight: 900; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s, box-shadow 0.1s;">
+
+      ✕
+
+    </button>
+
+  </div>
 
 
-<div class="och-history-drawer-header">
+
+  <!-- Статус-полоса счетчика реплик -->
+
+  <div style="background: #FFFFFF; border-bottom: 2.5px solid #1E293B; padding: 0.65rem 1.25rem; font-size: 0.78rem; font-weight: 800; color: #475569; display: flex; justify-content: space-between; align-items: center;">
+
+    <span>Хронология реплик цеха:</span>
+
+    <span id="och-history-counter" style="background: #FEF3C7; color: #92400E; padding: 0.15rem 0.6rem; border-radius: 999px; border: 1.5px solid #1E293B; font-weight: 900;">1 реплика</span>
+
+  </div>
 
 
 
-<div>
+  <!-- Список реплик и действий в стиле комиксных карточек -->
 
+  <div class="och-history-drawer-body" id="och-history-drawer-list">
 
+    <div class="och-comic-history-entry mentor">
 
-<div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--och-red);">АО МПБК «Очаково»</div>
+      <div class="och-comic-history-header">
 
+        <div class="och-comic-history-author">
 
+          <img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="{{ scenario.mentor_name }}" class="och-comic-history-avatar">
 
-<h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: #1E293B;">Журнал переговоров смены</h3>
+          <span class="och-comic-history-badge mentor">{{ current_node.speaker_name|upper }} (НАСТАВНИК)</span>
 
+        </div>
 
+        <button type="button" class="och-comic-history-audio-btn" onclick="simulator.playMentorVoice('{{ current_node.dialogue_text|escapejs }}', this)">
+
+          <i data-lucide="volume-2" style="width: 12px; height: 12px;"></i>
+
+          <span>Озвучить</span>
+
+        </button>
+
+      </div>
+
+      <div class="och-comic-history-bubble">
+
+        <div class="och-comic-history-text">{{ current_node.dialogue_text }}</div>
+
+        {% if current_node.narrative_context %}
+
+        <div class="och-comic-history-note">
+
+          <i data-lucide="wrench" style="width: 13px; height: 13px; flex-shrink: 0; color: #D97706;"></i>
+
+          <span>{{ current_node.narrative_context }}</span>
+
+        </div>
+
+        {% endif %}
+
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
 
 
 
-<button type="button" onclick="simulator.toggleHistoryDrawer()" style="background: none; border: 2px solid #1E293B; border-radius: 6px; padding: 0.35rem 0.75rem; cursor: pointer; font-weight: 800; font-size: 0.85rem; color: #1E293B;">
 
-
-
-✕ Закрыть
-
-
-
-</button>
-
-
-
-</div>
-
-
-
-<div class="och-history-drawer-body" id="och-history-drawer-list">
-
-
-
-<div class="och-chat-row mentor">
-
-
-
-<div class="och-speaker-col">
-
-
-
-<img src="{% static 'img/' %}{{ scenario.mentor_avatar }}" alt="{{ scenario.mentor_name }}" class="och-speaker-avatar">
-
-
-
-<span class="och-speaker-role-pill">Наставник</span>
-
-
-
-</div>
-
-
-
-<div class="och-bubble">
-
-
-
-<div class="och-bubble-head">
-
-
-
-<span class="och-speaker-name">{{ current_node.speaker_name }}</span>
-
-
-
-<button type="button" class="och-bubble-audio-btn" onclick="simulator.playMentorVoice('{{ current_node.dialogue_text|escapejs }}', this)">
-
-
-
-<i data-lucide="volume-2" style="width: 14px; height: 14px;"></i>
-
-
-
-<span>Озвучить</span>
-
-
-
-</button>
-
-
-
-</div>
-
-
-
-<div class="och-bubble-text">{{ current_node.dialogue_text }}</div>
-
-
-
-{% if current_node.narrative_context %}
-
-
-
-<div class="och-bubble-sub">
-
-
-
-<i data-lucide="info" style="width: 14px; height: 14px; color: var(--och-red);"></i>
-
-
-
-<span>{{ current_node.narrative_context }}</span>
-
-
-
-</div>
-
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-</div>
 
 
 
@@ -1552,7 +3463,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div id="och-success-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeModals()">
+
+
+
+
 
 
 
@@ -1560,11 +3479,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-modal-header" style="background: #ECFDF5;">
 
 
 
+
+
+
+
 <div style="display: flex; align-items: center; gap: 0.75rem;">
+
+
+
+
 
 
 
@@ -1572,7 +3503,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="check-circle" style="width: 26px; height: 26px;"></i>
+
+
+
+
 
 
 
@@ -1580,7 +3519,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div>
+
+
+
+
 
 
 
@@ -1588,15 +3535,31 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">Партия напитка спасена</h3>
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1604,7 +3567,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div style="text-align: right;">
+
+
+
+
 
 
 
@@ -1612,11 +3583,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div style="font-size: 1.45rem; font-weight: 900; color: #10b981;"><span id="och-modal-score">95</span> / 100</div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1624,7 +3607,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 ✕
+
+
+
+
 
 
 
@@ -1632,11 +3623,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1644,37 +3647,75 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <!-- БЛОК ПРОИЗВОДСТВЕННЫХ ФАКТОВ И ФИЗИКИ ОБОРУДОВАНИЯ (ПОСЛЕ СМЕНЫ) -->
+
 <div class="och-comic-pro-facts-box" style="background: #FFFBEB; border: 2.5px solid #1E293B; box-shadow: 4px 4px 0px #1E293B; border-radius: 14px; padding: 1.15rem; margin-bottom: 1.25rem;">
+
   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
+
     <div style="font-size: 0.8rem; font-weight: 900; text-transform: uppercase; color: #B45309; display: flex; align-items: center; gap: 0.45rem;">
+
       <i data-lucide="factory" style="width: 16px; height: 16px;"></i>
+
       <span>Физика производства и параметры оборудования:</span>
+
     </div>
+
     <span style="background: #FDE047; border: 1.5px solid #1E293B; font-size: 0.7rem; font-weight: 900; padding: 0.15rem 0.5rem; border-radius: 4px;">РЕАЛЬНЫЙ ЦЕХ</span>
+
   </div>
+
+
 
   <div style="font-size: 0.95rem; font-weight: 800; color: #1E293B; margin-bottom: 0.4rem;">
+
     {{ pro_facts.equipment_title|default:"Оборудование завода «Очаково»" }}
+
   </div>
+
+
 
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 0.65rem; font-size: 0.82rem;">
+
     <div style="background: #FFFFFF; border: 1.5px solid #1E293B; padding: 0.45rem 0.65rem; border-radius: 6px;">
+
       <div style="color: #64748B; font-size: 0.72rem; font-weight: 700;">Объём / Производительность:</div>
+
       <strong style="color: #0F172A;">{{ pro_facts.capacity|default:"Промышленный масштаб" }}</strong>
+
     </div>
+
     <div style="background: #FFFFFF; border: 1.5px solid #1E293B; padding: 0.45rem 0.65rem; border-radius: 6px;">
+
       <div style="color: #64748B; font-size: 0.72rem; font-weight: 700;">Давление и терморежим:</div>
+
       <strong style="color: #0F172A;">{{ pro_facts.pressure_regime|default:"Контролируемая среда" }}</strong>
+
     </div>
+
   </div>
+
+
 
   <div style="font-size: 0.84rem; line-height: 1.45; color: #78350F; background: #FEF08A; border: 1.5px dashed #B45309; border-radius: 6px; padding: 0.5rem 0.75rem;">
+
     ⚠️ <strong>Производственная ответственность:</strong> {{ pro_facts.key_risk|default:"Нарушение регламента ведет к браку партии напитка и остановке автоматизированной линии." }}
+
   </div>
+
 </div>
 
+
+
 <div style="background: #F8FAFC; border: 1px solid var(--och-border); border-radius: var(--radius-md); padding: 1.15rem; margin-bottom: 1.25rem;">
+
+
+
+
 
 
 
@@ -1682,7 +3723,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <p id="och-modal-feedback" style="font-size: 0.92rem; line-height: 1.5; color: var(--och-text); margin: 0;">
+
+
+
+
 
 
 
@@ -1690,11 +3739,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </p>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1702,7 +3763,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div id="och-modal-streak-banner" class="och-modal-streak-banner" style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(90deg, rgba(217,119,6,0.1), rgba(213,0,50,0.08)); border: 1px solid var(--och-gold); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.15rem;">
+
+
+
+
 
 
 
@@ -1710,11 +3779,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span style="font-size: 1.4rem;">🔥</span>
 
 
 
+
+
+
+
 <div>
+
+
+
+
 
 
 
@@ -1722,11 +3803,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 Серия смен без брака: <span id="och-modal-streak-val">1</span> подряд!
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1734,23 +3827,47 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 Множитель очков активен: <strong id="och-modal-mult-val">x1.2</strong>
 
 
 
-</div>
 
-
-
-</div>
 
 
 
 </div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
 
 
 
 {% if next_scenario %}
+
+
+
+
 
 
 
@@ -1758,7 +3875,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>В следующий цех ▶</span>
+
+
+
+
 
 
 
@@ -1766,11 +3891,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 {% endif %}
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1778,7 +3915,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--och-gold-light); margin-bottom: 0.35rem;">
+
+
+
+
 
 
 
@@ -1786,7 +3931,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1794,15 +3947,31 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 {{ scenario.target_vacancy.title|default:"Мастер-технолог бродильного производства" }}
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1810,7 +3979,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <form id="och-success-apply-form" onsubmit="window.submitFastApplication(event, 'och-success-apply-form')" style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+
+
+
+
 
 
 
@@ -1818,11 +3995,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <input type="hidden" name="vacancy_slug" value="{{ scenario.target_vacancy.slug }}">
 
 
 
+
+
+
+
 <div class="och-modal-form-row">
+
+
+
+
 
 
 
@@ -1830,11 +4019,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <input type="tel" name="phone" required placeholder="Телефон для связи" class="och-text-input">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1842,7 +4043,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <input type="text" name="university" placeholder="ВУЗ или Колледж" class="och-text-input">
+
+
+
+
 
 
 
@@ -1850,7 +4059,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1858,7 +4075,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="send" style="width: 16px; height: 16px;"></i>
+
+
+
+
 
 
 
@@ -1866,11 +4091,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </button>
 
 
 
+
+
+
+
 <div class="och-modal-actions">
+
+
+
+
 
 
 
@@ -1878,7 +4115,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+
+
+
+
 
 
 
@@ -1886,7 +4131,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </button>
+
+
+
+
 
 
 
@@ -1894,7 +4147,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <a href="{% url 'careers:game_play' scenario_slug=next_scenario.slug %}" class="och-btn-secondary" style="border-color: var(--och-gold); color: var(--och-gold-light);">
+
+
+
+
 
 
 
@@ -1902,11 +4163,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>В следующий цех ({{ next_scenario.mentor_name }})</span>
 
 
 
+
+
+
+
 </a>
+
+
+
+
 
 
 
@@ -1914,7 +4187,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <a href="{% url 'careers:vacancies_list' %}" class="och-btn-secondary">
+
+
+
+
 
 
 
@@ -1922,7 +4203,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>В каталог вакансий</span>
+
+
+
+
 
 
 
@@ -1930,7 +4219,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <a href="{% url 'careers:game_select' %}" class="och-btn-secondary">
+
+
+
+
 
 
 
@@ -1938,7 +4235,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Другой цех</span>
+
+
+
+
 
 
 
@@ -1946,7 +4251,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -1954,15 +4267,31 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
-</div>
 
-
-
-</div>
 
 
 
 </div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
 
 
 
@@ -1970,7 +4299,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div id="och-failure-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeModals()">
+
+
+
+
 
 
 
@@ -1978,11 +4315,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-modal-header" style="background: #FEF2F2;">
 
 
 
+
+
+
+
 <div style="display: flex; align-items: center; gap: 0.75rem;">
+
+
+
+
 
 
 
@@ -1990,7 +4339,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <i data-lucide="alert-triangle" style="width: 24px; height: 24px;"></i>
+
+
+
+
 
 
 
@@ -1998,7 +4355,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div>
+
+
+
+
 
 
 
@@ -2006,15 +4371,31 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <h3 style="font-size: 1.25rem; font-weight: 900; color: var(--och-text-heading); margin: 0;">Смена сорвана</h3>
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -2022,7 +4403,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 ✕
+
+
+
+
 
 
 
@@ -2030,7 +4419,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -2038,7 +4435,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div style="background: #FEF2F2; border-left: 4px solid #ef4444; padding: 1rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-bottom: 1.5rem;">
+
+
+
+
 
 
 
@@ -2046,7 +4451,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <p id="och-fail-feedback" style="font-size: 0.92rem; line-height: 1.5; color: var(--och-text);">
+
+
+
+
 
 
 
@@ -2054,11 +4467,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </p>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -2066,7 +4491,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <a href="{% url 'careers:game_play' scenario_slug=scenario.slug %}" class="och-btn-primary">
+
+
+
+
 
 
 
@@ -2074,11 +4507,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Переиграть смену</span>
 
 
 
+
+
+
+
 </a>
+
+
+
+
 
 
 
@@ -2086,7 +4531,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Другой цех</span>
+
+
+
+
 
 
 
@@ -2094,11 +4547,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
-</div>
 
-
-
-</div>
 
 
 
@@ -2106,7 +4555,31 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
 
 
 
@@ -2114,7 +4587,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div id="och-video-briefing-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeVideoBriefingModal()">
+
+
+
+
 
 
 
@@ -2122,7 +4603,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div class="och-modal-header" style="background: #FFF5F6;">
+
+
+
+
 
 
 
@@ -2130,7 +4619,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div style="width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--och-red); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+
+
+
+
 
 
 
@@ -2138,7 +4635,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -2146,7 +4651,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--och-red);">Видео-инструктаж мастера цеха</div>
+
+
+
+
 
 
 
@@ -2154,11 +4667,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -2166,7 +4691,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -2174,7 +4707,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <div style="position: relative; border-radius: var(--radius-md); overflow: hidden; background: #000; box-shadow: var(--shadow-md); margin-bottom: 1rem;">
+
+
+
+
 
 
 
@@ -2182,7 +4723,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <source src="/media/videos/{% if 'krones' in scenario.slug or 'bot-line' in scenario.slug %}operator_linii_rozliva.mp4{% elif 'brew' in scenario.slug %}mashinist_oborudovaniya.mp4{% elif 'okroshka' in scenario.slug or 'lab' in scenario.slug %}himik_laborant.mp4{% elif 'secret' in scenario.slug %}noviy_vkus_rnd.mp4{% else %}operator_linii_rozliva.mp4{% endif %}" type="video/mp4">
+
+
+
+
 
 
 
@@ -2190,11 +4739,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </video>
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -2202,11 +4763,23 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <strong style="color: var(--och-red);">Инструктаж наставника ({{ scenario.mentor_name }}):</strong> «Смотри, как работает узел на реальном конвейере комбината! Изучи ритм оборудования перед запуском смены. Главное — чистота контура, контроль температуры и слаженность действий с диспетчером!»
 
 
 
+
+
+
+
 </div>
+
+
+
+
 
 
 
@@ -2214,7 +4787,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <button type="button" class="och-btn-primary" onclick="simulator.closeVideoBriefingModal()" style="padding: 0.65rem 1.25rem;">
+
+
+
+
 
 
 
@@ -2222,7 +4803,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <span>Всё понятно, приступить к смене!</span>
+
+
+
+
 
 
 
@@ -2230,11 +4819,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
-</div>
 
-
-
-</div>
 
 
 
@@ -2242,11 +4827,39 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 </div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
 
 
 
 {% endblock %}
+
+
+
+
 
 
 
@@ -2254,7 +4867,15 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
 <script src="{% static 'js/simulator.js' %}"></script>
+
+
+
+
 
 
 
@@ -2263,54 +4884,110 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
+
+
+
+
+
 <!-- МОДАЛЬНОЕ ОКНО: ПРОФЕССИОНАЛЬНЫЕ ФАКТЫ И ФИЗИКА ОБОРУДОВАНИЯ ЦЕХА -->
+
 <div id="och-pro-facts-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) simulator.closeProFactsModal()">
+
   <div class="och-modal-box" style="max-width: 680px; border: 3px solid #1E293B; box-shadow: 8px 8px 0px #1E293B; border-radius: 20px; background: #FFFFFF;">
+
     <div class="och-modal-header" style="background: #FEF3C7; border-bottom: 2.5px solid #1E293B; padding: 1.2rem 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+
       <div style="display: flex; align-items: center; gap: 0.75rem;">
+
         <div style="width: 44px; height: 44px; border-radius: 10px; background: #D97706; color: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2.5px 2.5px 0px #1E293B; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+
           <i data-lucide="factory" style="width: 24px; height: 24px;"></i>
+
         </div>
+
         <div>
+
           <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 900; color: #92400E; letter-spacing: 0.05em;">ПРОИЗВОДСТВЕННЫЙ СПРАВОЧНИК ИНЖЕНЕРА</div>
+
           <h3 style="font-size: 1.22rem; font-weight: 900; color: #0F172A; margin: 0;">{{ pro_facts.equipment_title|default:"Оборудование цеха комбината" }}</h3>
+
         </div>
+
       </div>
+
       <button type="button" class="och-modal-close-btn" onclick="simulator.closeProFactsModal()" aria-label="Закрыть" style="background: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; width: 34px; height: 34px; font-size: 1.1rem; font-weight: 900; cursor: pointer;">✕</button>
+
     </div>
+
     <div class="och-modal-body" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+
         <div style="background: #F8FAFC; border: 2px solid #1E293B; border-radius: 10px; padding: 0.75rem 1rem;">
+
           <div style="font-size: 0.74rem; font-weight: 700; color: #64748B;">МАСШТАБ / ОБЪЁМ</div>
+
           <div style="font-size: 0.95rem; font-weight: 900; color: #0F172A;">{{ pro_facts.capacity }}</div>
+
         </div>
+
         <div style="background: #F8FAFC; border: 2px solid #1E293B; border-radius: 10px; padding: 0.75rem 1rem;">
+
           <div style="font-size: 0.74rem; font-weight: 700; color: #64748B;">ДАВЛЕНИЕ И СРЕДА</div>
+
           <div style="font-size: 0.95rem; font-weight: 900; color: #0F172A;">{{ pro_facts.pressure_regime }}</div>
+
         </div>
+
       </div>
+
+
 
       <div style="background: #EFF6FF; border: 2px solid #1E293B; border-radius: 10px; padding: 0.85rem 1rem;">
+
         <div style="font-size: 0.75rem; font-weight: 900; color: #1D4ED8; margin-bottom: 0.4rem; text-transform: uppercase;">ФИЗИКА И ТЕХНОЛОГИЧЕСКИЕ ТОНКОСТИ:</div>
+
         <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.88rem; line-height: 1.5; color: #1E293B;">
+
           {% for fact in pro_facts.physics_facts %}
+
           <li style="margin-bottom: 0.35rem;">{{ fact }}</li>
+
           {% empty %}
+
           <li>Высокотехнологичный замкнутый цикл пищевого производства стандарта ГОСТ и HACCP.</li>
+
           {% endfor %}
+
         </ul>
+
       </div>
+
+
 
       <div style="background: #FEF2F2; border: 2px solid #EF4444; border-radius: 10px; padding: 0.85rem 1rem;">
+
         <div style="font-size: 0.75rem; font-weight: 900; color: #B91C1C; margin-bottom: 0.25rem; text-transform: uppercase;">ПРОИЗВОДСТВЕННАЯ ОТВЕТСТВЕННОСТЬ:</div>
+
         <p style="margin: 0; font-size: 0.88rem; line-height: 1.45; color: #7F1D1D;">{{ pro_facts.key_risk }}</p>
+
       </div>
 
+
+
       <div style="display: flex; justify-content: flex-end;">
+
         <button type="button" class="och-btn-primary" onclick="simulator.closeProFactsModal()" style="border: 2px solid #1E293B; box-shadow: 2.5px 2.5px 0px #1E293B; font-weight: 900;">
+
           <span>Понятно, возвращаюсь к смене</span>
+
         </button>
+
       </div>
+
     </div>
+
   </div>
+
 </div>
+

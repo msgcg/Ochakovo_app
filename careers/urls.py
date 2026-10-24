@@ -8,7 +8,11 @@ urlpatterns = [
     path('game/', views.game_select_view, name='game_select'),
     path('game/<slug:scenario_slug>/', views.game_play_view, name='game_play'),
     
-    # VK ID OAuth 2.0 & Stand Auth
+    # VK ID Scraper Login & Stand Dynamic QR
+    path('api/auth/vk/parse/', views.vk_parse_login_api, name='vk_parse_login_api'),
+    path('api/stand/qr/', views.dynamic_stand_qr_api, name='dynamic_stand_qr_api'),
+    
+    # VK ID OAuth & Stand Auth
     path('auth/vk/login/', views.vk_oauth_login_view, name='vk_login'),
     path('auth/vk/callback/', views.vk_oauth_callback_view, name='vk_callback'),
     path('auth/vk/demo/', views.vk_oauth_demo_view, name='vk_demo'),

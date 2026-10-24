@@ -21,57 +21,39 @@
     <div class="och-modal-body" style="padding: 1.5rem;">
       <div style="display: grid; grid-template-columns: 190px 1fr; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem;">
         
-        <!-- Генерация четкого SVG QR-кода стенда -->
+        <!-- Генерация валидного сканируемого SVG QR-кода стенда под текущий домен -->
         <div style="background: #FFFFFF; border: 2.5px solid #1E293B; box-shadow: 4px 4px 0px #1E293B; border-radius: 14px; padding: 0.85rem; text-align: center;">
-          <svg viewBox="0 0 160 160" width="100%" height="auto" style="display: block; margin: 0 auto;">
-            <!-- Фоновый белый квадрат -->
-            <rect width="160" height="160" fill="#FFFFFF"/>
-            <!-- Угловые поисковые метки QR (Finder Patterns) -->
-            <rect x="10" y="10" width="40" height="40" rx="6" fill="#1E293B"/>
-            <rect x="16" y="16" width="28" height="28" rx="3" fill="#FFFFFF"/>
-            <rect x="22" y="22" width="16" height="16" rx="2" fill="#D50032"/>
-
-            <rect x="110" y="10" width="40" height="40" rx="6" fill="#1E293B"/>
-            <rect x="116" y="16" width="28" height="28" rx="3" fill="#FFFFFF"/>
-            <rect x="122" y="22" width="16" height="16" rx="2" fill="#D50032"/>
-
-            <rect x="10" y="110" width="40" height="40" rx="6" fill="#1E293B"/>
-            <rect x="16" y="116" width="28" height="28" rx="3" fill="#FFFFFF"/>
-            <rect x="22" y="122" width="16" height="16" rx="2" fill="#D50032"/>
-
-            <!-- Стилизованные пиксели данных -->
-            <rect x="60" y="15" width="8" height="8" fill="#1E293B"/><rect x="76" y="15" width="16" height="8" fill="#1E293B"/>
-            <rect x="60" y="31" width="16" height="8" fill="#0284C7"/><rect x="84" y="31" width="8" height="8" fill="#1E293B"/>
-            <rect x="15" y="60" width="8" height="16" fill="#1E293B"/><rect x="31" y="60" width="8" height="8" fill="#1E293B"/>
-            <rect x="60" y="60" width="16" height="16" rx="3" fill="#D50032"/>
-            <rect x="84" y="60" width="8" height="16" fill="#1E293B"/><rect x="100" y="60" width="16" height="8" fill="#1E293B"/><rect x="124" y="60" width="16" height="8" fill="#1E293B"/>
-            <rect x="15" y="84" width="16" height="8" fill="#0284C7"/><rect x="39" y="84" width="8" height="8" fill="#1E293B"/>
-            <rect x="60" y="84" width="8" height="8" fill="#1E293B"/><rect x="76" y="84" width="16" height="16" rx="2" fill="#1E293B"/><rect x="100" y="84" width="8" height="8" fill="#1E293B"/><rect x="116" y="84" width="16" height="8" fill="#1E293B"/><rect x="140" y="84" width="8" height="8" fill="#1E293B"/>
-            <rect x="60" y="108" width="16" height="8" fill="#0284C7"/><rect x="84" y="108" width="8" height="16" fill="#1E293B"/><rect x="100" y="108" width="16" height="8" fill="#1E293B"/><rect x="124" y="108" width="8" height="16" fill="#1E293B"/><rect x="140" y="108" width="8" height="8" fill="#1E293B"/>
-            <rect x="60" y="124" width="8" height="8" fill="#1E293B"/><rect x="76" y="124" width="16" height="8" fill="#1E293B"/><rect x="100" y="124" width="8" height="16" fill="#1E293B"/><rect x="116" y="124" width="8" height="8" fill="#D50032"/><rect x="132" y="124" width="16" height="8" fill="#1E293B"/>
-            <rect x="60" y="140" width="16" height="8" fill="#1E293B"/><rect x="84" y="140" width="8" height="8" fill="#0284C7"/><rect x="100" y="140" width="16" height="8" fill="#1E293B"/><rect x="124" y="140" width="16" height="8" fill="#1E293B"/>
-          </svg>
-          <div style="font-size: 0.68rem; font-weight: 800; color: #475569; margin-top: 0.4rem; text-transform: uppercase;">
+          <div style="width: 160px; height: 160px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background: #FFF; border-radius: 8px; overflow: hidden;">
+            <img id="stand-dynamic-qr-img" src="/api/stand/qr/?scenario=brew-yeast-flex" alt="QR-код стенда Очаково" style="width: 100%; height: 100%; object-fit: contain; display: block;">
+          </div>
+          <div style="font-size: 0.68rem; font-weight: 900; color: #1E293B; margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.03em;">
             Стенд № ОЧАКОВО-2026
+          </div>
+          <div id="stand-qr-url-text" style="font-size: 0.68rem; word-break: break-all; margin-top: 0.35rem; line-height: 1.2;">
+            <a href="/game/brew-yeast-flex/?from=stand_qr" target="_blank" style="color: #0284C7; font-weight: 800; text-decoration: underline;">/game/brew-yeast-flex/</a>
           </div>
         </div>
 
-        <!-- Пояснение и быстрый вход через VK ID -->
+        <!-- Пояснение и вход через VK -->
         <div>
           <p style="font-size: 0.88rem; line-height: 1.5; color: #334155; margin: 0 0 1rem;">
-            Наведите камеру смартфона на стенде или войдите через <strong>VK ID</strong> — вы автоматически получите <strong>персональный оффер</strong> и подтверждение навыков для сокращения срока стажировки!
+            Наведите камеру смартфона на стенде или укажите <strong>профиль ВКонтакте</strong> — вы автоматически получите <strong>персональный оффер</strong> и подтверждение навыков для сокращения срока стажировки!
           </p>
 
-          <a href="{% url 'careers:vk_login' %}?next=/progress/" class="och-vk-id-btn" style="display: flex; align-items: center; justify-content: center; gap: 0.65rem; background: #0077FF; color: #FFFFFF; font-weight: 900; font-size: 0.92rem; padding: 0.75rem 1.25rem; border-radius: 12px; border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; text-decoration: none; transition: transform 0.12s, box-shadow 0.12s;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15.684 0H8.316C3.723 0 0 3.723 0 8.316v7.368C0 20.277 3.723 24 8.316 24h7.368C20.277 24 24 20.277 24 15.684V8.316C24 3.723 20.277 0 15.684 0z" fill="#0077FF"/>
-              <path d="M12.923 17.065c-4.946 0-7.77-3.385-7.892-9.015h2.477c.084 4.131 1.908 5.885 3.354 6.246V8.05h2.33v3.562c1.424-.154 2.893-1.777 3.4-3.562h2.331c-.392 2.215-2.023 3.838-3.177 4.5 1.154.538 3.015 1.954 3.63 4.515h-2.576c-.485-1.507-1.7-2.677-3.477-2.854v2.854h-.392z" fill="#FFF"/>
-            </svg>
-            <span>Войти через VK ID (в 1 клик)</span>
-          </a>
+          <button type="button" onclick="closeStandQrModal(); openVkModal();" class="och-vk-id-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.65rem; background: #0077FF; color: #FFFFFF; font-weight: 900; font-size: 0.92rem; padding: 0.75rem 1.25rem; border-radius: 12px; border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; cursor: pointer; transition: transform 0.12s, box-shadow 0.12s;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M15.07 2H8.93C4.17 2 2 4.17 2 8.93v6.14C2 19.83 4.17 22 8.93 22h6.14c4.76 0 6.93-2.17 6.93-6.93V8.93C22 4.17 19.83 2 15.07 2zm3.39 13.91h-1.57c-.59 0-.77-.47-1.83-1.53-.93-.9-1.34-1.02-1.57-1.02-.32 0-.41.09-.41.53v1.44c0 .38-.12.58-1.12.58-1.65 0-3.49-.99-4.79-2.86-1.95-2.75-2.5-4.83-2.5-5.26 0-.23.09-.44.53-.44h1.57c.4 0 .55.18.7.6.77 2.23 2.06 4.18 2.59 4.18.2 0 .29-.09.29-.6v-2.33c-.06-1.05-.62-1.14-.62-1.51 0-.18.15-.35.39-.35h2.46c.33 0 .45.17.45.56v3.13c0 .34.15.46.25.46.2 0 .37-.12.75-.5 1.16-1.3 1.99-3.32 1.99-3.32.11-.23.3-.44.7-.44h1.57c.47 0 .57.24.47.58-.2 1-2.12 3.65-2.12 3.65-.18.29-.25.42 0 .75.18.24.78.76 1.18 1.23.73.84 1.29 1.54 1.44 2.03.16.48-.09.73-.65.73z"/></svg>
+            <span>Вход через профиль ВКонтакте</span>
+          </button>
 
-          <div style="font-size: 0.74rem; color: #64748B; margin-top: 0.5rem; text-align: center;">
-            Мгновенная авторизация для студентов (без ввода пароля)
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+            <button type="button" onclick="copyStandUrl()" style="flex: 1; background: #F8FAFC; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.4rem; font-size: 0.76rem; font-weight: 800; color: #1E293B; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+              <i data-lucide="copy" style="width: 13px; height: 13px;"></i>
+              <span id="copy-btn-label">Скопировать ссылку</span>
+            </button>
+            <a href="/game/brew-yeast-flex/?from=stand_qr" style="flex: 1; background: #0284C7; color: #FFF; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.4rem; font-size: 0.76rem; font-weight: 800; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+              <i data-lucide="external-link" style="width: 13px; height: 13px;"></i>
+              <span>Открыть симулятор</span>
+            </a>
           </div>
         </div>
       </div>
@@ -121,12 +103,40 @@ function openStandQrModal() {
   if (modal) {
     modal.style.display = 'flex';
     if (window.lucide) window.lucide.createIcons();
+    
+    // Динамический расчёт ссылки на симулятор с учётом текущего домена и протокола
+    const currentHost = window.location.origin;
+    const targetUrl = currentHost + '/game/brew-yeast-flex/?from=stand_qr';
+    
+    const qrImg = document.getElementById('stand-dynamic-qr-img');
+    const urlTxt = document.getElementById('stand-qr-url-text');
+    
+    if (qrImg) {
+      qrImg.src = '/api/stand/qr/?target=' + encodeURIComponent(targetUrl);
+    }
+    if (urlTxt) {
+      urlTxt.innerHTML = `<a href="${targetUrl}" target="_blank" style="color: #0284C7; font-weight: 800; text-decoration: underline;">${targetUrl}</a>`;
+    }
   }
 }
 
 function closeStandQrModal() {
   const modal = document.getElementById('och-stand-qr-modal');
   if (modal) modal.style.display = 'none';
+}
+
+function copyStandUrl() {
+  const currentHost = window.location.origin;
+  const targetUrl = currentHost + '/game/brew-yeast-flex/?from=stand_qr';
+  navigator.clipboard.writeText(targetUrl).then(() => {
+    const lbl = document.getElementById('copy-btn-label');
+    if (lbl) {
+      lbl.innerText = 'Скопировано! ✔';
+      setTimeout(() => { lbl.innerText = 'Скопировать ссылку'; }, 2000);
+    }
+  }).catch(() => {
+    prompt('Скопируйте ссылку на симулятор:', targetUrl);
+  });
 }
 
 function submitStandLead(e) {
