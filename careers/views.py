@@ -1,6 +1,8 @@
 from .scenarios_facts import SCENARIO_PRO_FACTS
 from .services.pdf_export_service import SkillsPdfService
 from datetime import datetime
+import os
+import requests
 import json
 import uuid
 import re
@@ -1045,7 +1047,7 @@ def vk_oauth_login_view(request):
 
     if not client_id:
         # Автоматический дружелюбный фоллбэк на демо-вход через VK ID
-        return redirect('/auth/vk/demo/?msg=no_keys')
+        return redirect(f'/auth/vk/demo/?next={next_url}&msg=no_keys')
 
     state = str(uuid.uuid4())
     request.session['vk_oauth_state'] = state

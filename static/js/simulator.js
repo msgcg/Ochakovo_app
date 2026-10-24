@@ -1446,6 +1446,7 @@ window.simulator = (function () {
 
     // Инициализируем случайного маскота при старте игры
     updateMascots('normal');
+    initCardTouchDrag();
 
     // Инициализируем стрик и начальные значения датчиков
     renderStreakBadge();
@@ -1502,21 +1503,27 @@ window.simulator = (function () {
 
 
   // ==========================================
-  // DRAG & DROP ПАНЕЛИ КАРТ ОБОРУДОВАНИЯ ЦЕХА
+  // DRAG & DROP ПАНЕЛИ КАРТ ОБОРУДОВАНИЯ ЦЕХА (HTML5 + TOUCH/POINTER)
   // ==========================================
   let draggedEquipment = null;
+  window._draggedEquipment = null;
 
   function onEquipmentDragStart(e, code, title) {
     draggedEquipment = { code, title };
+    window._draggedEquipment = { code, title };
     if (e && e.dataTransfer) {
-      e.dataTransfer.setData('text/plain', code);
-      e.dataTransfer.effectAllowed = 'copyMove';
+      try {
+        e.dataTransfer.setData('text/plain', code);
+        e.dataTransfer.effectAllowed = 'copyMove';
+      } catch (err) {
+        console.warn('[Drag] dataTransfer error', err);
+      }
     }
     const cardEl = e ? e.currentTarget : null;
     if (cardEl) {
       cardEl.classList.add('och-card-dragging');
     }
-    const dropZones = document.querySelectorAll('.och-comic-drop-target, .och-comic-frame-stage, #och-comic-stage');
+    const dropZones = document.querySelectorAll('.och-comic-drop-target, #och-comic-stage, .och-vn-stage');
     dropZones.forEach(dz => dz.classList.add('och-dropzone-active'));
   }
 
@@ -1525,44 +1532,160 @@ window.simulator = (function () {
     if (cardEl) {
       cardEl.classList.remove('och-card-dragging');
     }
-    const dropZones = document.querySelectorAll('.och-comic-drop-target, .och-comic-frame-stage, #och-comic-stage');
+    const dropZones = document.querySelectorAll('.och-comic-drop-target, #och-comic-stage, .och-vn-stage');
     dropZones.forEach(dz => dz.classList.remove('och-dropzone-active', 'och-dropzone-hover'));
   }
 
-  function onDropZoneDragOver(e) {
+  function onDropZoneDragEnter(e) {
     if (e) {
       e.preventDefault();
       if (e.dataTransfer) {
-        e.dataTransfer.dropEffect = 'copy';
+        try { e.dataTransfer.dropEffect = 'copy'; } catch (_) {}
       }
       const dz = e.currentTarget;
       if (dz) dz.classList.add('och-dropzone-hover');
     }
   }
 
-  function onDropZoneDragLeave(e) {
+  function onDropZoneDragOver(e) {
     if (e) {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        try { e.dataTransfer.dropEffect = 'copy'; } catch (_) {}
+      }
       const dz = e.currentTarget;
-      if (dz) dz.classList.remove('och-dropzone-hover');
+      if (dz && !dz.classList.contains('och-dropzone-hover')) {
+        dz.classList.add('och-dropzone-hover');
+      }
+    }
+  }
+
+  function onDropZoneDragLeave(e) {
+    if (e && e.currentTarget) {
+      if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) {
+        return; // курсор перешёл во внутренний элемент, игнорируем
+      }
+      e.currentTarget.classList.remove('och-dropzone-hover');
     }
   }
 
   function onEquipmentDrop(e) {
-    if (e) e.preventDefault();
-    const dz = e ? e.currentTarget : null;
-    if (dz) dz.classList.remove('och-dropzone-active', 'och-dropzone-hover');
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const dropZones = document.querySelectorAll('.och-comic-drop-target, #och-comic-stage, .och-vn-stage');
+    dropZones.forEach(dz => dz.classList.remove('och-dropzone-active', 'och-dropzone-hover'));
 
-    let code = (e && e.dataTransfer) ? e.dataTransfer.getData('text/plain') : null;
+    let code = null;
+    if (e && e.dataTransfer) {
+      try {
+        code = e.dataTransfer.getData('text/plain');
+      } catch (err) {
+        console.warn('[Drop] getData error', err);
+      }
+    }
     let title = '';
-    if (draggedEquipment) {
+    if (!code && window._draggedEquipment) {
+      code = window._draggedEquipment.code;
+      title = window._draggedEquipment.title;
+    } else if (draggedEquipment) {
       code = code || draggedEquipment.code;
       title = draggedEquipment.title;
     }
+
     if (code) {
       useEquipment(code, title || code);
       showActionToast(`🎯 Разыграна карта: ${title || code}`);
     }
     draggedEquipment = null;
+    window._draggedEquipment = null;
+  }
+
+  function isPointInside(element, x, y) {
+    if (!element) return false;
+    const rect = element.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  }
+
+  function initCardTouchDrag() {
+    const cards = document.querySelectorAll('.och-comic-card');
+    cards.forEach(card => {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let isDragging = false;
+      let ghost = null;
+      const code = card.dataset.code || card.getAttribute('onclick')?.match(/useEquipment\('([^']+)'/)?.[1];
+      const title = card.dataset.title || card.querySelector('.och-comic-card-name')?.innerText || code;
+
+      card.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        isDragging = false;
+      }, { passive: true });
+
+      card.addEventListener('touchmove', (e) => {
+        if (e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        const dy = touch.clientY - touchStartY;
+
+        // Если сдвинули вверх больше чем на 25px — активируем перетаскивание
+        if (dy < -25 && !isDragging) {
+          isDragging = true;
+          window._draggedEquipment = { code, title };
+          onEquipmentDragStart(null, code, title);
+
+          ghost = card.cloneNode(true);
+          ghost.classList.add('och-touch-ghost');
+          ghost.style.position = 'fixed';
+          ghost.style.pointerEvents = 'none';
+          ghost.style.zIndex = '99999';
+          ghost.style.width = card.offsetWidth + 'px';
+          ghost.style.opacity = '0.92';
+          ghost.style.transform = 'translate(-50%, -50%) scale(1.08) rotate(3deg)';
+          document.body.appendChild(ghost);
+        }
+
+        if (isDragging && ghost) {
+          ghost.style.left = touch.clientX + 'px';
+          ghost.style.top = touch.clientY + 'px';
+
+          const dropTarget = document.getElementById('och-comic-drop-target');
+          const stage = document.getElementById('och-comic-stage');
+          const isOverDrop = isPointInside(dropTarget, touch.clientX, touch.clientY) ||
+                             isPointInside(stage, touch.clientX, touch.clientY);
+
+          if (isOverDrop) {
+            dropTarget?.classList.add('och-dropzone-hover');
+            stage?.classList.add('och-dropzone-hover');
+          } else {
+            dropTarget?.classList.remove('och-dropzone-hover');
+            stage?.classList.remove('och-dropzone-hover');
+          }
+        }
+      }, { passive: true });
+
+      card.addEventListener('touchend', (e) => {
+        if (isDragging) {
+          if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+          const changedTouch = e.changedTouches[0];
+          const dropTarget = document.getElementById('och-comic-drop-target');
+          const stage = document.getElementById('och-comic-stage');
+          const isOverDrop = isPointInside(dropTarget, changedTouch.clientX, changedTouch.clientY) ||
+                             isPointInside(stage, changedTouch.clientX, changedTouch.clientY) ||
+                             (changedTouch.clientY < touchStartY - 60);
+
+          if (isOverDrop && code) {
+            useEquipment(code, title);
+            showActionToast(`🎯 Разыграна карта: ${title}`);
+          }
+          onEquipmentDragEnd(null);
+          isDragging = false;
+        }
+      });
+    });
   }
 
   function showActionToast(msg) {
@@ -1587,6 +1710,7 @@ window.simulator = (function () {
     useEquipment,
     onEquipmentDragStart,
     onEquipmentDragEnd,
+    onDropZoneDragEnter,
     onDropZoneDragOver,
     onDropZoneDragLeave,
     onEquipmentDrop,

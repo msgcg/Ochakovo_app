@@ -386,7 +386,16 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 
 
-<div class="och-vn-stage" id="och-comic-stage" ondragover="simulator.onDropZoneDragOver(event)" ondragleave="simulator.onDropZoneDragLeave(event)" ondrop="simulator.onEquipmentDrop(event)" style="background-image: url('{% static 'img/' %}{{ scenario.bg_image }}');">
+<div class="och-vn-stage" id="och-comic-stage"
+     ondragenter="simulator.onDropZoneDragEnter(event)"
+     ondragover="simulator.onDropZoneDragOver(event)"
+     ondragleave="simulator.onDropZoneDragLeave(event)"
+     ondrop="simulator.onEquipmentDrop(event)"
+     style="background-image: url('{% static 'img/' %}{{ scenario.bg_image }}');">
+
+<div class="och-stage-drop-overlay" id="och-stage-drop-overlay">
+  <div class="och-stage-drop-badge">🎯 ОТПУСТИТЕ КАРТУ НА СЦЕНУ ДЛЯ ПРИМЕНЕНИЯ</div>
+</div>
 
 
 
@@ -985,6 +994,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
 <!-- ЗОНА ДЛЯ СБРОСА КАРТ ОБОРУДОВАНИЯ ЦЕХА -->
 <div class="och-comic-drop-target" id="och-comic-drop-target"
+     ondragenter="simulator.onDropZoneDragEnter(event)"
      ondragover="simulator.onDropZoneDragOver(event)"
      ondragleave="simulator.onDropZoneDragLeave(event)"
      ondrop="simulator.onEquipmentDrop(event)">
@@ -1129,7 +1139,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
   <div class="och-comic-cards-deck">
     <!-- Карта 1: Охлаждение гликолем -->
     <div class="och-comic-card och-card-cyan" draggable="true"
-         ondragstart="simulator.onEquipmentDragStart(event, 'valve_cooling', 'Клапан охлаждения рубашки ЦКТ (-3°C)')"
+         data-code="valve_cooling" data-title="Клапан охлаждения рубашки ЦКТ (-3°C)" ondragstart="simulator.onEquipmentDragStart(event, 'valve_cooling', 'Клапан охлаждения рубашки ЦКТ (-3°C)')"
          ondragend="simulator.onEquipmentDragEnd(event)"
          onclick="simulator.useEquipment('valve_cooling', 'Клапан охлаждения рубашки ЦКТ (-3°C)')"
          title="Перетащите на сцену или нажмите">
@@ -1144,7 +1154,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
     <!-- Карта 2: Закваска Очаково 1978 -->
     <div class="och-comic-card och-card-gold" draggable="true"
-         ondragstart="simulator.onEquipmentDragStart(event, 'starter_culture', 'Закваска натурального брожения 1978')"
+         data-code="starter_culture" data-title="Закваска натурального брожения 1978" ondragstart="simulator.onEquipmentDragStart(event, 'starter_culture', 'Закваска натурального брожения 1978')"
          ondragend="simulator.onEquipmentDragEnd(event)"
          onclick="simulator.useEquipment('starter_culture', 'Закваска натурального брожения 1978')"
          title="Перетащите на сцену или нажмите">
@@ -1159,7 +1169,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
     <!-- Карта 3: CIP-мойка -->
     <div class="och-comic-card och-card-blue" draggable="true"
-         ondragstart="simulator.onEquipmentDragStart(event, 'cip_wash', 'Пульт контура CIP-мойки')"
+         data-code="cip_wash" data-title="Пульт контура CIP-мойки" ondragstart="simulator.onEquipmentDragStart(event, 'cip_wash', 'Пульт контура CIP-мойки')"
          ondragend="simulator.onEquipmentDragEnd(event)"
          onclick="simulator.useEquipment('cip_wash', 'Пульт контура CIP-мойки')"
          title="Перетащите на сцену или нажмите">
@@ -1174,7 +1184,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
     <!-- Карта 4: Рефрактометр Brix -->
     <div class="och-comic-card och-card-amber" draggable="true"
-         ondragstart="simulator.onEquipmentDragStart(event, 'refractometer', 'Оптический рефрактометр сахаров Brix')"
+         data-code="refractometer" data-title="Оптический рефрактометр сахаров Brix" ondragstart="simulator.onEquipmentDragStart(event, 'refractometer', 'Оптический рефрактометр сахаров Brix')"
          ondragend="simulator.onEquipmentDragEnd(event)"
          onclick="simulator.useEquipment('refractometer', 'Оптический рефрактометр сахаров Brix')"
          title="Перетащите на сцену или нажмите">
@@ -1189,7 +1199,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
     <!-- Карта 5: Аварийный стоп конвейера -->
     <div class="och-comic-card och-card-red" draggable="true"
-         ondragstart="simulator.onEquipmentDragStart(event, 'emergency_stop', 'Кнопка аварийного останова конвейера Krones')"
+         data-code="emergency_stop" data-title="Кнопка аварийного останова конвейера Krones" ondragstart="simulator.onEquipmentDragStart(event, 'emergency_stop', 'Кнопка аварийного останова конвейера Krones')"
          ondragend="simulator.onEquipmentDragEnd(event)"
          onclick="simulator.useEquipment('emergency_stop', 'Кнопка аварийного останова конвейера Krones')"
          title="Перетащите на сцену или нажмите">
@@ -1204,7 +1214,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
     <!-- Карта 6: Лабораторный pH-метр -->
     <div class="och-comic-card och-card-purple" draggable="true"
-         ondragstart="simulator.onEquipmentDragStart(event, 'ph_meter', 'Лабораторный экспресс pH-метр')"
+         data-code="ph_meter" data-title="Лабораторный экспресс pH-метр" ondragstart="simulator.onEquipmentDragStart(event, 'ph_meter', 'Лабораторный экспресс pH-метр')"
          ondragend="simulator.onEquipmentDragEnd(event)"
          onclick="simulator.useEquipment('ph_meter', 'Лабораторный экспресс pH-метр')"
          title="Перетащите на сцену или нажмите">
@@ -1219,7 +1229,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
     <!-- Карта 7: Дегустационный бокал -->
     <div class="och-comic-card och-card-rose" draggable="true"
-         ondragstart="simulator.onEquipmentDragStart(event, 'tasting_mug', 'Органолептическая проба кваса')"
+         data-code="tasting_mug" data-title="Органолептическая проба кваса" ondragstart="simulator.onEquipmentDragStart(event, 'tasting_mug', 'Органолептическая проба кваса')"
          ondragend="simulator.onEquipmentDragEnd(event)"
          onclick="simulator.useEquipment('tasting_mug', 'Органолептическая проба кваса')"
          title="Перетащите на сцену или нажмите">
@@ -1234,7 +1244,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 
     <!-- Карта 8: Рация диспетчера -->
     <div class="och-comic-card och-card-emerald" draggable="true"
-         ondragstart="simulator.onEquipmentDragStart(event, 'intercom_radio', 'Интерком диспетчера производства')"
+         data-code="intercom_radio" data-title="Интерком диспетчера производства" ondragstart="simulator.onEquipmentDragStart(event, 'intercom_radio', 'Интерком диспетчера производства')"
          ondragend="simulator.onEquipmentDragEnd(event)"
          onclick="simulator.useEquipment('intercom_radio', 'Интерком диспетчера производства')"
          title="Перетащите на сцену или нажмите">
