@@ -178,7 +178,27 @@ class WhisperVulkanService:
 
 
     @classmethod
-    def is_audio_silent(cls, wav_path: Path, min_rms: float = 160.0, min_peak: int = 400) -> bool:
+    def is_hardware_gpu_available(cls) -> bool:
+        """Проверяет, доступен ли настоящий аппаратный GPU (NVIDIA, AMD, Intel), а не софтверный llvmpipe"""
+        if sys.platform == "win32":
+            return True
+        try:
+            vi = shutil.which("vulkaninfo")
+            if vi:
+                res = subprocess.run([vi, "--summary"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=2)
+                out = res.stdout.lower()
+                if "devicename" in out:
+                    is_soft = any(sw in out for sw in ["llvmpipe", "lavapipe", "software", "cpu renderer", "softpipe"])
+                    has_hw = any(hw in out for hw in ["nvidia", "geforce", "rtx", "gtx", "radeon", "intel arc", "mali", "adreno"])
+                    if is_soft and not has_hw:
+                        return False
+                    return True
+        except Exception:
+            pass
+        return False
+
+    @classmethod
+    def is_audio_silent(cls, wav_path: Path, min_rms: float = 25.0, min_peak: int = 100) -> bool:
         """
         Проверяет, содержит ли аудиозапись реальный слышимый сигнал/голос,
         или это цифровая тишина / тихий фоновый шум микрофона.
@@ -307,6 +327,9 @@ class WhisperVulkanService:
             cpu_threads = min(os.cpu_count() or 4, 8)
             ochakovo_prompt = "Очаково, квас, брожение, сусло, наставник, Михалыч, ЦКТ, температура, закваска, гликоль, Krones, конвейер, робот, лаборатория, кислотность, pH-метр, паллета."
             run_mode = "vulkan" if mode in ("vulkan", "auto") else "cpu"
+            # В Linux / Docker без аппаратной видеокарты переключаемся на оптимизированный CPU AVX2
+            if sys.platform != "win32" and run_mode == "vulkan" and not cls.is_hardware_gpu_available():
+                run_mode = "cpu"
             executed_engine = f"whisper_{run_mode}_{model_tag}"
 
             # 3. Проверка уровня звука (VAD) для мгновенного отсечения тишины без галлюцинаций
@@ -371,7 +394,13 @@ class WhisperVulkanService:
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
                 )
-                stdout_data, stderr_data = proc_w.communicate(timeout=25)
+                try:
+                    stdout_data, stderr_data = proc_w.communicate(timeout=15)
+                except subprocess.TimeoutExpired:
+                    proc_w.kill()
+                    proc_w.wait()
+                    stdout_data, stderr_data = b"", b"Vulkan timeout expired"
+                    proc_w.returncode = 1
 
                 # Если Vulkan выдал сбой, безопасно запускаем с -ng (CPU AVX2 fallback)
                 if proc_w.returncode != 0:
@@ -393,7 +422,13 @@ class WhisperVulkanService:
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE
                         )
-                        c_out, c_err = proc_cpu.communicate(timeout=25)
+                        try:
+                            c_out, c_err = proc_cpu.communicate(timeout=18)
+                        except subprocess.TimeoutExpired:
+                            proc_cpu.kill()
+                            proc_cpu.wait()
+                            c_out, c_err = b"", b"CPU fallback timeout"
+                            proc_cpu.returncode = 1
                         if proc_cpu.returncode == 0 and c_out:
                             stdout_data = c_out
                             stderr_data = c_err

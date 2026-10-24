@@ -31,6 +31,7 @@ class OchakovoAIService:
     _gigachat_token = None
     _gigachat_cached_key = None
     _gigachat_expires_at = 0
+    _last_oauth_failure = 0
 
     @classmethod
     def has_configured_credentials(cls) -> bool:
@@ -84,6 +85,10 @@ class OchakovoAIService:
             return None
 
         current_time = int(time.time() * 1000)
+        # Если недавно был сбой авторизации GigaChat (таймаут сети или блокировка портов) - мгновенный fallback на локальный биохимический движок
+        if getattr(cls, '_last_oauth_failure', 0) and (current_time - cls._last_oauth_failure < 45000):
+            return None
+
         if getattr(cls, '_gigachat_cached_key', None) == key and cls._gigachat_token and (cls._gigachat_expires_at - current_time > 60000):
             return cls._gigachat_token
         oauth_url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
@@ -95,15 +100,19 @@ class OchakovoAIService:
         data = {"scope": scope}
 
         try:
-            resp = requests.post(oauth_url, headers=headers, data=data, verify=False, timeout=12)
+            resp = requests.post(oauth_url, headers=headers, data=data, verify=False, timeout=(2.5, 4.0))
             if resp.status_code == 200:
                 res_data = resp.json()
                 cls._gigachat_token = res_data.get("access_token")
                 cls._gigachat_cached_key = key
                 cls._gigachat_expires_at = res_data.get("expires_at", current_time + 1800000)
+                cls._last_oauth_failure = 0
                 return cls._gigachat_token
+            else:
+                cls._last_oauth_failure = current_time
         except Exception as exc:
-            print(f"[OchakovoAIService] Ошибка OAuth GigaChat: {exc}")
+            cls._last_oauth_failure = current_time
+            print(f"[OchakovoAIService] Сеть Salute OAuth недоступна ({exc}), мгновенная активация встроенного движка Очаково.")
 
         return None
 
@@ -534,7 +543,7 @@ class OchakovoAIService:
             "function_call": "auto"
         }
 
-        resp = requests.post(api_url, headers=headers, json=payload, verify=False, timeout=25)
+        resp = requests.post(api_url, headers=headers, json=payload, verify=False, timeout=(3.0, 7.0))
         if resp.status_code == 200:
             res_json = resp.json()
             choice_msg = res_json.get("choices", [{}])[0].get("message", {})

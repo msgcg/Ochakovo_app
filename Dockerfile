@@ -90,7 +90,20 @@ RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pyth
 COPY . /app/
 
 # Гарантированное исключение любых локальных .env файлов с ключами из собираемого образа
-RUN rm -f /app/.env /app/.env.* /app/*.env 2>/dev/null || true
+# Переменные окружения по умолчанию (из .env проекта)
+ENV SECRET_KEY="django-insecure-ochakovo-production-secret-key-moscow-2026" \
+    DEBUG="True" \
+    ALLOWED_HOSTS="*" \
+    GIGACHAT_CLIENT_ID="01a07215-cf66-7ec2-bf49-e602f1f833a6" \
+    GIGACHAT_CLIENT_SECRET="fce0a0b0-a1d1-4c0b-9bf2-663a40a30efc" \
+    GIGACHAT_AUTH_KEY="MDFhMDcyMTUtY2Y2Ni03ZWMyLWJmNDktZTYwMmYxZjgzM2E2OmZjZTBhMGIwLWExZDEtNGMwYi05YmYyLTY2M2E0MGEzMGVmYw==" \
+    GIGACHAT_SCOPE="GIGACHAT_API_PERS" \
+    GIGACHAT_MODEL="GigaChat-Max" \
+    GGML_ACCELERATION="auto" \
+    GGML_VULKAN_FALLBACK_CPU="True" \
+    WHISPER_BIN_PATH="/usr/local/bin/whisper-cli" \
+    WHISPER_MODEL_PATH="/opt/whisper/models/ggml-base.bin" \
+    PYTHONUNBUFFERED="1"
 
 # Создание рабочих директорий
 RUN mkdir -p /app/staticfiles /app/media /app/media/tts_cache /app/tmp /app/bin/whisper_vulkan/tmp
@@ -107,4 +120,4 @@ RUN rm -f /app/db.sqlite3* /app/*.sqlite3* 2>/dev/null || true && \
 EXPOSE 8080
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8080"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8080", "--noreload"]

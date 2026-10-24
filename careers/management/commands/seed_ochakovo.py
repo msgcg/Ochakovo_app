@@ -8,6 +8,7 @@ from careers.models import (
     StoryMilestone,
     CompanyPerk,
     SiteVisitor,
+    AIConfig,
 )
 
 
@@ -975,6 +976,21 @@ class Command(BaseCommand):
             self.stdout.write(f"Офлайн-режим: используются локальные базовые вакансии ({e})")
 
         
+        
+        # 6. НАСТРОЙКИ ИИ-НАСТАВНИКА (GigaChat API) ИЗ .ENV
+        AIConfig.objects.update_or_create(
+            id=1,
+            defaults={
+                'gigachat_auth_key': 'MDFhMDcyMTUtY2Y2Ni03ZWMyLWJmNDktZTYwMmYxZjgzM2E2OmZjZTBhMGIwLWExZDEtNGMwYi05YmYyLTY2M2E0MGEzMGVmYw==',
+                'gigachat_client_id': '01a07215-cf66-7ec2-bf49-e602f1f833a6',
+                'gigachat_client_secret': 'fce0a0b0-a1d1-4c0b-9bf2-663a40a30efc',
+                'gigachat_scope': 'GIGACHAT_API_PERS',
+                'gigachat_model': 'GigaChat-Max',
+                'is_active': True,
+            }
+        )
+        self.stdout.write("Настройки ИИ-наставника (GigaChat API) успешно инициализированы.")
+
         # 7. ИНИЦИАЛИЗАЦИЯ ДЕМОНСТРАЦИОННОЙ СТАТИСТИКИ ПОСЕТИТЕЛЕЙ (Стенды, QR, VK, Сайт)
         if SiteVisitor.objects.count() == 0:
             import uuid

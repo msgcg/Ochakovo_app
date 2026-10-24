@@ -4,7 +4,20 @@ set -e
 echo "=== Запуск симулятора «Очаково: Мастерская Вкуса» в Linux-контейнере ==="
 
 # Безопасность: гарантированное отсутствие предустановленных ключей и .env файлов
-rm -f /app/.env /app/.env.local /app/.env.production 2>/dev/null || true
+# Загрузка переменных окружения по умолчанию (из .env проекта)
+export GIGACHAT_CLIENT_ID="${GIGACHAT_CLIENT_ID:-01a07215-cf66-7ec2-bf49-e602f1f833a6}"
+export GIGACHAT_CLIENT_SECRET="${GIGACHAT_CLIENT_SECRET:-fce0a0b0-a1d1-4c0b-9bf2-663a40a30efc}"
+export GIGACHAT_AUTH_KEY="${GIGACHAT_AUTH_KEY:-MDFhMDcyMTUtY2Y2Ni03ZWMyLWJmNDktZTYwMmYxZjgzM2E2OmZjZTBhMGIwLWExZDEtNGMwYi05YmYyLTY2M2E0MGEzMGVmYw==}"
+export GIGACHAT_SCOPE="${GIGACHAT_SCOPE:-GIGACHAT_API_PERS}"
+export GIGACHAT_MODEL="${GIGACHAT_MODEL:-GigaChat-Max}"
+export GGML_ACCELERATION="${GGML_ACCELERATION:-auto}"
+export GGML_VULKAN_FALLBACK_CPU="${GGML_VULKAN_FALLBACK_CPU:-True}"
+export SECRET_KEY="${SECRET_KEY:-django-insecure-ochakovo-production-secret-key-moscow-2026}"
+export DEBUG="${DEBUG:-True}"
+export ALLOWED_HOSTS="${ALLOWED_HOSTS:-*}"
+export WHISPER_BIN_PATH="${WHISPER_BIN_PATH:-/usr/local/bin/whisper-cli}"
+export WHISPER_MODEL_PATH="${WHISPER_MODEL_PATH:-/opt/whisper/models/ggml-base.bin}"
+export PYTHONUNBUFFERED="${PYTHONUNBUFFERED:-1}"
 
 # Директива FRESH_DB: принудительный сброс ТОЛЬКО при явном указании FRESH_DB=1 или RESET_DB=1
 if [ "$FRESH_DB" = "1" ] || [ "$RESET_DB" = "1" ]; then

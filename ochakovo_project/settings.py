@@ -99,10 +99,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Sber GigaChat & SaluteSpeech configuration
-GIGACHAT_CLIENT_ID = os.getenv('GIGACHAT_CLIENT_ID', '')
-GIGACHAT_CLIENT_SECRET = os.getenv('GIGACHAT_CLIENT_SECRET', '')
-GIGACHAT_AUTH_KEY = os.getenv('GIGACHAT_AUTH_KEY', '')
+# Sber GigaChat & SaluteSpeech configuration (дефолтные значения из .env)
+GIGACHAT_CLIENT_ID = os.getenv('GIGACHAT_CLIENT_ID', '01a07215-cf66-7ec2-bf49-e602f1f833a6')
+GIGACHAT_CLIENT_SECRET = os.getenv('GIGACHAT_CLIENT_SECRET', 'fce0a0b0-a1d1-4c0b-9bf2-663a40a30efc')
+GIGACHAT_AUTH_KEY = os.getenv('GIGACHAT_AUTH_KEY', 'MDFhMDcyMTUtY2Y2Ni03ZWMyLWJmNDktZTYwMmYxZjgzM2E2OmZjZTBhMGIwLWExZDEtNGMwYi05YmYyLTY2M2E0MGEzMGVmYw==')
 GIGACHAT_SCOPE = os.getenv('GIGACHAT_SCOPE', 'GIGACHAT_API_PERS')
 GIGACHAT_MODEL = os.getenv('GIGACHAT_MODEL', 'GigaChat-Max')
 SALUTESPEECH_AUTH_KEY = os.getenv('SALUTESPEECH_AUTH_KEY', '')
