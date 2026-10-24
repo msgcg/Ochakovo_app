@@ -7,6 +7,7 @@ from careers.models import (
     ScenarioChoice,
     StoryMilestone,
     CompanyPerk,
+    SiteVisitor,
 )
 
 
@@ -15,6 +16,20 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write("Начало наполнения базы данных Очаково...")
+        # 0. ГАРАНТИРОВАННОЕ СОЗДАНИЕ СУПЕРПОЛЬЗОВАТЕЛЯ admin / ochakovo2026
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        admin_user, created = User.objects.get_or_create(username='admin')
+        admin_user.set_password('ochakovo2026')
+        admin_user.is_staff = True
+        admin_user.is_superuser = True
+        if not admin_user.email:
+            admin_user.email = 'admin@ochakovo.ru'
+        admin_user.save()
+        if created:
+            self.stdout.write(self.style.SUCCESS("[OK] Создан суперпользователь: admin (пароль: ochakovo2026)"))
+        else:
+            self.stdout.write(self.style.SUCCESS("[OK] Обновлен суперпользователь: admin (пароль: ochakovo2026)"))
 
         # 1. КАРЬЕРНЫЕ ТРЕКИ
         tracks_data = [
@@ -958,5 +973,107 @@ class Command(BaseCommand):
             self.stdout.write(f"Синхронизировано {sync_res['total_fetched']} официальных вакансий с сайта завода.")
         except Exception as e:
             self.stdout.write(f"Офлайн-режим: используются локальные базовые вакансии ({e})")
+
+        
+        # 7. ИНИЦИАЛИЗАЦИЯ ДЕМОНСТРАЦИОННОЙ СТАТИСТИКИ ПОСЕТИТЕЛЕЙ (Стенды, QR, VK, Сайт)
+        if SiteVisitor.objects.count() == 0:
+            import uuid
+            from django.utils import timezone
+            now = timezone.now()
+            sample_visitors = [
+                {
+                    'session_key': 'stand_qr_visitor_01',
+                    'ip_address': '195.208.44.12',
+                    'device_type': 'mobile',
+                    'browser_os': 'Safari (iOS 17.4)',
+                    'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1',
+                    'landing_page': '/?source=stand_qr',
+                    'last_page': '/game/krones-robot-tilt/',
+                    'referrer': 'https://ochakovo.ru/mosprom2026/qr',
+                    'source': 'stand_qr',
+                    'vk_name': 'Максим Васильев',
+                    'vk_user_id': 'id49201948',
+                    'page_views_count': 6,
+                    'has_played_game': True,
+                    'has_completed_shift': True,
+                    'has_applied': True,
+                    'last_game_score': 95,
+                },
+                {
+                    'session_key': 'stand_qr_visitor_02',
+                    'ip_address': '178.62.190.55',
+                    'device_type': 'mobile',
+                    'browser_os': 'Chrome (Android 14)',
+                    'user_agent': 'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 Chrome/122.0.0.0 Mobile Safari/537.36',
+                    'landing_page': '/?source=stand_qr',
+                    'last_page': '/vacancies/master-tehnolog-proizvodstva/',
+                    'referrer': 'https://ochakovo.ru/stand',
+                    'source': 'stand_qr',
+                    'vk_name': 'Анна Соколова',
+                    'vk_user_id': 'id81230491',
+                    'page_views_count': 4,
+                    'has_played_game': True,
+                    'has_completed_shift': True,
+                    'has_applied': True,
+                    'last_game_score': 100,
+                },
+                {
+                    'session_key': 'vk_candidate_visitor_03',
+                    'ip_address': '94.25.174.88',
+                    'device_type': 'desktop',
+                    'browser_os': 'Яндекс.Браузер (Windows)',
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 YaBrowser/24.1.0.0 Safari/537.36',
+                    'landing_page': '/auth/vk/login/',
+                    'last_page': '/progress/',
+                    'referrer': 'https://vk.com/ochakovo_career',
+                    'source': 'vk',
+                    'vk_name': 'Дмитрий Кузнецов',
+                    'vk_user_id': 'id18492011',
+                    'page_views_count': 9,
+                    'has_played_game': True,
+                    'has_completed_shift': True,
+                    'has_applied': True,
+                    'last_game_score': 90,
+                },
+                {
+                    'session_key': 'direct_desktop_visitor_04',
+                    'ip_address': '212.45.12.80',
+                    'device_type': 'desktop',
+                    'browser_os': 'Chrome (Windows)',
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36',
+                    'landing_page': '/',
+                    'last_page': '/game/brew-yeast-flex/',
+                    'referrer': 'https://yandex.ru/search/',
+                    'source': 'site',
+                    'vk_name': '',
+                    'vk_user_id': '',
+                    'page_views_count': 5,
+                    'has_played_game': True,
+                    'has_completed_shift': False,
+                    'has_applied': False,
+                    'last_game_score': 65,
+                },
+                {
+                    'session_key': 'mobile_site_visitor_05',
+                    'ip_address': '85.140.2.14',
+                    'device_type': 'mobile',
+                    'browser_os': 'Safari (iOS 16.5)',
+                    'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1',
+                    'landing_page': '/vacancies/',
+                    'last_page': '/vacancies/inzhener-avtomatizacii-krones/',
+                    'referrer': '',
+                    'source': 'site',
+                    'vk_name': '',
+                    'vk_user_id': '',
+                    'page_views_count': 3,
+                    'has_played_game': False,
+                    'has_completed_shift': False,
+                    'has_applied': False,
+                    'last_game_score': None,
+                },
+            ]
+            for sv in sample_visitors:
+                SiteVisitor.objects.update_or_create(session_key=sv['session_key'], defaults=sv)
+            self.stdout.write(f"Инициализирована демонстрационная статистика посетителей ({len(sample_visitors)} записей)")
 
         self.stdout.write(self.style.SUCCESS("База данных Очаково успешно наполнена всеми необходимыми данными!"))

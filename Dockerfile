@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Multi-stage / optimized slim image for Ochakovo Career Platform & Simulator
 FROM python:3.12-slim
 
@@ -37,7 +38,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ARG WHISPER_MODELS="base"
 
 # Автоматическая сборка/установка whisper.cpp с поддержкой аппаратного ускорения Vulkan GPU
-RUN mkdir -p /tmp/spirv-headers /tmp/whisper-src /opt/whisper/models && \
+RUN --mount=type=bind,source=.,target=/context \
+    mkdir -p /tmp/spirv-headers /tmp/whisper-src /opt/whisper/models && \
     echo "Установка пакета SPIRV-Headers для CMake..." && \
     (curl -f -sSLk "https://github.com/KhronosGroup/SPIRV-Headers/archive/refs/heads/main.tar.gz" | tar -xz -C /tmp/spirv-headers --strip-components=1 && \
      cmake -B /tmp/spirv-headers/build -S /tmp/spirv-headers -DCMAKE_INSTALL_PREFIX=/usr/local && \
@@ -64,11 +66,20 @@ RUN mkdir -p /tmp/spirv-headers /tmp/whisper-src /opt/whisper/models && \
      ldconfig && rm -rf /tmp/whisper) && \
     rm -rf /tmp/whisper-src && \
     for model in $WHISPER_MODELS; do \
-        echo "Загрузка GGML модели: ggml-${model}.bin..." && \
-        (curl -f -sSLk -o "/opt/whisper/models/ggml-${model}.bin" \
-         "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${model}.bin" || \
-         curl -f -sSLk -o "/opt/whisper/models/ggml-${model}.bin" \
-         "https://ggml.ggerganov.com/ggml-model-whisper-${model}.bin"); \
+        if [ -d "/context" ] && [ -s "/context/models/ggml-${model}.bin" ]; then \
+            echo "Использование локальной модели из контекста: models/ggml-${model}.bin" && \
+            cp "/context/models/ggml-${model}.bin" "/opt/whisper/models/ggml-${model}.bin"; \
+        elif [ -d "/context" ] && [ -s "/context/bin/whisper_vulkan/models/ggml-${model}.bin" ]; then \
+            echo "Использование локальной модели из bin/whisper_vulkan/models/ggml-${model}.bin" && \
+            cp "/context/bin/whisper_vulkan/models/ggml-${model}.bin" "/opt/whisper/models/ggml-${model}.bin"; \
+        else \
+            echo "Загрузка GGML модели: ggml-${model}.bin..." && \
+            (curl -f -sSLk --tlsv1.2 --retry 5 --retry-delay 3 --retry-all-errors -o "/opt/whisper/models/ggml-${model}.bin" \
+             "https://hf-mirror.com/ggerganov/whisper.cpp/resolve/main/ggml-${model}.bin" || \
+             curl -f -sSLk --tlsv1.2 --retry 5 --retry-delay 3 --retry-all-errors -o "/opt/whisper/models/ggml-${model}.bin" \
+             "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${model}.bin"); \
+        fi && \
+        chmod 644 "/opt/whisper/models/ggml-${model}.bin"; \
     done
 
 # Установка Python-зависимостей
@@ -87,12 +98,13 @@ RUN mkdir -p /app/staticfiles /app/media /app/media/tts_cache /app/tmp /app/bin/
 # Нормализация окончаний строк и прав на запуск entrypoint скрипта
 RUN dos2unix /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh
 
-# Создание чистой эталонной базы данных Очаково внутри образа при сборке
-RUN python manage.py migrate --noinput && \
+# Гарантированное удаление локальных SQLite баз и сборка чистой эталонной БД Очаково
+RUN rm -f /app/db.sqlite3* /app/*.sqlite3* 2>/dev/null || true && \
+    python manage.py migrate --noinput && \
     python manage.py seed_ochakovo && \
     cp /app/db.sqlite3 /app/db.sqlite3.clean
 
-EXPOSE 8000
+EXPOSE 8080
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8080"]

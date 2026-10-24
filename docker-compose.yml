@@ -9,7 +9,7 @@ services:
     container_name: ochakovo_career_app
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       - .:/app
       - ochakovo_media:/app/media
@@ -24,15 +24,15 @@ services:
       - GGML_VULKAN_FALLBACK_CPU=True
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video,graphics
-      - GIGACHAT_CLIENT_ID=
-      - GIGACHAT_CLIENT_SECRET=
-      - GIGACHAT_AUTH_KEY=
+      - GIGACHAT_CLIENT_ID=01a07215-cf66-7ec2-bf49-e602f1f833a6
+      - GIGACHAT_CLIENT_SECRET=fce0a0b0-a1d1-4c0b-9bf2-663a40a30efc
+      - GIGACHAT_AUTH_KEY=MDFhMDcyMTUtY2Y2Ni03ZWMyLWJmNDktZTYwMmYxZjgzM2E2OmZjZTBhMGIwLWExZDEtNGMwYi05YmYyLTY2M2E0MGEzMGVmYw==
     dns:
       - 77.88.8.8
       - 8.8.8.8
       - 1.1.1.1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
       interval: 30s
       timeout: 10s
       retries: 3

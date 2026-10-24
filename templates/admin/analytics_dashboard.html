@@ -1,0 +1,410 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Главная</a>
+  &rsaquo; <a href="{% url 'admin:careers_sitevisitor_changelist' %}">Посетители сайта</a>
+  &rsaquo; Сводный аналитический дашборд
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  .och-analytics-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 10px 0 40px 0;
+  }
+
+  .och-dash-header {
+    background: #FFFFFF;
+    border: 2px solid #1E293B;
+    box-shadow: 4px 4px 0px #1E293B;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .och-dash-title {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #0F172A;
+    margin: 0 0 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .och-dash-desc {
+    color: #64748B;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  /* Сетка KPI */
+  .och-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .och-stat-box {
+    background: #FFFFFF;
+    border: 2px solid #1E293B;
+    box-shadow: 3px 3px 0px #1E293B;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    transition: transform 0.15s ease;
+  }
+
+  .och-stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 0px #1E293B;
+  }
+
+  .och-stat-value {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: #0F172A;
+    line-height: 1.1;
+  }
+
+  .och-stat-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 6px;
+  }
+
+  /* Сетка секций */
+  .och-grid-2col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .och-panel {
+    background: #FFFFFF;
+    border: 2px solid #1E293B;
+    box-shadow: 4px 4px 0px #1E293B;
+    border-radius: 14px;
+    padding: 22px;
+  }
+
+  .och-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px dashed #E2E8F0;
+  }
+
+  .och-panel-title {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #0F172A;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Воронка конверсии */
+  .och-funnel-step {
+    margin-bottom: 14px;
+  }
+
+  .och-funnel-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: #0F172A;
+    margin-bottom: 4px;
+  }
+
+  .och-funnel-track {
+    background: #F1F5F9;
+    border: 1.5px solid #1E293B;
+    border-radius: 8px;
+    height: 22px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .och-funnel-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.6s ease;
+  }
+
+  .och-funnel-desc {
+    font-size: 0.75rem;
+    color: #64748B;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  /* Карточки источников и устройств */
+  .och-distrib-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #F8FAFC;
+    border: 1.5px solid #1E293B;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-weight: 800;
+  }
+
+  /* Таблица последних визитов */
+  .och-data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 2px solid #1E293B;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .och-data-table th {
+    background: #0F172A;
+    color: #FFFFFF;
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid #1E293B;
+  }
+
+  .och-data-table td {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #E2E8F0;
+    background: #FFFFFF;
+  }
+
+  .och-data-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .och-data-table tr:hover td {
+    background: #F8FAFC;
+  }
+</style>
+
+<div class="och-analytics-wrap">
+  <!-- Шапка дашборда с кнопками -->
+  <div class="och-dash-header">
+    <div>
+      <h1 class="och-dash-title">
+        <span>📊</span> Аналитический командный пункт соискателей «Очаково»
+      </h1>
+      <p class="och-dash-desc">
+        Сквозная аналитика: посещения, офлайн-стенды, VK ID, игровой симулятор цехов и конверсия в отклики на оплачиваемую практику
+      </p>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <a href="{% url 'admin:careers_sitevisitor_changelist' %}" class="och-btn-neo och-btn-white">
+        👥 Все посетители
+      </a>
+      <a href="{% url 'admin:careers_jobapplication_changelist' %}" class="och-btn-neo och-btn-yellow">
+        📋 Заявки HR ({{ applied_count }})
+      </a>
+      <a href="/admin/analytics/export-csv/" class="och-btn-neo och-btn-dark">
+        📥 Скачать CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Карточки KPI -->
+  <div class="och-kpi-row">
+    <div class="och-stat-box">
+      <div class="och-stat-value" style="color: #0F172A;">{{ total_visitors }}</div>
+      <div class="och-stat-label">👥 Уникальных визитов</div>
+    </div>
+    <div class="och-stat-box" style="background: #F8FAFC;">
+      <div class="och-stat-value" style="color: #334155;">{{ total_page_views }}</div>
+      <div class="och-stat-label">👁️ Просмотров страниц</div>
+    </div>
+    <div class="och-stat-box" style="background: #FEF3C7; border-color: #D97706;">
+      <div class="och-stat-value" style="color: #B45309;">{{ visitor_stats.qr_visitors|default:'0' }}</div>
+      <div class="och-stat-label" style="color: #92400E;">📱 Стенды / QR-коды</div>
+    </div>
+    <div class="och-stat-box" style="background: #EFF6FF; border-color: #2563EB;">
+      <div class="och-stat-value" style="color: #1D4ED8;">{{ visitor_stats.vk_visitors|default:'0' }}</div>
+      <div class="och-stat-label" style="color: #1E40AF;">🌐 Профили ВКонтакте</div>
+    </div>
+    <div class="och-stat-box" style="background: #F3E8FF; border-color: #9333EA;">
+      <div class="och-stat-value" style="color: #7E22CE;">{{ played_count }}</div>
+      <div class="och-stat-label" style="color: #6B21A8;">🎮 Запусков симулятора</div>
+    </div>
+    <div class="och-stat-box" style="background: #DCFCE7; border-color: #16A34A;">
+      <div class="och-stat-value" style="color: #15803D;">{{ completed_count }}</div>
+      <div class="och-stat-label" style="color: #166534;">🏆 Успешных смен</div>
+    </div>
+    <div class="och-stat-box" style="background: #FFF1F2; border-color: #E11D48;">
+      <div class="och-stat-value" style="color: #BE123C;">{{ applied_count }}</div>
+      <div class="och-stat-label" style="color: #9F1239;">📋 Заявок на практику</div>
+    </div>
+    <div class="och-stat-box" style="background: #F8FAFC; border-color: #0F172A;">
+      <div class="och-stat-value" style="color: #D50032;">{{ conversion_rate }}%</div>
+      <div class="och-stat-label">⚡ Конверсия воронки</div>
+    </div>
+  </div>
+
+  <!-- Двухколоночный блок: Воронка конверсии и Источники -->
+  <div class="och-grid-2col">
+    <!-- Блок 1: Воронка конверсии -->
+    <div class="och-panel">
+      <div class="och-panel-head">
+        <h3 class="och-panel-title">
+          <span>🎯</span> Сквозная HR-воронка кандидатов Очаково
+        </h3>
+        <span style="font-size: 0.8rem; font-weight: 800; color: #16A34A; background: #DCFCE7; padding: 2px 8px; border-radius: 6px; border: 1px solid #86EFAC;">
+          CR: {{ conversion_rate }}%
+        </span>
+      </div>
+      <div>
+        {% for step in funnel_stages %}
+        <div class="och-funnel-step">
+          <div class="och-funnel-info">
+            <span>{{ step.step }}. {{ step.name }}</span>
+            <span>{{ step.count }} чел. ({{ step.percent }}%)</span>
+          </div>
+          <div class="och-funnel-track">
+            <div class="och-funnel-fill" style="width: {{ step.percent }}%; background: {{ step.color }};"></div>
+          </div>
+          <div class="och-funnel-desc">{{ step.desc }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Блок 2: Каналы трафика и устройства -->
+    <div class="och-panel">
+      <div class="och-panel-head">
+        <h3 class="och-panel-title">
+          <span>📡</span> Каналы привлечения и устройства
+        </h3>
+        <span style="font-size: 0.8rem; font-weight: 700; color: #64748B;">Всего {{ total_visitors }} пользователей</span>
+      </div>
+      
+      <div style="font-weight: 800; font-size: 0.85rem; color: #0F172A; margin-bottom: 8px;">Каналы входа:</div>
+      {% for src in sources_data %}
+      <div class="och-distrib-row" style="background: {{ src.bg }}; border-color: {{ src.color }};">
+        <span style="color: {{ src.color }};">{{ src.icon }} {{ src.name }}</span>
+        <span style="color: {{ src.color }};">{{ src.count }} чел. &nbsp;<b>({{ src.percent }}%)</b></span>
+      </div>
+      {% endfor %}
+
+      <div style="font-weight: 800; font-size: 0.85rem; color: #0F172A; margin: 16px 0 8px 0;">Устройства пользователей:</div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+        {% for dev in devices_data %}
+        <div style="background: #F8FAFC; border: 1.5px solid #1E293B; border-radius: 8px; padding: 10px; text-align: center;">
+          <div style="font-size: 1.2rem;">{{ dev.icon }}</div>
+          <div style="font-size: 0.78rem; font-weight: 800; color: #64748B;">{{ dev.name }}</div>
+          <div style="font-size: 1.1rem; font-weight: 900; color: #0F172A;">{{ dev.count }}</div>
+          <div style="font-size: 0.72rem; font-weight: 700; color: #D50032;">{{ dev.percent }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Таблица последних визитов -->
+  <div class="och-panel">
+    <div class="och-panel-head">
+      <h3 class="och-panel-title">
+        <span>👥</span> Последние действия пользователей на сайте
+      </h3>
+      <a href="{% url 'admin:careers_sitevisitor_changelist' %}" class="och-btn-neo och-btn-white" style="font-size: 0.8rem; padding: 4px 10px;">
+        Открыть весь реестр &rarr;
+      </a>
+    </div>
+
+    <table class="och-data-table">
+      <thead>
+        <tr>
+          <th>Пользователь</th>
+          <th>Канал</th>
+          <th>Устройство</th>
+          <th>Просмотров</th>
+          <th>Симулятор</th>
+          <th>Статус</th>
+          <th>Последняя активность</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in recent_visitors %}
+        <tr>
+          <td>
+            <div style="font-weight: 800; color: #0F172A;">
+              {% if v.vk_name %}🌐 {{ v.vk_name }}{% else %}👤 Гость {{ v.session_key|slice:":8" }}{% endif %}
+            </div>
+            <div style="font-size: 0.74rem; color: #64748B;">{{ v.browser_os }}</div>
+          </td>
+          <td>
+            <span style="font-weight: 800; font-size: 0.78rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #CBD5E1; background: #F8FAFC;">
+              {{ v.get_source_display }}
+            </span>
+          </td>
+          <td>{{ v.get_device_type_display }}</td>
+          <td><b>{{ v.page_views_count }}</b></td>
+          <td>
+            {% if v.has_completed_shift %}
+              <span style="background: #DCFCE7; color: #15803D; font-weight: 800; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #86EFAC;">
+                🏆 {{ v.last_game_score|default:'100' }} XP
+              </span>
+            {% elif v.has_played_game %}
+              <span style="background: #FEF3C7; color: #92400E; font-weight: 800; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #FDE68A;">
+                🎮 {{ v.last_game_score|default:'Играл' }}
+              </span>
+            {% else %}
+              <span style="color: #94A3B8;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if v.has_applied %}
+              <span style="background: #DCFCE7; color: #166534; font-weight: 900; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; border: 1.5px solid #16A34A;">
+                🟢 Заявка подана
+              </span>
+            {% elif v.has_completed_shift %}
+              <span style="background: #FEF9C3; color: #854D0E; font-weight: 800; font-size: 0.75rem; padding: 3px 6px; border-radius: 6px;">
+                🟡 Смена сдана
+              </span>
+            {% else %}
+              <span style="color: #64748B; font-size: 0.78rem;">Просмотр</span>
+            {% endif %}
+          </td>
+          <td style="color: #64748B; font-size: 0.8rem; font-weight: 700;">
+            {{ v.last_visit|date:"d.m.Y H:i" }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align: center; color: #64748B; padding: 20px;">
+            Пока нет зарегистрированных визитов
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

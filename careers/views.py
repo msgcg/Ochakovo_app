@@ -4,6 +4,7 @@ from .scenarios_facts import SCENARIO_PRO_FACTS
 from .services.pdf_export_service import SkillsPdfService
 from datetime import datetime
 import os
+import csv
 import requests
 import json
 import uuid
@@ -1179,3 +1180,163 @@ def export_skills_pdf_view(request):
     except Exception as exc:
         print(f"[PDF Export Error] {exc}")
         return HttpResponse(f"Ошибка формирования PDF: {exc}", status=500)
+
+
+# ==============================================================================
+# АДМИНИСТРАТИВНЫЙ ДАШБОРД АНАЛИТИКИ И ВЫГРУЗКИ ПОСЕТИТЕЛЕЙ САЙТА
+# ==============================================================================
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Count, Avg
+
+@staff_member_required(login_url='/admin/login/')
+def admin_analytics_dashboard_view(request):
+    """
+    Интерактивный дашборд статистики всех посетителей комбината «Очаково»:
+    воронка конверсии, распределение по каналам (QR-стенды, VK, сайт),
+    типы устройств и динамика активности соискателей.
+    """
+    from .models import SiteVisitor, GameSession, JobApplication, Vacancy, GameScenario
+    
+    total_visitors = SiteVisitor.objects.count()
+    total_page_views = sum(SiteVisitor.objects.values_list('page_views_count', flat=True)) or 0
+    
+    # 1. Каналы трафика (источники)
+    source_counts = dict(SiteVisitor.objects.values('source').annotate(c=Count('id')).values_list('source', 'c'))
+    sources_data = [
+        {
+            'key': 'stand_qr',
+            'name': 'Стенды / QR-коды',
+            'icon': '📱',
+            'color': '#F59E0B',
+            'bg': '#FEF3C7',
+            'count': source_counts.get('stand_qr', 0),
+            'percent': round(source_counts.get('stand_qr', 0) / max(1, total_visitors) * 100, 1)
+        },
+        {
+            'key': 'vk',
+            'name': 'ВКонтакте (VK ID)',
+            'icon': '🌐',
+            'color': '#0284C7',
+            'bg': '#E0F2FE',
+            'count': source_counts.get('vk', 0),
+            'percent': round(source_counts.get('vk', 0) / max(1, total_visitors) * 100, 1)
+        },
+        {
+            'key': 'site',
+            'name': 'Прямой заход на сайт',
+            'icon': '💻',
+            'color': '#334155',
+            'bg': '#F1F5F9',
+            'count': source_counts.get('site', 0),
+            'percent': round(source_counts.get('site', 0) / max(1, total_visitors) * 100, 1)
+        },
+        {
+            'key': 'hh',
+            'name': 'HeadHunter (hh.ru)',
+            'icon': '💼',
+            'color': '#D50032',
+            'bg': '#FEE2E2',
+            'count': source_counts.get('hh', 0),
+            'percent': round(source_counts.get('hh', 0) / max(1, total_visitors) * 100, 1)
+        },
+    ]
+    
+    # 2. Устройства и платформы
+    device_counts = dict(SiteVisitor.objects.values('device_type').annotate(c=Count('id')).values_list('device_type', 'c'))
+    devices_data = [
+        {'name': 'Смартфоны', 'icon': '📱', 'count': device_counts.get('mobile', 0), 'percent': round(device_counts.get('mobile', 0) / max(1, total_visitors) * 100, 1)},
+        {'name': 'ПК / Ноутбуки', 'icon': '🖥️', 'count': device_counts.get('desktop', 0), 'percent': round(device_counts.get('desktop', 0) / max(1, total_visitors) * 100, 1)},
+        {'name': 'Планшеты', 'icon': '📟', 'count': device_counts.get('tablet', 0), 'percent': round(device_counts.get('tablet', 0) / max(1, total_visitors) * 100, 1)},
+    ]
+    
+    # 3. Воронка конверсии кандидатов
+    played_count = SiteVisitor.objects.filter(has_played_game=True).count()
+    completed_count = SiteVisitor.objects.filter(has_completed_shift=True).count()
+    applied_count = JobApplication.objects.count()
+    approved_count = JobApplication.objects.filter(status='practice_approved').count()
+    
+    funnel_stages = [
+        {'step': 1, 'name': 'Посетители сайта', 'count': total_visitors, 'percent': 100, 'color': '#3B82F6', 'desc': 'Уникальные визиты и сессии'},
+        {'step': 2, 'name': 'Запуск симулятора', 'count': played_count, 'percent': round(played_count / max(1, total_visitors) * 100, 1), 'color': '#8B5CF6', 'desc': 'Вход в цеховой инцидент завода'},
+        {'step': 3, 'name': 'Успешная смена', 'count': completed_count, 'percent': round(completed_count / max(1, total_visitors) * 100, 1), 'color': '#10B981', 'desc': 'Партия напитка сварена и спасена'},
+        {'step': 4, 'name': 'Подано заявок на практику', 'count': applied_count, 'percent': round(applied_count / max(1, total_visitors) * 100, 1), 'color': '#F59E0B', 'desc': 'Заполнен отклик с подтверждением навыков'},
+        {'step': 5, 'name': 'Одобрены на практику', 'count': approved_count, 'percent': round(approved_count / max(1, total_visitors) * 100, 1), 'color': '#D50032', 'desc': 'Оформлен трудовой договор и сокращение стажировки'},
+    ]
+    
+    # 4. Последние визиты и недавние заявки
+    recent_visitors = SiteVisitor.objects.all().order_by('-last_visit')[:25]
+    recent_applications = JobApplication.objects.select_related('target_vacancy', 'target_track').all().order_by('-created_at')[:8]
+    
+    context = {
+        'title': 'Сводная аналитика посещаемости и воронки соискателей «Очаково»',
+        'total_visitors': total_visitors,
+        'total_page_views': total_page_views,
+        'sources_data': sources_data,
+        'devices_data': devices_data,
+        'funnel_stages': funnel_stages,
+        'recent_visitors': recent_visitors,
+        'recent_applications': recent_applications,
+        'played_count': played_count,
+        'completed_count': completed_count,
+        'applied_count': applied_count,
+        'approved_count': approved_count,
+        'conversion_rate': round(applied_count / max(1, total_visitors) * 100, 1),
+    }
+    return render(request, 'admin/analytics_dashboard.html', context)
+
+
+@staff_member_required(login_url='/admin/login/')
+def admin_analytics_export_csv(request):
+    """
+    Экспорт полного реестра всех посетителей сайта в формате CSV для Excel.
+    """
+    from .models import SiteVisitor
+    
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="ochakovo_visitors_{datetime.now().strftime("%Y%m%d_%H%M")}.csv"'
+    response.write('﻿')  # UTF-8 BOM для корректного отображения кириллицы в Excel
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'ID Сессии',
+        'Пользователь / VK',
+        'ID ВКонтакте',
+        'Устройство',
+        'Браузер и ОС',
+        'IP-адрес',
+        'Канал входа',
+        'Страница входа',
+        'Последняя страница',
+        'Источник (Referer)',
+        'Просмотров страниц',
+        'Запуск симулятора',
+        'Успех смены',
+        'Баллы (XP)',
+        'Подал заявку',
+        'Первый визит',
+        'Последняя активность',
+    ])
+    
+    for v in SiteVisitor.objects.all().order_by('-last_visit'):
+        writer.writerow([
+            v.session_key,
+            v.vk_name or 'Гость',
+            v.vk_user_id,
+            v.get_device_type_display(),
+            v.browser_os,
+            v.ip_address,
+            v.get_source_display(),
+            v.landing_page,
+            v.last_page,
+            v.referrer,
+            v.page_views_count,
+            'Да' if v.has_played_game else 'Нет',
+            'Да' if v.has_completed_shift else 'Нет',
+            v.last_game_score if v.last_game_score is not None else '—',
+            'Да' if v.has_applied else 'Нет',
+            v.first_visit.strftime('%d.%m.%Y %H:%M'),
+            v.last_visit.strftime('%d.%m.%Y %H:%M'),
+        ])
+    
+    return response
+

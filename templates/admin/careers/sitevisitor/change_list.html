@@ -1,0 +1,91 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static %}
+
+{% block object-tools %}
+<style>
+  .och-changelist-bar {
+    background: #FFFFFF;
+    border: 2px solid #1E293B;
+    box-shadow: 3px 3px 0px #1E293B;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .och-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .och-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 2px solid #1E293B;
+    box-shadow: 2px 2px 0px #1E293B;
+    text-decoration: none !important;
+    transition: all 0.12s ease;
+    cursor: pointer;
+  }
+
+  .och-filter-btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px #1E293B;
+  }
+
+  .och-filter-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px #1E293B;
+  }
+
+  .och-btn-active {
+    background: #0F172A !important;
+    color: #FFFFFF !important;
+  }
+</style>
+
+<div class="och-changelist-bar">
+  <div class="och-filter-buttons">
+    <span style="font-weight: 900; color: #0F172A; font-size: 0.88rem; margin-right: 4px;">Фильтры визитов:</span>
+    <a href="?" class="och-filter-btn och-btn-white">
+      👥 Все ({{ visitor_stats.total_visitors|default:'0' }})
+    </a>
+    <a href="?source__exact=stand_qr" class="och-filter-btn och-btn-yellow">
+      📱 Со стендов / QR ({{ visitor_stats.qr_visitors|default:'0' }})
+    </a>
+    <a href="?source__exact=vk" class="och-filter-btn och-btn-blue">
+      🌐 Из ВКонтакте ({{ visitor_stats.vk_visitors|default:'0' }})
+    </a>
+    <a href="?has_played_game__exact=1" class="och-filter-btn" style="background:#F3E8FF; color:#7E22CE;">
+      🎮 Играли в симулятор ({{ visitor_stats.played_count|default:'0' }})
+    </a>
+    <a href="?has_completed_shift__exact=1" class="och-filter-btn" style="background:#DCFCE7; color:#15803D;">
+      🏆 Защитили смену ({{ visitor_stats.completed_count|default:'0' }})
+    </a>
+    <a href="?has_applied__exact=1" class="och-filter-btn" style="background:#FFF1F2; color:#BE123C;">
+      🟢 Подали заявку ({{ visitor_stats.applied_count|default:'0' }})
+    </a>
+  </div>
+  <div style="display: flex; gap: 8px;">
+    <a href="/admin/analytics/" class="och-btn-neo och-btn-red" style="font-size: 0.82rem; padding: 6px 12px;">
+      📊 Сводный дашборд
+    </a>
+    <a href="/admin/analytics/export-csv/" class="och-btn-neo och-btn-dark" style="font-size: 0.82rem; padding: 6px 12px;">
+      📥 Скачать CSV
+    </a>
+  </div>
+</div>
+
+{{ block.super }}
+{% endblock %}

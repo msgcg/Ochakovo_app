@@ -1,0 +1,155 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | АО МПБК «Очаково»{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --och-red: #D50032;
+    --och-dark: #0F172A;
+    --och-border: #1E293B;
+    --och-shadow: 3px 3px 0px #1E293B;
+  }
+  
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  #header {
+    background: #0F172A !important;
+    border-bottom: 3px solid #1E293B;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  #branding h1 {
+    font-weight: 900;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+  }
+
+  #branding h1 a {
+    color: #FFFFFF !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .och-badge-logo {
+    background: #D50032;
+    color: #FFFFFF;
+    font-size: 0.72rem;
+    font-weight: 900;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1.5px solid #FFFFFF;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Стилизованные кнопки в стиле Очаково */
+  .och-admin-nav-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .och-btn-neo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 2px solid #1E293B;
+    box-shadow: 2.5px 2.5px 0px #1E293B;
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    white-space: nowrap;
+  }
+
+  .och-btn-neo:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3.5px 3.5px 0px #1E293B;
+  }
+
+  .och-btn-neo:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0px #1E293B;
+  }
+
+  .och-btn-red { background: #D50032; color: #FFFFFF !important; border-color: #7F001D; box-shadow: 2.5px 2.5px 0px #7F001D; }
+  .och-btn-yellow { background: #FBBF24; color: #0F172A !important; }
+  .och-btn-green { background: #10B981; color: #FFFFFF !important; }
+  .och-btn-blue { background: #0284C7; color: #FFFFFF !important; }
+  .och-btn-white { background: #FFFFFF; color: #0F172A !important; }
+  .och-btn-dark { background: #1E293B; color: #FFFFFF !important; }
+
+  /* Карточки модулей и таблиц */
+  .module, .results, .dashboard-card {
+    border: 2px solid #1E293B !important;
+    box-shadow: 4px 4px 0px #1E293B !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    background: #FFFFFF !important;
+  }
+
+  .module caption, .module h2 {
+    background: #0F172A !important;
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    font-size: 0.95rem !important;
+    padding: 10px 16px !important;
+  }
+
+  .breadcrumbs {
+    background: #F8FAFC !important;
+    border-bottom: 2px solid #E2E8F0;
+    font-weight: 700;
+    padding: 10px 24px !important;
+  }
+</style>
+{% endblock %}
+
+{% block branding %}
+<div id="branding">
+  <h1>
+    <a href="{% url 'admin:index' %}">
+      <span class="och-badge-logo">ОЧАКОВО 2026</span>
+      <span>HR-Воронка и Заводской Симулятор</span>
+    </a>
+  </h1>
+</div>
+{% endblock %}
+
+{% block userlinks %}
+<div class="och-admin-nav-group">
+  <a href="/admin/analytics/" class="och-btn-neo och-btn-yellow" title="Интерактивная статистика всех заходивших пользователей">
+    📊 Статистика пользователей
+  </a>
+  <a href="{% url 'admin:careers_sitevisitor_changelist' %}" class="och-btn-neo och-btn-white" title="Журнал визитов">
+    👥 Посетители ({{ visitor_stats.total_visitors|default:'0' }})
+  </a>
+  <a href="/" target="_blank" class="och-btn-neo och-btn-red" title="Открыть сайт платформы">
+    🌐 На сайт
+  </a>
+  {{ block.super }}
+</div>
+{% endblock %}

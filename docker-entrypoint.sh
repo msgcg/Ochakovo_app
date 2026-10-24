@@ -23,13 +23,24 @@ fi
 echo "Применение миграций Django..."
 python manage.py migrate --noinput
 
-# Проверка наличия данных в базе (если база абсолютно пуста — засеиваем эталонные данные Очаково)
-echo "Проверка наличия вакансий, карьерных треков и сценариев Очаково..."
+# Проверка наличия суперпользователя admin (ochakovo2026) и справочников Очаково
+echo "Проверка суперпользователя admin (ochakovo2026) и данных Очаково..."
 python -c "
 import os, django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ochakovo_project.settings')
 django.setup()
+from django.contrib.auth import get_user_model
 from careers.models import Vacancy, GameScenario, InternshipTrack
+User = get_user_model()
+admin_user, created = User.objects.get_or_create(username='admin')
+admin_user.set_password('ochakovo2026')
+admin_user.is_staff = True
+admin_user.is_superuser = True
+if not admin_user.email:
+    admin_user.email = 'admin@ochakovo.ru'
+admin_user.save()
+print('Суперпользователь admin гарантирован (логин: admin, пароль: ochakovo2026).')
+
 if not Vacancy.objects.exists() or not GameScenario.objects.exists():
     print('Справочники Очаково пусты. Запуск инициализации сценариев и вакансий...')
     from django.core.management import call_command
@@ -68,5 +79,5 @@ fi
 echo "Сборка статических файлов..."
 python manage.py collectstatic --noinput --clear || true
 
-echo "Сервер «Очаково» готов к работе на порту 8000."
+echo "Сервер «Очаково» готов к работе на порту 8080."
 exec "$@"

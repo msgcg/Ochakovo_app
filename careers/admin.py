@@ -15,6 +15,7 @@ from .models import (
     JobApplication,
     StoryMilestone,
     CompanyPerk,
+    SiteVisitor,
 )
 
 # Настройка заголовков панели администратора на русском языке
@@ -317,3 +318,191 @@ class AIConfigAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return AIConfig.objects.count() == 0
+
+
+@admin.register(SiteVisitor)
+class SiteVisitorAdmin(admin.ModelAdmin):
+    """
+    Журнал активности и статистика всех пользователей, заходивших на сайт Очаково:
+    типы устройств, каналы переходов (стенды/QR, VK ID, сайт), глубина просмотра,
+    результаты в симуляторе и статус конверсии в соискатели.
+    """
+    change_list_template = "admin/careers/sitevisitor/change_list.html"
+
+    list_display = (
+        'visitor_identity',
+        'device_badge',
+        'source_badge',
+        'activity_badge',
+        'conversion_status',
+        'entry_and_last_page',
+        'first_visit_fmt',
+        'last_visit_fmt',
+    )
+    list_filter = (
+        'source',
+        'device_type',
+        'has_played_game',
+        'has_completed_shift',
+        'has_applied',
+        'last_visit',
+        'first_visit',
+    )
+    search_fields = (
+        'session_key',
+        'vk_name',
+        'vk_user_id',
+        'ip_address',
+        'landing_page',
+        'last_page',
+        'user_agent',
+    )
+    readonly_fields = (
+        'session_key',
+        'ip_address',
+        'device_type',
+        'browser_os',
+        'user_agent',
+        'landing_page',
+        'last_page',
+        'referrer',
+        'source',
+        'vk_user_id',
+        'vk_name',
+        'page_views_count',
+        'has_played_game',
+        'has_completed_shift',
+        'has_applied',
+        'last_game_score',
+        'first_visit',
+        'last_visit',
+    )
+    ordering = ('-last_visit',)
+    list_per_page = 30
+    actions = ['export_as_csv_action']
+
+    @admin.display(description="Пользователь / Устройство")
+    def visitor_identity(self, obj):
+        if obj.vk_name:
+            return format_html(
+                '<div style="font-weight: 800; font-size: 0.92rem; color: #0F172A;">🌐 {}</div>'
+                '<div style="font-size: 0.74rem; color: #0284C7; font-weight: 700;">VK ID: {} &nbsp;|&nbsp; {}</div>',
+                obj.vk_name,
+                obj.vk_user_id or '—',
+                obj.browser_os or 'Браузер'
+            )
+        return format_html(
+            '<div style="font-weight: 800; font-size: 0.92rem; color: #0F172A;">👤 Гость <span style="font-family: monospace; font-size: 0.8rem; background: #E2E8F0; padding: 1px 5px; border-radius: 4px;">{}</span></div>'
+            '<div style="font-size: 0.74rem; color: #64748B;">IP: {} &nbsp;|&nbsp; {}</div>',
+            obj.session_key[:8] if obj.session_key else 'anon',
+            obj.ip_address or 'локально',
+            obj.browser_os or 'Браузер'
+        )
+
+    @admin.display(description="Устройство", ordering='device_type')
+    def device_badge(self, obj):
+        mapping = {
+            'mobile': ('#E0F2FE', '#0369A1', '📱 Смартфон'),
+            'desktop': ('#F1F5F9', '#334155', '🖥️ ПК / Ноутбук'),
+            'tablet': ('#F3E8FF', '#6B21A8', '📟 Планшет'),
+            'bot': ('#FEE2E2', '#991B1B', '🤖 Бот'),
+        }
+        bg, color, text = mapping.get(obj.device_type, ('#F1F5F9', '#334155', obj.device_type))
+        return format_html(
+            '<span style="background:{}; color:{}; font-weight:800; font-size:0.75rem; padding:3px 8px; border-radius:6px; border:1px solid #CBD5E1; white-space:nowrap;">{}</span>',
+            bg, color, text
+        )
+
+    @admin.display(description="Канал входа", ordering='source')
+    def source_badge(self, obj):
+        mapping = {
+            'stand_qr': ('#FEF3C7', '#B45309', '📱 Стенд / QR-код'),
+            'vk': ('#EFF6FF', '#1D4ED8', '🌐 ВКонтакте'),
+            'site': ('#F8FAFC', '#0F172A', '💻 Сайт практики'),
+            'hh': ('#FEE2E2', '#DC2626', '💼 HeadHunter'),
+            'simulator': ('#DCFCE7', '#15803D', '🎮 Симулятор цеха'),
+        }
+        bg, color, text = mapping.get(obj.source, ('#F1F5F9', '#334155', obj.get_source_display()))
+        return format_html(
+            '<span style="background:{}; color:{}; font-weight:800; font-size:0.75rem; padding:3px 8px; border-radius:6px; border:1.5px solid #1E293B; white-space:nowrap;">{}</span>',
+            bg, color, text
+        )
+
+    @admin.display(description="Активность на сайте")
+    def activity_badge(self, obj):
+        items = []
+        items.append(f'<span style="font-weight:700; color:#475569;">👁️ {obj.page_views_count} просм.</span>')
+        if obj.has_played_game:
+            score_txt = f"{obj.last_game_score} XP" if obj.last_game_score is not None else "в цеху"
+            if obj.has_completed_shift:
+                items.append(f'<span style="background:#DCFCE7; color:#15803D; font-weight:800; font-size:0.72rem; padding:2px 6px; border-radius:4px; border:1px solid #86EFAC;">🏆 Смена: {score_txt}</span>')
+            else:
+                items.append(f'<span style="background:#FEF3C7; color:#92400E; font-weight:800; font-size:0.72rem; padding:2px 6px; border-radius:4px; border:1px solid #FDE68A;">🎮 Играл: {score_txt}</span>')
+        return mark_safe(" &nbsp;".join(items))
+
+    @admin.display(description="Статус воронки", ordering='has_applied')
+    def conversion_status(self, obj):
+        if obj.has_applied:
+            bg, color, border, label = '#DCFCE7', '#166534', '#16A34A', '🟢 Заявка подана'
+        elif obj.has_completed_shift:
+            bg, color, border, label = '#FEF9C3', '#854D0E', '#EAB308', '🟡 Смена защищена'
+        elif obj.has_played_game:
+            bg, color, border, label = '#E0F2FE', '#0369A1', '#7DD3FC', '🔵 Играл в цеху'
+        else:
+            bg, color, border, label = '#F1F5F9', '#64748B', '#CBD5E1', '⚪ Знакомился с сайтом'
+
+        return format_html(
+            '<span style="background:{}; color:{}; border:1.5px solid {}; font-weight:800; font-size:0.75rem; padding:3px 8px; border-radius:6px; white-space:nowrap;">{}</span>',
+            bg, color, border, label
+        )
+
+    @admin.display(description="Вход → Последняя страница")
+    def entry_and_last_page(self, obj):
+        return format_html(
+            '<div style="font-size:0.78rem; color:#475569;"><span style="color:#64748B;">Вход:</span> <b>{}</b></div>'
+            '<div style="font-size:0.78rem; color:#0F172A;"><span style="color:#64748B;">Сейчас:</span> <b>{}</b></div>',
+            obj.landing_page[:28],
+            obj.last_page[:28]
+        )
+
+    @admin.display(description="Первый визит", ordering='first_visit')
+    def first_visit_fmt(self, obj):
+        return obj.first_visit.strftime("%d.%m.%Y %H:%M")
+
+    @admin.display(description="Последняя активность", ordering='last_visit')
+    def last_visit_fmt(self, obj):
+        return obj.last_visit.strftime("%d.%m.%Y %H:%M")
+
+    @admin.action(description="📥 Выгрузить выбранных посетителей в CSV")
+    def export_as_csv_action(self, request, queryset):
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="ochakovo_selected_visitors_{datetime.now().strftime("%Y%m%d_%H%M")}.csv"'
+        response.write('﻿')
+        writer = csv.writer(response)
+        writer.writerow([
+            'ID Сессии', 'Пользователь / VK', 'ID VK', 'Устройство', 'Браузер и ОС',
+            'IP-адрес', 'Канал входа', 'Страница входа', 'Последняя страница',
+            'Просмотров', 'Запуск симулятора', 'Успех смены', 'Баллы (XP)', 'Подал заявку',
+            'Первый визит', 'Последняя активность'
+        ])
+        for v in queryset:
+            writer.writerow([
+                v.session_key,
+                v.vk_name or 'Гость',
+                v.vk_user_id,
+                v.get_device_type_display(),
+                v.browser_os,
+                v.ip_address,
+                v.get_source_display(),
+                v.landing_page,
+                v.last_page,
+                v.page_views_count,
+                'Да' if v.has_played_game else 'Нет',
+                'Да' if v.has_completed_shift else 'Нет',
+                v.last_game_score if v.last_game_score is not None else '—',
+                'Да' if v.has_applied else 'Нет',
+                v.first_visit.strftime('%d.%m.%Y %H:%M'),
+                v.last_visit.strftime('%d.%m.%Y %H:%M'),
+            ])
+        return response
+
