@@ -1,3 +1,6 @@
+from .scenarios_facts import SCENARIO_PRO_FACTS
+from .services.pdf_export_service import SkillsPdfService
+from datetime import datetime
 import json
 import uuid
 import re
@@ -114,12 +117,8 @@ def game_play_view(request, scenario_slug):
     prev_scenario = all_scenarios[current_idx - 1] if current_idx > 0 else all_scenarios[-1]
     next_scenario = all_scenarios[(current_idx + 1) % len(all_scenarios)] if all_scenarios else None
 
-    session_creds = request.session.get('sber_credentials', {})
-    has_custom_gigachat = bool(session_creds.get('client_id') and session_creds.get('client_secret')) or bool(session_creds.get('auth_key'))
-    has_env_gigachat = bool(getattr(settings, 'GIGACHAT_CLIENT_ID', '')) or bool(getattr(settings, 'GIGACHAT_AUTH_KEY', ''))
-    force_offline = request.session.get('force_offline_ai', False)
-
-    ai_mode = 'offline' if force_offline else ('gigachat' if (has_custom_gigachat or has_env_gigachat) else 'offline')
+    has_owner_gigachat = OchakovoAIService.has_configured_credentials()
+    ai_mode = 'gigachat' if has_owner_gigachat else 'offline'
 
     context = {
         'scenario': scenario,
@@ -131,8 +130,9 @@ def game_play_view(request, scenario_slug):
         'next_scenario': next_scenario,
         'carousel_position': f"{current_idx + 1} / {len(all_scenarios)}" if all_scenarios else "1 / 1",
         'ai_mode': ai_mode,
-        'has_custom_gigachat': has_custom_gigachat,
-        'has_gigachat_credentials': has_custom_gigachat or has_env_gigachat,
+        'has_custom_gigachat': False,
+        'has_gigachat_credentials': True,
+        'pro_facts': SCENARIO_PRO_FACTS.get(scenario.slug, {}),
     }
     return render(request, 'careers/game_play.html', context)
 
@@ -193,26 +193,46 @@ def game_action_api(request):
             is_choice_correct = (score_delta > 0) and (next_node_id != 'fail_spoiled') and (not (target_node and target_node.is_terminal and not target_node.is_success))
 
             if is_choice_correct:
-                # Если выбран вариант ответа из рекомендуемых и он сразу верный - сразу помечаем смену успешной!
-                is_completed = True
-                is_failed = False
-                verdict = "success"
-                score_delta = max(35, score_delta)
-                reply_text = choice.mentor_quick_reaction or (target_node.dialogue_text if target_node else f"Отличный выбор! {mentor_name} одобряет: технологический регламент выполнен безупречно!")
-                feedback_text = (target_node.narrative_context if target_node else None) or choice.tactical_hint or "Производственный норматив комбината «Очаково» выдержан на 100%."
+                session.current_node_id = next_node_id
+                has_next_choices = ScenarioChoice.objects.filter(node=target_node).exists() if target_node else False
+
+                if target_node and target_node.is_terminal and target_node.is_success:
+                    is_completed = True
+                    is_failed = False
+                    verdict = "success"
+                    score_delta = max(35, score_delta)
+                    reply_text = choice.mentor_quick_reaction or (target_node.dialogue_text if target_node else f"Отличный выбор! {mentor_name} одобряет: технологический регламент выполнен безупречно!")
+                    feedback_text = (target_node.narrative_context if target_node else None) or choice.tactical_hint or "Производственный норматив комбината «Очаково» выдержан на 100%."
+                elif has_next_choices:
+                    # Даем игроку продолжить ветку сценария на следующем узле
+                    is_completed = False
+                    is_failed = False
+                    verdict = "success"
+                    reply_text = choice.mentor_quick_reaction or (target_node.dialogue_text if target_node else f"Верно! {mentor_name} одобряет: переходим к следующему шагу регламента.")
+                    feedback_text = choice.tactical_hint or (target_node.narrative_context if target_node else "") or "Шаг регламента успешно пройден."
+                elif session.turns_count >= 1:
+                    is_completed = True
+                    is_failed = False
+                    verdict = "success"
+                    score_delta = max(30, score_delta)
+                    reply_text = choice.mentor_quick_reaction or f"Отличная работа! {mentor_name} жмёт руку: смена успешно отработана, все параметры в норме!"
+                    feedback_text = choice.tactical_hint or "Смена успешно завершена в полном соответствии с регламентом комбината «Очаково»."
+                else:
+                    is_completed = False
+                    is_failed = False
+                    verdict = "success"
+                    reply_text = choice.mentor_quick_reaction or f"Хорошее начало! {mentor_name} подтверждает: регламент соблюдается. Проверь показания и сделай следующее действие!"
+                    feedback_text = choice.tactical_hint or "Параметры линии стабилизируются."
             else:
-                # Если же вариант неверный — НЕ проваливаем смену сразу! Переводим в диалог с наставником:
-                # "общение нужно только если вариант выбран неверный"
                 is_completed = False
                 is_failed = False
                 verdict = "warning"
-                score_delta = max(-15, score_delta)
-                # Корректируем прирост температуры так, чтобы не пробить аварийный порог до начала диалога
-                temp_delta = min(0.8, max(-0.5, temp_delta))
+                score_delta = max(-10, score_delta)
+                temp_delta = min(0.6, max(-0.3, temp_delta))
                 if session.temperature + temp_delta >= 29.5:
-                    temp_delta = max(0.0, round(29.4 - session.temperature, 1))
+                    temp_delta = max(0.0, round(29.2 - session.temperature, 1))
                 if session.purity + purity_delta <= 45:
-                    purity_delta = -5
+                    purity_delta = -4
                 reply_text = (
                     f"Так, внимание! Наставник {mentor_name} предостерегает: «Ты что творишь?! "
                     f"Действие „{choice.choice_text}“ здесь недопустимо — так мы партию запорем или сорвем график! "
@@ -224,18 +244,12 @@ def game_action_api(request):
 
     # 2. Если отправлен свободный текст или перетащено оборудование цеха
     if not choice_id and (user_text or equipment_code):
-        session_creds = request.session.get('sber_credentials', {})
-        force_offline = request.session.get('force_offline_ai', False)
         ai_res = OchakovoAIService.process_turn(
             scenario=scenario,
             session=session,
             user_message=user_text,
             equipment_code=equipment_code,
             dialogue_history=session.dialogue_history,
-            custom_auth_key=session_creds.get('auth_key'),
-            custom_client_id=session_creds.get('client_id'),
-            custom_client_secret=session_creds.get('client_secret'),
-            force_offline=force_offline,
             is_recommended_choice=is_recommended_choice
         )
         verdict = ai_res.get('verdict', 'success')
@@ -262,21 +276,31 @@ def game_action_api(request):
     session.balance = max(0, min(100, session.balance + balance_delta))
     session.turns_count += 1
 
-    # Строгий производственный регламент комбината «Очаково»:
-    # Если температура превышает критический порог или чистота падает до антисанитарии - смена срывается!
+    # Производственный регламент комбината «Очаково» (с балансом игры и строгости):
+    # Даем игроку 2-3 шага на исправление ситуации, не срывая смену моментально на первом ходу
     if not is_completed:
-        if session.temperature >= 29.8:
+        if session.temperature >= 29.8 and session.turns_count >= 2:
             is_failed = True
             feedback_text = feedback_text or "Температура сусла превысила критические 29.8°C: термическая гибель закваски, затор скис."
             verdict = "critical_fail"
             mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
             if not any(w in reply_text.lower() for w in ["сорвана", "дождались", "отстранил", "скис"]):
                 reply_text = f"Тревога! Аварийный датчик ЦКТ зафиксировал {session.temperature:.1f}°C! Сусло перегрелось и скисло. Наставник {mentor_name} останавливает смену!"
-        elif session.purity <= 42:
+        elif session.temperature >= 29.8 and session.turns_count < 2:
+            session.temperature = 29.3
+            verdict = "warning"
+            mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
+            reply_text = f"Опасный нагрев! Датчик ЦКТ подобрался к 29.3°C! {mentor_name} предупреждает: «Срочно открой клапан охлаждения гликолем (-3°C), иначе закваска погибнет!»"
+        elif session.purity <= 40 and session.turns_count >= 2:
             is_failed = True
-            feedback_text = feedback_text or "Чистота контура CIP упала ниже 42%: критическая угроза микробиологической чистоты напитка."
+            feedback_text = feedback_text or "Чистота контура CIP упала ниже 40%: критическая угроза микробиологической чистоты напитка."
             verdict = "critical_fail"
-        elif session.score <= 15:
+        elif session.purity <= 40 and session.turns_count < 2:
+            session.purity = 44
+            verdict = "warning"
+            mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
+            reply_text = f"Внимание! Чистота контура CIP на грани 44%! {mentor_name}: «Срочно запусти промывку дезинфектантом перед подачей сусла!»"
+        elif session.score <= 15 and session.turns_count >= 2:
             is_failed = True
             feedback_text = feedback_text or "Критическое количество технологических ошибок: наставник отстранил стажёра от смены."
             verdict = "critical_fail"
@@ -999,3 +1023,235 @@ def service_worker_view(request):
         return resp
     except Exception:
         return HttpResponse('console.log("sw not found");', content_type='application/javascript')
+
+
+# ==============================================================================
+# VK ID OAUTH 2.0 & STAND LEAD CAPTURE & PDF EXPORT
+# ==============================================================================
+
+def vk_oauth_login_view(request):
+    """
+    Инициация входа через VK ID (OAuth 2.0) для студентов и молодёжи.
+    Если VK_CLIENT_ID не настроен, перенаправляет на демо-авторизацию с подсказкой.
+    """
+    client_id = getattr(settings, 'VK_CLIENT_ID', os.environ.get('VK_CLIENT_ID', ''))
+    redirect_uri = getattr(settings, 'VK_REDIRECT_URI', os.environ.get('VK_REDIRECT_URI', ''))
+    
+    if not redirect_uri:
+        redirect_uri = request.build_absolute_uri('/auth/vk/callback/')
+    
+    next_url = request.GET.get('next', '/progress/')
+    request.session['vk_oauth_next'] = next_url
+
+    if not client_id:
+        # Автоматический дружелюбный фоллбэк на демо-вход через VK ID
+        return redirect('/auth/vk/demo/?msg=no_keys')
+
+    state = str(uuid.uuid4())
+    request.session['vk_oauth_state'] = state
+
+    vk_auth_url = (
+        f"https://oauth.vk.com/authorize?"
+        f"client_id={client_id}&"
+        f"display=page&"
+        f"redirect_uri={redirect_uri}&"
+        f"scope=email&"
+        f"response_type=code&"
+        f"v=5.199&"
+        f"state={state}"
+    )
+    return redirect(vk_auth_url)
+
+
+def vk_oauth_callback_view(request):
+    """
+    Обработка ответа OAuth 2.0 от ВКонтакте: получение токена и профиля кандидата.
+    """
+    code = request.GET.get('code')
+    error = request.GET.get('error')
+    next_url = request.session.get('vk_oauth_next', '/progress/')
+
+    if error or not code:
+        return redirect(f"{next_url}?vk_error=cancelled")
+
+    client_id = getattr(settings, 'VK_CLIENT_ID', os.environ.get('VK_CLIENT_ID', ''))
+    client_secret = getattr(settings, 'VK_CLIENT_SECRET', os.environ.get('VK_CLIENT_SECRET', ''))
+    redirect_uri = getattr(settings, 'VK_REDIRECT_URI', os.environ.get('VK_REDIRECT_URI', ''))
+    if not redirect_uri:
+        redirect_uri = request.build_absolute_uri('/auth/vk/callback/')
+
+    try:
+        token_url = "https://oauth.vk.com/access_token"
+        params = {
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'redirect_uri': redirect_uri,
+            'code': code
+        }
+        resp = requests.get(token_url, params=params, timeout=10)
+        token_data = resp.json()
+
+        access_token = token_data.get('access_token')
+        user_id = token_data.get('user_id')
+        user_email = token_data.get('email', '')
+
+        if access_token and user_id:
+            profile_resp = requests.get("https://api.vk.com/method/users.get", params={
+                'user_ids': user_id,
+                'fields': 'photo_200,city,bdate',
+                'access_token': access_token,
+                'v': '5.199'
+            }, timeout=10)
+            pdata = profile_resp.json().get('response', [{}])[0]
+
+            first_name = pdata.get('first_name', 'Стажёр')
+            last_name = pdata.get('last_name', 'Очаково')
+            full_name = f"{first_name} {last_name}".strip()
+            avatar = pdata.get('photo_200', '')
+            city = pdata.get('city', {}).get('title', 'Москва')
+
+            request.session['vk_user'] = {
+                'id': user_id,
+                'first_name': first_name,
+                'last_name': last_name,
+                'full_name': full_name,
+                'avatar': avatar,
+                'email': user_email,
+                'city': city,
+                'is_demo': False
+            }
+            return redirect(f"{next_url}?vk_auth=success")
+    except Exception as exc:
+        print(f"[VK OAuth Error] {exc}")
+
+    return redirect(f"{next_url}?vk_error=network_error")
+
+
+def vk_oauth_demo_view(request):
+    """
+    Моментальный 1-клик демо-вход через VK ID для стенда или локального тестирования.
+    Позволяет протестировать весь цикл авторизации соискателя без регистрации VK App.
+    """
+    next_url = request.session.get('vk_oauth_next') or request.GET.get('next', '/progress/')
+
+    # Устанавливаем реалистичный профиль московского студента-технолога
+    request.session['vk_user'] = {
+        'id': 70364404,
+        'first_name': 'Максим',
+        'last_name': 'Соколов',
+        'full_name': 'Максим Соколов',
+        'avatar': '/static/img/avatar_student_boy.jpg',
+        'email': 'sokolov.ochakovo@vk.com',
+        'city': 'Москва',
+        'university': 'МГУТУ им. К.Г. Разумовского',
+        'study_field': 'Технология бродильных производств и виноделие',
+        'is_demo': True
+    }
+    return redirect(f"{next_url}?vk_auth=demo_success")
+
+
+def candidate_logout_view(request):
+    """Выход кандидата из сессии VK ID"""
+    if 'vk_user' in request.session:
+        del request.session['vk_user']
+    next_url = request.GET.get('next', '/')
+    return redirect(next_url)
+
+
+@csrf_exempt
+@require_POST
+def stand_lead_capture_api(request):
+    """
+    Быстрый сбор лидов и контактов соискателей на выставочном стенде / по QR-коду.
+    Мгновенно подбирает 3 наиболее релевантные вакансии и сохраняет заявку.
+    """
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        data = request.POST
+
+    full_name = (data.get('full_name') or '').strip()
+    phone = (data.get('phone') or '').strip()
+    telegram = (data.get('telegram') or '').strip()
+    email = (data.get('email') or '').strip()
+    university = (data.get('university') or 'Стенд / Карьерный форум').strip()
+    track_slug = (data.get('track_slug') or '').strip()
+
+    if not full_name or not (phone or telegram or email):
+        return JsonResponse({'ok': False, 'error': 'Укажите ФИО и хотя бы один контакт (телефон, Telegram или Email)'}, status=400)
+
+    # Поиск подходящего карьерного трека
+    target_track = None
+    if track_slug:
+        target_track = InternshipTrack.objects.filter(slug=track_slug).first()
+    if not target_track:
+        target_track = InternshipTrack.objects.first()
+
+    # Поиск 3 лучших вакансий
+    matched_vacs = Vacancy.objects.filter(is_active=True)
+    if target_track:
+        matched_vacs = matched_vacs.filter(track=target_track)
+    matched_vacs = matched_vacs.order_by('-salary_max')[:3]
+
+    vacancies_data = []
+    for v in matched_vacs:
+        vacancies_data.append({
+            'id': v.id,
+            'title': v.title,
+            'salary': f"от {v.salary_min:,} до {v.salary_max:,} ₽".replace(',', ' ') if v.salary_max else "по договоренности",
+            'department': v.department,
+            'url': v.hh_url or f"/vacancies/{v.slug}/"
+        })
+
+    # Сохранение заявки в базу
+    app = JobApplication.objects.create(
+        full_name=full_name,
+        phone=phone,
+        telegram=telegram,
+        email=email or f"{telegram.replace('@', '')}@t.me",
+        university=university,
+        study_field='Практика со стенда комбината',
+        target_track=target_track,
+        status='new',
+        cover_letter=f"Экспресс-заявка с выставочного стенда АО «Очаково» (QR-вход)."
+    )
+
+    return JsonResponse({
+        'ok': True,
+        'message': f"Спасибо, {full_name}! Ваша заявка принята в приоритетную очередь HR комбината.",
+        'application_id': app.id,
+        'matched_vacancies': vacancies_data,
+        'bonuses': [
+            "Сокращение срока стажировки до 1 месяца",
+            "Прямое направление в HR без промежуточных этапов",
+            "Допуск к испытаниям на должности 2 категории (от 80 000 ₽)"
+        ]
+    })
+
+
+def export_skills_pdf_view(request):
+    """
+    Генерация и скачивание официального PDF паспорта компетенций соискателя комбината «Очаково».
+    """
+    vk_user = request.session.get('vk_user', {})
+    full_name = request.GET.get('name') or vk_user.get('full_name') or 'Стажёр комбината «Очаково»'
+    university = request.GET.get('uni') or vk_user.get('university') or 'Московский технологический университет'
+    score = int(request.GET.get('score', 420))
+    rank_title = request.GET.get('rank') or 'Младший технолог-практикант (Разряд II)'
+
+    candidate_data = {
+        'full_name': full_name,
+        'university': university,
+        'total_score': score,
+        'rank_title': rank_title,
+    }
+
+    try:
+        pdf_bytes = SkillsPdfService.generate_passport(candidate_data)
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        filename = f"Ochakovo_Skills_Passport_{datetime.now().strftime('%Y%m%d')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as exc:
+        print(f"[PDF Export Error] {exc}")
+        return HttpResponse(f"Ошибка формирования PDF: {exc}", status=500)

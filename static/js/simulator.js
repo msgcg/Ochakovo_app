@@ -827,6 +827,24 @@ window.simulator = (function () {
     if (vnSpeakerBadge) {
       vnSpeakerBadge.className = `och-vn-speaker-badge ${role === 'candidate' ? 'intern' : 'mentor'}`;
     }
+
+    // Переключение хвостика комиксного облачка и активного говорящего
+    const vnConsoleEl = document.querySelector('.och-vn-console');
+    const studentActorEl = document.getElementById('vn-actor-student');
+    const mentorActorEl = document.getElementById('vn-actor-mentor');
+    if (vnConsoleEl) {
+      if (role === 'candidate') {
+        vnConsoleEl.classList.remove('speaker-mentor');
+        vnConsoleEl.classList.add('speaker-intern');
+        if (studentActorEl) studentActorEl.classList.add('active-speaker');
+        if (mentorActorEl) mentorActorEl.classList.remove('active-speaker');
+      } else {
+        vnConsoleEl.classList.remove('speaker-intern');
+        vnConsoleEl.classList.add('speaker-mentor');
+        if (mentorActorEl) mentorActorEl.classList.add('active-speaker');
+        if (studentActorEl) studentActorEl.classList.remove('active-speaker');
+      }
+    }
     if (vnSpeakerName) vnSpeakerName.innerText = name;
     if (vnSpeakerRole) vnSpeakerRole.innerText = role === 'candidate' ? 'Стажёр' : 'Наставник';
     if (vnSpeakerAvatar) vnSpeakerAvatar.src = avatarSrc;
@@ -1078,6 +1096,21 @@ window.simulator = (function () {
   // Управление видео-инструктажем мастера цеха (с поддержкой звука и Range 206)
   let currentActiveSpeech = '';
 
+  
+  // 18. Профессиональные производственные факты цеха (После смены)
+  function openProFactsModal() {
+    const modal = document.getElementById('och-pro-facts-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      if (window.lucide) window.lucide.createIcons();
+    }
+  }
+
+  function closeProFactsModal() {
+    const modal = document.getElementById('och-pro-facts-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
   function openVideoBriefingModal() {
     const modal = document.getElementById('och-video-briefing-modal');
     if (!modal) return;
@@ -1266,18 +1299,8 @@ window.simulator = (function () {
 
   // 17. Управление предсменным инструктажем и настройкой ИИ
   function openBriefingModal() {
-    const modal = document.getElementById('och-briefing-modal');
-    if (!modal) return;
-    const statusEl = document.getElementById('och-briefing-status');
-    if (statusEl) {
-      statusEl.style.display = 'none';
-      statusEl.className = 'och-briefing-status';
-      statusEl.innerHTML = '';
-    }
-    modal.style.display = 'flex';
-    if (window.lucide && typeof window.lucide.createIcons === 'function') {
-      window.lucide.createIcons();
-    }
+    // Окно ввода ключа отключено: единый ключ задается владельцем сайта в .env или админке
+    return;
   }
 
   function closeBriefingModal() {
@@ -1430,12 +1453,8 @@ window.simulator = (function () {
     // Автоматически предлагаем обучающий видео-инструктаж перед началом смены
     const pathSlug = window.location.pathname.split('/').filter(Boolean).pop() || 'shift';
     const videoStorageKey = 'och_video_offered_' + pathSlug;
-    if (!sessionStorage.getItem(videoStorageKey)) {
-      setTimeout(() => {
-        openVideoBriefingModal();
-        sessionStorage.setItem(videoStorageKey, 'true');
-      }, 500);
-    }
+    // Авто-показ видео убран по ТЗ: видео доступно по кнопке в HUD, а факты цеха открываются после смены
+    sessionStorage.setItem(videoStorageKey, 'true');
     const tempEl = document.getElementById('val-temp');
     if (tempEl) {
       const parsedTemp = parseFloat(tempEl.innerText);
@@ -1478,17 +1497,100 @@ window.simulator = (function () {
     const hasCreds = hudEl && hudEl.dataset.hasCredentials === 'true';
     const briefingDone = sessionStorage.getItem('och_briefing_completed') === 'true';
 
-    if (!hasCreds && !briefingDone) {
-      setTimeout(() => {
-        openBriefingModal();
-      }, 400);
-    }
+    // Окно ввода ключа отключено: единый ключ задается владельцем сайта в .env или админке
   });
+
+
+  // ==========================================
+  // DRAG & DROP ПАНЕЛИ КАРТ ОБОРУДОВАНИЯ ЦЕХА
+  // ==========================================
+  let draggedEquipment = null;
+
+  function onEquipmentDragStart(e, code, title) {
+    draggedEquipment = { code, title };
+    if (e && e.dataTransfer) {
+      e.dataTransfer.setData('text/plain', code);
+      e.dataTransfer.effectAllowed = 'copyMove';
+    }
+    const cardEl = e ? e.currentTarget : null;
+    if (cardEl) {
+      cardEl.classList.add('och-card-dragging');
+    }
+    const dropZones = document.querySelectorAll('.och-comic-drop-target, .och-comic-frame-stage, #och-comic-stage');
+    dropZones.forEach(dz => dz.classList.add('och-dropzone-active'));
+  }
+
+  function onEquipmentDragEnd(e) {
+    const cardEl = e ? e.currentTarget : null;
+    if (cardEl) {
+      cardEl.classList.remove('och-card-dragging');
+    }
+    const dropZones = document.querySelectorAll('.och-comic-drop-target, .och-comic-frame-stage, #och-comic-stage');
+    dropZones.forEach(dz => dz.classList.remove('och-dropzone-active', 'och-dropzone-hover'));
+  }
+
+  function onDropZoneDragOver(e) {
+    if (e) {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'copy';
+      }
+      const dz = e.currentTarget;
+      if (dz) dz.classList.add('och-dropzone-hover');
+    }
+  }
+
+  function onDropZoneDragLeave(e) {
+    if (e) {
+      const dz = e.currentTarget;
+      if (dz) dz.classList.remove('och-dropzone-hover');
+    }
+  }
+
+  function onEquipmentDrop(e) {
+    if (e) e.preventDefault();
+    const dz = e ? e.currentTarget : null;
+    if (dz) dz.classList.remove('och-dropzone-active', 'och-dropzone-hover');
+
+    let code = (e && e.dataTransfer) ? e.dataTransfer.getData('text/plain') : null;
+    let title = '';
+    if (draggedEquipment) {
+      code = code || draggedEquipment.code;
+      title = draggedEquipment.title;
+    }
+    if (code) {
+      useEquipment(code, title || code);
+      showActionToast(`🎯 Разыграна карта: ${title || code}`);
+    }
+    draggedEquipment = null;
+  }
+
+  function showActionToast(msg) {
+    let toast = document.getElementById('och-sim-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'och-sim-toast';
+      toast.className = 'och-sim-comic-toast';
+      document.body.appendChild(toast);
+    }
+    toast.innerText = msg;
+    toast.classList.add('visible');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+      toast.classList.remove('visible');
+    }, 2400);
+  }
 
   return {
     toggleVoiceRecording,
     stopVoiceRecording,
     useEquipment,
+    onEquipmentDragStart,
+    onEquipmentDragEnd,
+    onDropZoneDragOver,
+    onDropZoneDragLeave,
+    onEquipmentDrop,
+    showActionToast,
     toggleToolDrawer,
     requestHint,
     chooseAction,
@@ -1500,6 +1602,8 @@ window.simulator = (function () {
     switchBriefingTab,
     submitGigaChatCredentials,
     useSmartOfflineMode,
+    openProFactsModal,
+    closeProFactsModal,
     openVideoBriefingModal,
     closeVideoBriefingModal,
     toggleHistoryDrawer,

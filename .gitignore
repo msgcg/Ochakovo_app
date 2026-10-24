@@ -21,8 +21,7 @@ __pycache__/
 *.so
 
 # Static build & Media uploads
-/media/*
-!/media/tts_cache/
+media/tts_cache/*.mp3
 /staticfiles/
 !/static/
 

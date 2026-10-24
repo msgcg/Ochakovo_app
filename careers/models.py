@@ -291,3 +291,51 @@ class CompanyPerk(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class AIConfig(models.Model):
+    """Единая конфигурация ИИ-наставника комбината Очаково (задается владельцем)"""
+    gigachat_auth_key = models.CharField(
+        max_length=500,
+        blank=True,
+        verbose_name="GigaChat Auth Key (Base64)",
+        help_text="Готовый Base64 ключ авторизации Сбер Studio Salute"
+    )
+    gigachat_client_id = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name="GigaChat Client ID",
+        help_text="Идентификатор клиента из Studio Salute"
+    )
+    gigachat_client_secret = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name="GigaChat Client Secret",
+        help_text="Секретный ключ клиента из Studio Salute"
+    )
+    gigachat_model = models.CharField(
+        max_length=60,
+        default="GigaChat-Max",
+        verbose_name="Модель GigaChat",
+        help_text="Например: GigaChat-Max или GigaChat"
+    )
+    gigachat_scope = models.CharField(
+        max_length=60,
+        default="GIGACHAT_API_PERS",
+        verbose_name="Scope API",
+        help_text="GIGACHAT_API_PERS (для физлиц) или GIGACHAT_API_CORP"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Использовать онлайн ИИ",
+        help_text="Если выключено или ключи не заданы, симулятор использует встроенный офлайн-движок"
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+
+    class Meta:
+        verbose_name = "Настройки ИИ-наставника (единый ключ)"
+        verbose_name_plural = "Настройки ИИ-наставника (единый ключ)"
+
+    def __str__(self):
+        status = "онлайн" if self.is_active else "офлайн"
+        return f"Конфигурация ИИ Очаково ({status})"

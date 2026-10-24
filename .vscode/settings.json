@@ -24,5 +24,6 @@
     "**/.git/subtree-cache/**": true,
     "**/.venv/**": true,
     "**/staticfiles/**": true
-  }
+  },
+  "python-envs.defaultEnvManager": "ms-python.python:venv"
 }

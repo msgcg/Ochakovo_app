@@ -130,6 +130,26 @@
             </button>
           </li>
           <li>
+            <button type="button" class="och-nav-stand-btn" onclick="openStandQrModal()" title="Быстрый вход для стендов и форумов по QR" style="background: #F0F9FF; border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; padding: 0.35rem 0.65rem; font-size: 0.78rem; font-weight: 900; color: #0284C7; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: transform 0.12s, box-shadow 0.12s;">
+              <i data-lucide="qr-code" style="width: 14px; height: 14px; color: #0284C7;"></i>
+              <span>Стенд (QR)</span>
+            </button>
+          </li>
+          {% if request.session.vk_user %}
+          <li>
+            <a href="{% url 'careers:progress' %}" class="och-nav-link" title="Профиль: {{ request.session.vk_user.full_name }}" style="color: #0284C7; font-weight: 800;">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #0077FF; margin-right: 4px;"></span>
+              <span>{{ request.session.vk_user.first_name }} (VK)</span>
+            </a>
+          </li>
+          {% else %}
+          <li>
+            <a href="{% url 'careers:vk_login' %}?next={{ request.path }}" title="Войти через VK ID (в 1 клик)" style="background: #0077FF; color: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; padding: 0.3rem 0.6rem; font-size: 0.76rem; font-weight: 900; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
+              <span>VK ID</span>
+            </a>
+          </li>
+          {% endif %}
+          <li>
             <a href="{% url 'careers:game_select' %}" class="och-nav-link och-nav-cta">
               <span>Старт смены</span>
               <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
@@ -237,5 +257,6 @@
   <!-- Скрипты приложения -->
   <script src="{% static 'js/app.js' %}"></script>
   {% block extra_scripts %}{% endblock %}
+{% include "careers/components/stand_qr_modal.html" %}
 </body>
 </html>

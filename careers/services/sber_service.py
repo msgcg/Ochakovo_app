@@ -33,8 +33,43 @@ class OchakovoAIService:
     _gigachat_expires_at = 0
 
     @classmethod
+    def has_configured_credentials(cls) -> bool:
+        """Проверяет наличие единого ключа ИИ в БД (админке) или в .env"""
+        try:
+            from careers.models import AIConfig
+            db_cfg = AIConfig.objects.filter(is_active=True).first()
+            if db_cfg and ((db_cfg.gigachat_auth_key and db_cfg.gigachat_auth_key.strip()) or (db_cfg.gigachat_client_id and db_cfg.gigachat_client_secret)):
+                return True
+        except Exception:
+            pass
+        if getattr(settings, 'GIGACHAT_AUTH_KEY', '').strip():
+            return True
+        if getattr(settings, 'GIGACHAT_CLIENT_ID', '').strip() and getattr(settings, 'GIGACHAT_CLIENT_SECRET', '').strip():
+            return True
+        return False
+
+    @classmethod
     def get_gigachat_token(cls, auth_key: str = None, client_id: str = None, client_secret: str = None) -> str | None:
+        scope = getattr(settings, 'GIGACHAT_SCOPE', 'GIGACHAT_API_PERS')
         key = (auth_key or '').strip()
+
+        # 1. Проверяем единый ключ в БД (панель администратора Django)
+        if not key:
+            try:
+                from careers.models import AIConfig
+                db_cfg = AIConfig.objects.filter(is_active=True).first()
+                if db_cfg:
+                    if db_cfg.gigachat_auth_key and db_cfg.gigachat_auth_key.strip():
+                        key = db_cfg.gigachat_auth_key.strip()
+                    elif db_cfg.gigachat_client_id and db_cfg.gigachat_client_secret:
+                        import base64
+                        key = base64.b64encode(f"{db_cfg.gigachat_client_id.strip()}:{db_cfg.gigachat_client_secret.strip()}".encode('utf-8')).decode('utf-8')
+                    if db_cfg.gigachat_scope:
+                        scope = db_cfg.gigachat_scope.strip()
+            except Exception:
+                pass
+
+        # 2. Проверяем единый ключ в .env / settings
         if not key:
             c_id = (client_id or getattr(settings, 'GIGACHAT_CLIENT_ID', '')).strip()
             c_sec = (client_secret or getattr(settings, 'GIGACHAT_CLIENT_SECRET', '')).strip()
@@ -51,8 +86,6 @@ class OchakovoAIService:
         current_time = int(time.time() * 1000)
         if getattr(cls, '_gigachat_cached_key', None) == key and cls._gigachat_token and (cls._gigachat_expires_at - current_time > 60000):
             return cls._gigachat_token
-
-        scope = getattr(settings, 'GIGACHAT_SCOPE', 'GIGACHAT_API_PERS')
         oauth_url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
         headers = {
             "Authorization": f"Basic {key}",
@@ -1286,7 +1319,7 @@ class OchakovoAIService:
         if eq == "valve_cooling" or any(w in msg_lower for w in ["охлад", "рубашк", "клапан", "гликол", "снизить темп", "температур"]):
             verdict = "success"
             mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
-            is_comp = is_recommended_choice or session.turns_count >= 2
+            is_comp = (session.turns_count >= 1 and is_recommended_choice) or session.turns_count >= 2
             if is_comp:
                 reply = (
                     f"Отличная реакция, стажёр! Наставник {mentor_name} жмёт руку: клапан рубашки открыт, гликоль пошел по контуру. "
@@ -1329,7 +1362,7 @@ class OchakovoAIService:
         if eq == "starter_culture" or any(w in msg_lower for w in ["закваск", "дрожж", "внести", "добавит", "лакто", "культура"]):
             verdict = "success"
             mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
-            is_comp = is_recommended_choice or session.turns_count >= 2
+            is_comp = (session.turns_count >= 1 and is_recommended_choice) or session.turns_count >= 2
             if is_comp:
                 reply = (
                     f"Точно в цель! {mentor_name} фиксирует: внесли фирменную закваску «Очаково 1978»: "
@@ -1450,7 +1483,7 @@ class OchakovoAIService:
         if any(w in msg_lower for w in ["поправит", "банка", "поправить банк", "выровнят", "датчик", "продут", "сдуть", "рестарт", "зелен"]):
             verdict = "success"
             mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
-            is_comp = is_recommended_choice or session.turns_count >= 2
+            is_comp = (session.turns_count >= 1 and is_recommended_choice) or session.turns_count >= 2
             if is_comp:
                 reply = (
                     f"Красота! {mentor_name} довольно аплодирует: банку-бунтаря смахнули на конвейер, оптический датчик Krones доволен и мигает зелёным! "
@@ -1489,7 +1522,7 @@ class OchakovoAIService:
         if any(w in msg_lower for w in ["белый квас", "хрен", "победител", "база", "окрошк"]):
             verdict = "success"
             mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
-            is_comp = is_recommended_choice or session.turns_count >= 2
+            is_comp = (session.turns_count >= 1 and is_recommended_choice) or session.turns_count >= 2
             if is_comp:
                 reply = (
                     f"Шах и мат кефирным сектантам! {mentor_name} победно поднимает кружку: наш резкий белый квас с хреном — абсолютная классика с 1978 года. "
@@ -1553,7 +1586,7 @@ class OchakovoAIService:
             else:
                 verdict = "success"
                 mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
-                is_comp = is_recommended_choice or session.turns_count >= 2
+                is_comp = (session.turns_count >= 1 and is_recommended_choice) or session.turns_count >= 2
                 if is_comp:
                     reply = (
                         f"Паллета кваса и CoolCola аккуратно зафиксирована стретчем и загружена в фуру №14! WMS терминал пикнул зелёным. "
@@ -1592,7 +1625,7 @@ class OchakovoAIService:
         if any(w in msg_lower for w in ["журнал", "1978", "солод", "рецепт", "дроп", "ретро"]):
             verdict = "success"
             mentor_name = getattr(scenario, 'mentor_name', 'Михалыч')
-            is_comp = is_recommended_choice or session.turns_count >= 2
+            is_comp = (session.turns_count >= 1 and is_recommended_choice) or session.turns_count >= 2
             if is_comp:
                 reply = (
                     f"Есть секретный дроп! В архивном журнале 1978 года найдена золотая пропорция томлёного ржаного солода "

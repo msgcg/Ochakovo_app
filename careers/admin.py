@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import (
+    AIConfig,
     InternshipTrack,
     Vacancy,
     GameScenario,
@@ -73,3 +74,18 @@ class StoryMilestoneAdmin(admin.ModelAdmin):
 class CompanyPerkAdmin(admin.ModelAdmin):
     list_display = ('title', 'tag', 'order')
     ordering = ('order',)
+
+
+@admin.register(AIConfig)
+class AIConfigAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'gigachat_model', 'gigachat_scope', 'is_active', 'updated_at')
+    fieldsets = (
+        ('Единый ключ ИИ-наставника Очаково', {
+            'description': 'Задайте ключи Сбер Studio Salute (GigaChat API). Они автоматически используются для всех соискателей. Кандидаты ключ не вводят!',
+            'fields': ('is_active', 'gigachat_auth_key', 'gigachat_client_id', 'gigachat_client_secret', 'gigachat_model', 'gigachat_scope')
+        }),
+    )
+
+    def has_add_permission(self, request):
+        # Ограничиваем одной записью конфигурации
+        return AIConfig.objects.count() == 0

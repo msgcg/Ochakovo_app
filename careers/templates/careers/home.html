@@ -23,6 +23,10 @@
             <i data-lucide="play-circle" style="width: 20px; height: 20px;"></i>
             <span>Пройти тест-смену в цеху (2 мин)</span>
           </a>
+          <button type="button" class="och-btn-outline" onclick="openStandQrModal()" style="background: #F0F9FF; border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; color: #0284C7; font-weight: 900; border-radius: 12px; padding: 0.75rem 1.15rem; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <i data-lucide="qr-code" style="width: 18px; height: 18px; color: #0284C7;"></i>
+            <span>Вход со стенда (QR)</span>
+          </button>
           <a href="{% url 'careers:vacancies_list' %}" class="och-btn-secondary">
             <i data-lucide="briefcase" style="width: 18px; height: 18px; color: var(--och-red);"></i>
             <span>Вакансии сезона ({{ total_active_vacancies }})</span>
@@ -66,6 +70,40 @@
     </div>
   </div>
 </section>
+
+<!-- 1.1. БАННЕР ВХОДА СО СТЕНДА И ВЫСТАВОЧНОГО ПЛАНШЕТА -->
+<section style="background: #FFFFFF; border-top: 2.5px solid #1E293B; border-bottom: 2.5px solid #1E293B; padding: 1.5rem 0;">
+  <div class="container">
+    <div style="background: #FFFBEB; border: 3px solid #1E293B; box-shadow: 6px 6px 0px #1E293B; border-radius: 18px; padding: 1.35rem 1.75rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 1.25rem; flex: 1; min-width: 280px;">
+        <div style="width: 56px; height: 56px; border-radius: 12px; background: #0284C7; color: #FFFFFF; border: 2.5px solid #1E293B; box-shadow: 3px 3px 0px #1E293B; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <i data-lucide="qr-code" style="width: 30px; height: 30px;"></i>
+        </div>
+        <div>
+          <div style="font-size: 0.76rem; font-weight: 900; text-transform: uppercase; color: #0284C7; letter-spacing: 0.05em;">HR-АВТОМАТИЗАЦИЯ ВХОДА В ВОРОНКУ</div>
+          <h3 style="font-size: 1.22rem; font-weight: 900; color: #0F172A; margin: 0 0 0.25rem;">Вы на стенде «Очаково» или молодежном форуме?</h3>
+          <p style="font-size: 0.88rem; color: #475569; margin: 0; line-height: 1.45;">
+            Сканируйте QR-код или авторизуйтесь через <strong>VK ID</strong> в 1 клик: пройдите блиц-смену, подтвердите компетенции и сократите срок стажировки!
+          </p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        <a href="{% url 'careers:vk_login' %}?next=/progress/" style="background: #0077FF; color: #FFFFFF; border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; border-radius: 12px; padding: 0.75rem 1.25rem; font-size: 0.92rem; font-weight: 900; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.12s, box-shadow 0.12s;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15.684 0H8.316C3.723 0 0 3.723 0 8.316v7.368C0 20.277 3.723 24 8.316 24h7.368C20.277 24 24 20.277 24 15.684V8.316C24 3.723 20.277 0 15.684 0z" fill="#0077FF"/>
+            <path d="M12.923 17.065c-4.946 0-7.77-3.385-7.892-9.015h2.477c.084 4.131 1.908 5.885 3.354 6.246V8.05h2.33v3.562c1.424-.154 2.893-1.777 3.4-3.562h2.331c-.392 2.215-2.023 3.838-3.177 4.5 1.154.538 3.015 1.954 3.63 4.515h-2.576c-.485-1.507-1.7-2.677-3.477-2.854v2.854h-.392z" fill="#FFF"/>
+          </svg>
+          <span>Вход через VK ID</span>
+        </a>
+        <button type="button" onclick="openStandQrModal()" class="och-btn-primary" style="border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; border-radius: 12px; padding: 0.75rem 1.25rem; font-size: 0.92rem; font-weight: 900; cursor: pointer;">
+          <i data-lucide="qr-code" style="width: 18px; height: 18px;"></i>
+          <span>Показать QR стенда</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
 
 <!-- 2. СТАТИСТИКА И ФАКТЫ О КОМПАНИИ -->
 <section style="padding: 2.5rem 0; border-bottom: 1px solid var(--och-border); background: #FFFFFF;">

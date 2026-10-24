@@ -1,0 +1,183 @@
+{% load static %}
+<!-- МОДАЛЬНОЕ ОКНО: БЫСТРЫЙ ВХОД СО СТЕНДА ПО QR-КОДУ / ПЛАНШЕТУ -->
+<div id="och-stand-qr-modal" class="och-modal-backdrop" style="display: none;" onclick="if(event.target===this) closeStandQrModal()">
+  <div class="och-modal-box" style="max-width: 640px; border: 3px solid #1E293B; box-shadow: 8px 8px 0px #1E293B; border-radius: 20px; background: #FFFFFF;">
+    
+    <!-- Шапка модального окна -->
+    <div class="och-modal-header" style="background: #F8FAFC; border-bottom: 2.5px solid #1E293B; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 44px; height: 44px; border-radius: 10px; background: #0284C7; color: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2.5px 2.5px 0px #1E293B; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <i data-lucide="qr-code" style="width: 24px; height: 24px;"></i>
+        </div>
+        <div>
+          <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 900; color: #0284C7; letter-spacing: 0.05em;">ВХОД ДЛЯ КАРЬЕРНЫХ ФОРУМОВ И СТЕНДОВ</div>
+          <h3 style="font-size: 1.25rem; font-weight: 900; color: #0F172A; margin: 0;">Экспресс-старт практики «Очаково»</h3>
+        </div>
+      </div>
+      <button type="button" class="och-modal-close-btn" onclick="closeStandQrModal()" aria-label="Закрыть" style="background: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; width: 34px; height: 34px; font-size: 1.1rem; font-weight: 900; cursor: pointer;">✕</button>
+    </div>
+
+    <!-- Тело модального окна -->
+    <div class="och-modal-body" style="padding: 1.5rem;">
+      <div style="display: grid; grid-template-columns: 190px 1fr; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem;">
+        
+        <!-- Генерация четкого SVG QR-кода стенда -->
+        <div style="background: #FFFFFF; border: 2.5px solid #1E293B; box-shadow: 4px 4px 0px #1E293B; border-radius: 14px; padding: 0.85rem; text-align: center;">
+          <svg viewBox="0 0 160 160" width="100%" height="auto" style="display: block; margin: 0 auto;">
+            <!-- Фоновый белый квадрат -->
+            <rect width="160" height="160" fill="#FFFFFF"/>
+            <!-- Угловые поисковые метки QR (Finder Patterns) -->
+            <rect x="10" y="10" width="40" height="40" rx="6" fill="#1E293B"/>
+            <rect x="16" y="16" width="28" height="28" rx="3" fill="#FFFFFF"/>
+            <rect x="22" y="22" width="16" height="16" rx="2" fill="#D50032"/>
+
+            <rect x="110" y="10" width="40" height="40" rx="6" fill="#1E293B"/>
+            <rect x="116" y="16" width="28" height="28" rx="3" fill="#FFFFFF"/>
+            <rect x="122" y="22" width="16" height="16" rx="2" fill="#D50032"/>
+
+            <rect x="10" y="110" width="40" height="40" rx="6" fill="#1E293B"/>
+            <rect x="16" y="116" width="28" height="28" rx="3" fill="#FFFFFF"/>
+            <rect x="22" y="122" width="16" height="16" rx="2" fill="#D50032"/>
+
+            <!-- Стилизованные пиксели данных -->
+            <rect x="60" y="15" width="8" height="8" fill="#1E293B"/><rect x="76" y="15" width="16" height="8" fill="#1E293B"/>
+            <rect x="60" y="31" width="16" height="8" fill="#0284C7"/><rect x="84" y="31" width="8" height="8" fill="#1E293B"/>
+            <rect x="15" y="60" width="8" height="16" fill="#1E293B"/><rect x="31" y="60" width="8" height="8" fill="#1E293B"/>
+            <rect x="60" y="60" width="16" height="16" rx="3" fill="#D50032"/>
+            <rect x="84" y="60" width="8" height="16" fill="#1E293B"/><rect x="100" y="60" width="16" height="8" fill="#1E293B"/><rect x="124" y="60" width="16" height="8" fill="#1E293B"/>
+            <rect x="15" y="84" width="16" height="8" fill="#0284C7"/><rect x="39" y="84" width="8" height="8" fill="#1E293B"/>
+            <rect x="60" y="84" width="8" height="8" fill="#1E293B"/><rect x="76" y="84" width="16" height="16" rx="2" fill="#1E293B"/><rect x="100" y="84" width="8" height="8" fill="#1E293B"/><rect x="116" y="84" width="16" height="8" fill="#1E293B"/><rect x="140" y="84" width="8" height="8" fill="#1E293B"/>
+            <rect x="60" y="108" width="16" height="8" fill="#0284C7"/><rect x="84" y="108" width="8" height="16" fill="#1E293B"/><rect x="100" y="108" width="16" height="8" fill="#1E293B"/><rect x="124" y="108" width="8" height="16" fill="#1E293B"/><rect x="140" y="108" width="8" height="8" fill="#1E293B"/>
+            <rect x="60" y="124" width="8" height="8" fill="#1E293B"/><rect x="76" y="124" width="16" height="8" fill="#1E293B"/><rect x="100" y="124" width="8" height="16" fill="#1E293B"/><rect x="116" y="124" width="8" height="8" fill="#D50032"/><rect x="132" y="124" width="16" height="8" fill="#1E293B"/>
+            <rect x="60" y="140" width="16" height="8" fill="#1E293B"/><rect x="84" y="140" width="8" height="8" fill="#0284C7"/><rect x="100" y="140" width="16" height="8" fill="#1E293B"/><rect x="124" y="140" width="16" height="8" fill="#1E293B"/>
+          </svg>
+          <div style="font-size: 0.68rem; font-weight: 800; color: #475569; margin-top: 0.4rem; text-transform: uppercase;">
+            Стенд № ОЧАКОВО-2026
+          </div>
+        </div>
+
+        <!-- Пояснение и быстрый вход через VK ID -->
+        <div>
+          <p style="font-size: 0.88rem; line-height: 1.5; color: #334155; margin: 0 0 1rem;">
+            Наведите камеру смартфона на стенде или войдите через <strong>VK ID</strong> — вы автоматически получите <strong>персональный оффер</strong> и подтверждение навыков для сокращения срока стажировки!
+          </p>
+
+          <a href="{% url 'careers:vk_login' %}?next=/progress/" class="och-vk-id-btn" style="display: flex; align-items: center; justify-content: center; gap: 0.65rem; background: #0077FF; color: #FFFFFF; font-weight: 900; font-size: 0.92rem; padding: 0.75rem 1.25rem; border-radius: 12px; border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; text-decoration: none; transition: transform 0.12s, box-shadow 0.12s;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15.684 0H8.316C3.723 0 0 3.723 0 8.316v7.368C0 20.277 3.723 24 8.316 24h7.368C20.277 24 24 20.277 24 15.684V8.316C24 3.723 20.277 0 15.684 0z" fill="#0077FF"/>
+              <path d="M12.923 17.065c-4.946 0-7.77-3.385-7.892-9.015h2.477c.084 4.131 1.908 5.885 3.354 6.246V8.05h2.33v3.562c1.424-.154 2.893-1.777 3.4-3.562h2.331c-.392 2.215-2.023 3.838-3.177 4.5 1.154.538 3.015 1.954 3.63 4.515h-2.576c-.485-1.507-1.7-2.677-3.477-2.854v2.854h-.392z" fill="#FFF"/>
+            </svg>
+            <span>Войти через VK ID (в 1 клик)</span>
+          </a>
+
+          <div style="font-size: 0.74rem; color: #64748B; margin-top: 0.5rem; text-align: center;">
+            Мгновенная авторизация для студентов (без ввода пароля)
+          </div>
+        </div>
+      </div>
+
+      <!-- Экспресс-форма сбора контактов на стенде -->
+      <div style="background: #F8FAFC; border: 2px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; border-radius: 14px; padding: 1.15rem;">
+        <div style="font-size: 0.8rem; font-weight: 900; text-transform: uppercase; color: #D50032; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.4rem;">
+          <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+          <span>Или оставьте контакт прямо на планшете стенда:</span>
+        </div>
+
+        <form id="och-stand-lead-form" onsubmit="submitStandLead(event)" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <input type="text" id="stand-lead-name" required placeholder="Ваше Имя и Фамилия *" style="border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; padding: 0.6rem 0.85rem; font-size: 0.88rem; font-weight: 700;">
+            <input type="text" id="stand-lead-contact" required placeholder="Телефон или Telegram *" style="border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; padding: 0.6rem 0.85rem; font-size: 0.88rem; font-weight: 700;">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <input type="text" id="stand-lead-uni" placeholder="ВУЗ или Колледж" style="border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; padding: 0.6rem 0.85rem; font-size: 0.88rem; font-weight: 700;">
+            <select id="stand-lead-track" style="border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; padding: 0.6rem 0.85rem; font-size: 0.88rem; font-weight: 700; background: #FFF;">
+              <option value="brewing">Варка и брожение (от 70 000 ₽)</option>
+              <option value="bottling">Розлив и линии Krones (от 70 000 ₽)</option>
+              <option value="lab">Лаборатория качества (от 60 000 ₽)</option>
+              <option value="warehouse">Складская логистика (от 56 000 ₽)</option>
+            </select>
+          </div>
+
+          <button type="submit" id="stand-lead-submit-btn" class="och-btn-primary" style="padding: 0.75rem; font-size: 0.92rem; font-weight: 900; justify-content: center; width: 100%; border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; border-radius: 10px;">
+            <span>Подобрать работу и закрепить бонусы стажировки</span>
+            <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+          </button>
+        </form>
+
+        <!-- Результат мгновенного подбора вакансий -->
+        <div id="stand-lead-result" style="display: none; margin-top: 1rem; padding: 0.85rem; background: #ECFDF5; border: 2px solid #059669; border-radius: 10px;">
+          <div style="font-weight: 900; color: #065F46; font-size: 0.95rem; margin-bottom: 0.5rem;" id="stand-lead-result-msg"></div>
+          <div style="font-size: 0.82rem; font-weight: 800; color: #047857; margin-bottom: 0.35rem;">Подобранные вакансии на комбинате:</div>
+          <div id="stand-lead-matched-list" style="display: flex; flex-direction: column; gap: 0.4rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openStandQrModal() {
+  const modal = document.getElementById('och-stand-qr-modal');
+  if (modal) {
+    modal.style.display = 'flex';
+    if (window.lucide) window.lucide.createIcons();
+  }
+}
+
+function closeStandQrModal() {
+  const modal = document.getElementById('och-stand-qr-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function submitStandLead(e) {
+  e.preventDefault();
+  const name = document.getElementById('stand-lead-name').value.trim();
+  const contact = document.getElementById('stand-lead-contact').value.trim();
+  const uni = document.getElementById('stand-lead-uni').value.trim();
+  const track = document.getElementById('stand-lead-track').value;
+  const btn = document.getElementById('stand-lead-submit-btn');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span>Подбор вакансий...</span>';
+
+  const isEmail = contact.includes('@') && contact.includes('.');
+  const isTg = contact.startsWith('@') || !contact.replace(/\D/g, '').length;
+
+  fetch('/api/candidate/stand-lead/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      full_name: name,
+      phone: isEmail || isTg ? '+7-999-000-00-00' : contact,
+      telegram: isTg ? contact : (name ? '@' + name.toLowerCase().replace(/\s+/g, '_') : ''),
+      email: isEmail ? contact : (name ? name.toLowerCase().replace(/\s+/g, '.') + '@mail.ru' : ''),
+      university: uni || 'Стенд / Форум',
+      track_slug: track
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Заявка успешно отправлена! ✔</span>';
+    if (data.ok) {
+      const resBox = document.getElementById('stand-lead-result');
+      const msgBox = document.getElementById('stand-lead-result-msg');
+      const list = document.getElementById('stand-lead-matched-list');
+      resBox.style.display = 'block';
+      msgBox.innerText = data.message;
+      list.innerHTML = '';
+      (data.matched_vacancies || []).forEach(v => {
+        const item = document.createElement('div');
+        item.style.cssText = 'background: #FFFFFF; border: 1.5px solid #059669; padding: 0.5rem 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;';
+        item.innerHTML = `<strong>${v.title}</strong> <span style="color: #D50032; font-weight: 800;">${v.salary}</span>`;
+        list.appendChild(item);
+      });
+    }
+  })
+  .catch(err => {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Ошибка связи</span>';
+    console.error(err);
+  });
+}
+</script>

@@ -23,6 +23,22 @@
           </p>
 
           <div class="och-progress-actions">
+            {% if request.session.vk_user %}
+            <div style="background: #EFF6FF; border: 2px solid #0077FF; box-shadow: 2.5px 2.5px 0px #1E293B; border-radius: 10px; padding: 0.55rem 0.95rem; display: inline-flex; align-items: center; gap: 0.65rem; font-size: 0.84rem;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: #0077FF; display: inline-block;"></span>
+              <span>Авторизован: <strong>{{ request.session.vk_user.full_name }}</strong></span>
+              <a href="{% url 'careers:candidate_logout' %}?next=/progress/" style="color: #DC2626; font-size: 0.74rem; font-weight: 700; margin-left: 0.35rem;">[Выйти]</a>
+            </div>
+            {% else %}
+            <a href="{% url 'careers:vk_login' %}?next=/progress/" style="background: #0077FF; color: #FFFFFF; border: 2px solid #1E293B; box-shadow: 3px 3px 0px #1E293B; border-radius: 10px; padding: 0.6rem 1rem; font-size: 0.88rem; font-weight: 900; text-decoration: none; display: inline-flex; align-items: center; gap: 0.45rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15.684 0H8.316C3.723 0 0 3.723 0 8.316v7.368C0 20.277 3.723 24 8.316 24h7.368C20.277 24 24 20.277 24 15.684V8.316C24 3.723 20.277 0 15.684 0z" fill="#0077FF"/><path d="M12.923 17.065c-4.946 0-7.77-3.385-7.892-9.015h2.477c.084 4.131 1.908 5.885 3.354 6.246V8.05h2.33v3.562c1.424-.154 2.893-1.777 3.4-3.562h2.331c-.392 2.215-2.023 3.838-3.177 4.5 1.154.538 3.015 1.954 3.63 4.515h-2.576c-.485-1.507-1.7-2.677-3.477-2.854v2.854h-.392z" fill="#FFF"/></svg>
+              <span>Привязать VK ID профиль</span>
+            </a>
+            {% endif %}
+            <a href="{% url 'careers:export_skills_pdf' %}" class="och-btn-outline" style="border: 2px solid #1E293B; box-shadow: 3px 3px 0px #1E293B; background: #FFFFFF; font-weight: 900; color: #0F172A; text-decoration: none; padding: 0.6rem 1rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.45rem;">
+              <i data-lucide="file-text" style="width: 16px; height: 16px; color: #D50032;"></i>
+              <span>Скачать PDF-паспорт</span>
+            </a>
             <button type="button" class="och-btn-primary" onclick="openProgressApplyModal()">
               <i data-lucide="send" style="width: 16px; height: 16px;"></i>
               <span>Откликнуться на hh.ru с сертификатом</span>
@@ -248,7 +264,32 @@
               Настоящим подтверждается, что соискатель успешно освоил базовые технологические регламенты завода «Очаково» (Москва, ул. Рябиновая, 44), подтвердил навыки предотвращения аварийных ситуаций, контроля плотности сусла и взаимодействия с автоматизированными системами Krones.
             </p>
 
-            <div class="och-cert-table-wrap">
+            <!-- ОФИЦИАЛЬНО РАЗБЛОКИРОВАННЫЕ БОНУСЫ И ПРЕИМУЩЕСТВА СТАЖИРОВКИ -->
+            <div style="background: #FEF3C7; border: 2px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; border-radius: 12px; padding: 1.15rem; margin-bottom: 1.5rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
+                <div style="font-size: 0.8rem; font-weight: 900; text-transform: uppercase; color: #92400E; display: flex; align-items: center; gap: 0.45rem;">
+                  <i data-lucide="gift" style="width: 16px; height: 16px; color: #D97706;"></i>
+                  <span>Бонусы кандидата, подтверждённые в симуляторе завода:</span>
+                </div>
+                <span style="background: #F59E0B; color: #FFFFFF; font-size: 0.7rem; font-weight: 900; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #1E293B;">HR-АКСЕЛЕРАЦИЯ</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem;">
+                <div style="background: #FFFFFF; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.65rem 0.85rem;">
+                  <div style="font-weight: 900; font-size: 0.88rem; color: #0F172A; margin-bottom: 0.2rem;">⏱️ Сокращение стажировки</div>
+                  <div style="font-size: 0.78rem; color: #475569; line-height: 1.4;">Срок вводной адаптации сокращён <strong>с 3 мес. до 1 месяца</strong> благодаря практическим навыкам.</div>
+                </div>
+                <div style="background: #FFFFFF; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.65rem 0.85rem;">
+                  <div style="font-weight: 900; font-size: 0.88rem; color: #0F172A; margin-bottom: 0.2rem;">🏆 Допуск ко 2 категории</div>
+                  <div style="font-size: 0.78rem; color: #475569; line-height: 1.4;">Право претендовать на позиции Мастера смены / Технолога с окладом <strong>от 80 000 до 110 000 ₽</strong>.</div>
+                </div>
+                <div style="background: #FFFFFF; border: 1.5px solid #1E293B; border-radius: 8px; padding: 0.65rem 0.85rem;">
+                  <div style="font-weight: 900; font-size: 0.88rem; color: #0F172A; margin-bottom: 0.2rem;">🚀 Зелёный коридор HR</div>
+                  <div style="font-size: 0.78rem; color: #475569; line-height: 1.4;">Прямой вызов на очное собеседование с Главным технологом комбината без тестов.</div>
+                </div>
+              </div>
+            </div>
+
+<div class="och-cert-table-wrap">
               <table class="och-cert-table">
                 <thead>
                   <tr>
@@ -275,10 +316,10 @@
               <div style="font-weight: 800; color: var(--och-text-heading); font-family: monospace;">Михалыч (Цех №1)</div>
             </div>
             <div class="och-cert-actions">
-              <button type="button" class="och-btn-secondary" onclick="window.print()" title="Распечатать или сохранить в PDF">
-                <i data-lucide="printer" style="width: 15px; height: 15px;"></i>
-                <span>Печать / PDF</span>
-              </button>
+              <a href="{% url 'careers:export_skills_pdf' %}" class="och-btn-secondary" style="border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.95rem; font-weight: 800; border-radius: 10px;" title="Скачать официальный PDF-паспорт компетенций">
+                <i data-lucide="download" style="width: 15px; height: 15px; color: var(--och-red);"></i>
+                <span>Скачать PDF-паспорт</span>
+              </a>
               <button type="button" class="och-btn-primary" onclick="openProgressApplyModal()">
                 <i data-lucide="external-link" style="width: 15px; height: 15px;"></i>
                 <span>Отправить на hh.ru</span>
