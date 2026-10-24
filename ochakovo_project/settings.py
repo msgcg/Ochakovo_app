@@ -115,3 +115,9 @@ GGML_VULKAN_FALLBACK_CPU = os.getenv('GGML_VULKAN_FALLBACK_CPU', 'True').strip()
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
+
+
+# VK ID OAuth 2.0 configuration
+VK_CLIENT_ID = os.getenv('VK_CLIENT_ID', '').strip()
+VK_CLIENT_SECRET = os.getenv('VK_CLIENT_SECRET', '').strip()
+VK_REDIRECT_URI = os.getenv('VK_REDIRECT_URI', '').strip()
