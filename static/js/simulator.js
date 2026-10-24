@@ -210,29 +210,112 @@ window.simulator = (function () {
     }
   }
 
+  let maxSessionVolume = 0;
+
   function startMicVisualizer(stream) {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) {
-        audioContext = new AudioCtx();
+        if (!audioContext || audioContext.state === 'closed') {
+          audioContext = new AudioCtx();
+        }
+        if (audioContext.state === 'suspended') {
+          audioContext.resume().catch(() => {});
+        }
         const source = audioContext.createMediaStreamSource(stream);
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 64;
+        analyser.smoothingTimeConstant = 0.65;
         source.connect(analyser);
 
-        const waveBars = document.querySelectorAll('.och-mic-wave-bar');
+        const canvas = document.getElementById('och-mic-canvas');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+        const levelBar = document.getElementById('och-mic-level-bar');
+        const dbText = document.getElementById('och-mic-db-text');
+        const bannerText = document.getElementById('och-mic-banner-text');
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        maxSessionVolume = 0;
+        let quietFramesCount = 0;
 
         function updateWaves() {
           if (!isRecording) return;
           analyser.getByteFrequencyData(dataArray);
+
           let sum = 0;
-          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          let peak = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+            if (dataArray[i] > peak) peak = dataArray[i];
+          }
           const avg = sum / dataArray.length;
-          waveBars.forEach((b, idx) => {
-            const h = Math.max(4, Math.min(22, (avg / 7) * (idx + 1) * 0.65));
-            b.style.height = `${h}px`;
-          });
+          const volumePct = Math.min(100, Math.round((avg / 120) * 100));
+          if (volumePct > maxSessionVolume) maxSessionVolume = volumePct;
+
+          if (levelBar) {
+            levelBar.style.width = `${volumePct}%`;
+            if (volumePct > 70) {
+              levelBar.style.background = '#EF4444';
+            } else if (volumePct > 20) {
+              levelBar.style.background = '#10B981';
+            } else {
+              levelBar.style.background = '#64748B';
+            }
+          }
+          if (dbText) {
+            if (volumePct > 8) {
+              dbText.innerText = `${volumePct}%`;
+              dbText.style.color = '#10B981';
+            } else {
+              dbText.innerText = '0%';
+              dbText.style.color = '#94A3B8';
+            }
+          }
+
+          if (bannerText && isRecording) {
+            if (volumePct > 15) {
+              quietFramesCount = 0;
+              if (!recognizedSpeechText) {
+                bannerText.innerText = '🎙️ Звук поступает... Говорите в микрофон';
+              }
+            } else {
+              quietFramesCount++;
+              if (quietFramesCount > 90 && !recognizedSpeechText) {
+                bannerText.innerText = '⚠️ Микрофон молчит (0%). Проверьте звук в Windows';
+              }
+            }
+          }
+
+          if (ctx && canvas) {
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#0F172A';
+            ctx.fillRect(0, 0, w, h);
+
+            const numBars = 16;
+            const barWidth = Math.floor((w - (numBars - 1) * 2) / numBars);
+
+            for (let i = 0; i < numBars; i++) {
+              const binIndex = Math.floor((i / numBars) * (dataArray.length * 0.8));
+              const val = dataArray[binIndex] || 0;
+              const barH = Math.max(2, Math.round((val / 255) * (h - 2)));
+              const x = i * (barWidth + 2);
+              const y = h - barH;
+
+              const grad = ctx.createLinearGradient(x, h, x, y);
+              grad.addColorStop(0, '#10B981');
+              grad.addColorStop(0.7, '#F59E0B');
+              grad.addColorStop(1, '#EF4444');
+
+              ctx.fillStyle = grad;
+              ctx.fillRect(x, y, barWidth, barH);
+
+              ctx.fillStyle = '#F8FAFC';
+              ctx.fillRect(x, Math.max(0, y - 1), barWidth, 1.5);
+            }
+          }
+
           animFrameId = requestAnimationFrame(updateWaves);
         }
         updateWaves();
@@ -246,6 +329,18 @@ window.simulator = (function () {
     if (animFrameId) {
       cancelAnimationFrame(animFrameId);
       animFrameId = null;
+    }
+    const canvas = document.getElementById('och-mic-canvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    const levelBar = document.getElementById('och-mic-level-bar');
+    if (levelBar) levelBar.style.width = '0%';
+    const dbText = document.getElementById('och-mic-db-text');
+    if (dbText) {
+      dbText.innerText = '0%';
+      dbText.style.color = '#94A3B8';
     }
     if (audioContext) {
       try { audioContext.close(); } catch (e) {}
@@ -311,22 +406,50 @@ window.simulator = (function () {
 
       if (micBtn) {
         micBtn.classList.add('recording');
-        micBtn.title = 'Идет запись... Повторный тап на микрофон — стоп';
+        micBtn.title = 'Идет запись речи... Повторный тап на микрофон — остановить и редактировать';
       }
       if (banner) {
         banner.style.display = 'flex';
-        if (bannerText) bannerText.innerText = 'Идет запись речи... Говорите в микрофон (тап на микрофон — стоп)';
+        if (bannerText) bannerText.innerText = 'Слушаю вас... Говорите в микрофон (повторный тап — завершить)';
       }
 
       // 2. Запуск визуализатора частот звука
       startMicVisualizer(audioStream);
 
-      // 3. Запуск Web Speech API для мгновенного отображения текста
-      if (recognition) {
+      // 3. Запуск Web Speech API (создаем свежий экземпляр при каждом сеансе записи)
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRec) {
         try {
+          recognition = new SpeechRec();
+          recognition.lang = 'ru-RU';
+          recognition.interimResults = true;
+          recognition.continuous = true;
+          recognition.maxAlternatives = 1;
+          recognition.onresult = function (event) {
+            let interim = '';
+            let final = '';
+            for (let i = 0; i < event.results.length; ++i) {
+              if (event.results[i].isFinal) {
+                final += event.results[i][0].transcript + ' ';
+              } else {
+                interim += event.results[i][0].transcript;
+              }
+            }
+            const recognized = (final || interim).trim();
+            if (recognized) {
+              recognizedSpeechText = recognized;
+              if (textInput) textInput.value = recognized;
+              if (bannerText && isRecording) {
+                bannerText.innerText = 'Слышу: «' + (recognized.length > 32 ? '...' + recognized.slice(-32) : recognized) + '»';
+              }
+            }
+          };
+          recognition.onerror = function (e) {
+            console.warn('[Web Speech API] Warning:', e.error);
+          };
           recognition.start();
         } catch (e) {
-          console.warn('[SpeechRec] Already started or error:', e);
+          console.warn('[Web Speech API] Start error:', e);
         }
       }
 
@@ -393,10 +516,10 @@ window.simulator = (function () {
         const audioBlob = new Blob(audioChunks, { type: mimeType });
         audioChunks = [];
 
-        if (bannerText) bannerText.innerText = 'Распознавание речи через Whisper Vulkan GPU...';
+        if (bannerText) bannerText.innerText = 'Распознавание через Whisper...';
 
-        // Базовый текст речи из Web Speech API для мгновенной работы в Windows отладке
-        let finalSpeech = (textInput?.value || recognizedSpeechText || '').trim();
+        // Приоритет распознанной речи без подмешивания старого содержимого поля
+        let finalSpeech = (recognizedSpeechText || '').trim();
 
         try {
           const formData = new FormData();
@@ -410,23 +533,32 @@ window.simulator = (function () {
             body: formData
           });
           const data = await resp.json();
-          if (data && data.ok && data.text && data.text.trim()) {
-            finalSpeech = data.text.trim();
+          if (data && data.ok) {
+            if (data.silence) {
+              // Сервер определил тишину/отсутствие звука
+              finalSpeech = '';
+            } else if (data.text && data.text.trim()) {
+              const rawT = data.text.trim();
+              const normT = rawT.toLowerCase().replace(/[^а-яa-z0-9]/gi, '');
+              const hallucinations = ['чтопроисходит', 'чтопроисхожит', 'чтоэто', 'субтитры', 'спасибозапросмотр', 'продолжениеследует'];
+              if (!hallucinations.includes(normT)) {
+                finalSpeech = rawT;
+              }
+            }
           }
         } catch (sttErr) {
           console.warn('[Whisper STT] Request error:', sttErr);
-        }
-
-        // Если локальный Whisper вернул текст, либо браузерный Web Speech API успел распознать речь
-        if (!finalSpeech && (textInput?.value || recognizedSpeechText)) {
-          finalSpeech = (textInput?.value || recognizedSpeechText).trim();
         }
 
         if (finalSpeech) {
           showRecognizedSpeechForEditing(finalSpeech);
         } else {
           if (bannerText) {
-            bannerText.innerText = 'Речь не расслышана. Нажмите на микрофон еще раз или введите текст вручную.';
+            if (maxSessionVolume < 10) {
+              bannerText.innerText = 'Микрофон молчал (0%). Проверьте настройки звука Windows.';
+            } else {
+              bannerText.innerText = 'Речь не обнаружена (тишина). Попробуйте сказать громче.';
+            }
           }
           setTimeout(() => {
             if (!isRecording && banner) banner.style.display = 'none';

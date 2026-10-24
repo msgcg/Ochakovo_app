@@ -691,22 +691,21 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 </div>
 <!-- Нижняя панель ввода стажёра -->
 <div class="och-sim-input-bar">
-<!-- Баннер активной голосовой записи / рации -->
-<div id="och-mic-banner" class="och-mic-banner" style="display: none;" onclick="simulator.toggleVoiceRecording()" title="Нажмите для завершения записи (или повторно тапните на микрофон)">
-<div class="och-mic-banner-left">
-<div class="och-mic-pulse-dot"></div>
-<div class="och-mic-waves">
-<div class="och-mic-wave-bar"></div>
-<div class="och-mic-wave-bar"></div>
-<div class="och-mic-wave-bar"></div>
-<div class="och-mic-wave-bar"></div>
-</div>
-<span id="och-mic-banner-text">Рация мастера активна... Говорите в микрофон</span>
-</div>
-<div class="och-mic-tap-hint">
-<i data-lucide="mic-off" style="width: 13px; height: 13px;"></i>
-<span>Тап на микрофон — стоп</span>
-</div>
+<!-- Баннер активной голосовой записи / рации с живой спектрограммой -->
+<div id="och-mic-banner" class="och-mic-banner" style="display: none;" onclick="simulator.toggleVoiceRecording()" title="Повторный тап на микрофон — завершить запись и редактировать">
+  <div class="och-mic-banner-left">
+    <div class="och-mic-pulse-dot"></div>
+    <div class="och-mic-spectrogram-box" title="Живая спектрограмма сигнала: частоты и громкость входящего звука">
+      <canvas id="och-mic-canvas" width="130" height="24" class="och-mic-spectrum-canvas"></canvas>
+      <div class="och-mic-level-pill" id="och-mic-level-pill" title="Уровень громкости звука">
+        <span id="och-mic-db-text">0%</span>
+        <div class="och-mic-level-track">
+          <div id="och-mic-level-bar" class="och-mic-level-bar"></div>
+        </div>
+      </div>
+    </div>
+    <span id="och-mic-banner-text">Рация активна... Говорите в микрофон</span>
+  </div>
 </div>
 <div class="och-sim-input-row">
 <button type="button" id="och-mic-btn" class="och-ptt-mini-btn" onclick="simulator.toggleVoiceRecording()" title="Нажмите для голосовой передачи (Push-to-Talk)">

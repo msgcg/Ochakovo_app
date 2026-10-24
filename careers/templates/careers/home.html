@@ -23,7 +23,7 @@
             <i data-lucide="play-circle" style="width: 20px; height: 20px;"></i>
             <span>Пройти тест-смену в цеху (2 мин)</span>
           </a>
-          <button type="button" class="och-btn-outline" onclick="openStandQrModal()" style="background: #F0F9FF; border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; color: #0284C7; font-weight: 900; border-radius: 12px; padding: 0.75rem 1.15rem; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+          <button type="button" class="och-btn-outline" onclick="openStandQrModal()">
             <i data-lucide="qr-code" style="width: 18px; height: 18px; color: #0284C7;"></i>
             <span>Вход со стенда (QR)</span>
           </button>
@@ -88,14 +88,14 @@
         </div>
       </div>
       <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-        <a href="{% url 'careers:vk_login' %}?next=/progress/" style="background: #0077FF; color: #FFFFFF; border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; border-radius: 12px; padding: 0.75rem 1.25rem; font-size: 0.92rem; font-weight: 900; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.12s, box-shadow 0.12s;">
+        <a href="{% url 'careers:vk_login' %}?next=/progress/" class="och-vk-id-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15.684 0H8.316C3.723 0 0 3.723 0 8.316v7.368C0 20.277 3.723 24 8.316 24h7.368C20.277 24 24 20.277 24 15.684V8.316C24 3.723 20.277 0 15.684 0z" fill="#0077FF"/>
             <path d="M12.923 17.065c-4.946 0-7.77-3.385-7.892-9.015h2.477c.084 4.131 1.908 5.885 3.354 6.246V8.05h2.33v3.562c1.424-.154 2.893-1.777 3.4-3.562h2.331c-.392 2.215-2.023 3.838-3.177 4.5 1.154.538 3.015 1.954 3.63 4.515h-2.576c-.485-1.507-1.7-2.677-3.477-2.854v2.854h-.392z" fill="#FFF"/>
           </svg>
           <span>Вход через VK ID</span>
         </a>
-        <button type="button" onclick="openStandQrModal()" class="och-btn-primary" style="border: 2.5px solid #1E293B; box-shadow: 3.5px 3.5px 0px #1E293B; border-radius: 12px; padding: 0.75rem 1.25rem; font-size: 0.92rem; font-weight: 900; cursor: pointer;">
+        <button type="button" onclick="openStandQrModal()" class="och-btn-primary">
           <i data-lucide="qr-code" style="width: 18px; height: 18px;"></i>
           <span>Показать QR стенда</span>
         </button>

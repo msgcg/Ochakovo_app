@@ -790,96 +790,122 @@ a {
 
    ========================================================================== */
 
-.och-btn-primary {
-
-  display: inline-flex;
-
-  align-items: center;
-
-  gap: 0.6rem;
-
-  background: var(--och-red);
-
-  color: #ffffff !important;
-
-  font-size: 1rem;
-
-  font-weight: 700;
-
-  padding: 0.85rem 1.65rem;
-
-  border-radius: var(--radius-md);
-
+/* Единая нео-бруталистская система кнопок комбината «Очаково»: скругление 10px, контрастная рамка 2px #1E293B, жесткая тень 3px 3px 0px #1E293B */
+.och-btn-primary,
+.och-btn-secondary,
+.och-btn-outline,
+.och-btn-sync,
+.och-btn-simulator-direct,
+.och-vk-id-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.55rem !important;
+  border: 2px solid #1E293B !important;
+  box-shadow: 3px 3px 0px #1E293B !important;
+  border-radius: 10px !important;
+  font-family: var(--font-main) !important;
+  font-weight: 800 !important;
   text-decoration: none !important;
-
-  box-shadow: 0 4px 14px var(--och-red-glow);
-
-  transition: all var(--transition-fast);
-
-  border: none;
-
-  cursor: pointer;
-
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  padding: 0.75rem 1.35rem !important;
+  font-size: 0.95rem !important;
+  line-height: 1.25 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, color 0.12s ease !important;
 }
 
+/* Hover-эффект приподнимания */
+.och-btn-primary:hover,
+.och-btn-secondary:hover,
+.och-btn-outline:hover,
+.och-btn-sync:hover,
+.och-btn-simulator-direct:hover,
+.och-vk-id-btn:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px #1E293B !important;
+}
 
+/* Active-эффект вдавливания */
+.och-btn-primary:active,
+.och-btn-secondary:active,
+.och-btn-outline:active,
+.och-btn-sync:active,
+.och-btn-simulator-direct:active,
+.och-vk-id-btn:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #1E293B !important;
+}
+
+/* Цветовые стили */
+.och-btn-primary {
+  background: #D50032 !important;
+  color: #FFFFFF !important;
+}
 
 .och-btn-primary:hover {
-
-  background: var(--och-red-hover);
-
-  transform: translateY(-1px);
-
-  box-shadow: 0 8px 20px rgba(213, 0, 50, 0.35);
-
+  background: #B8002B !important;
+  color: #FFFFFF !important;
 }
-
-
 
 .och-btn-secondary {
-
-  display: inline-flex;
-
-  align-items: center;
-
-  gap: 0.5rem;
-
-  background: #ffffff;
-
-  border: 1px solid var(--och-border-strong);
-
-  color: var(--och-text);
-
-  font-size: 0.98rem;
-
-  font-weight: 600;
-
-  padding: 0.85rem 1.45rem;
-
-  border-radius: var(--radius-md);
-
-  text-decoration: none;
-
-  transition: all var(--transition-fast);
-
-  cursor: pointer;
-
-  box-shadow: var(--shadow-sm);
-
+  background: #FFFFFF !important;
+  color: #0F172A !important;
 }
 
-
-
 .och-btn-secondary:hover {
+  background: #F8FAFC !important;
+  color: #D50032 !important;
+}
 
-  background: #f8fafc;
+.och-btn-outline {
+  background: #F0F9FF !important;
+  color: #0284C7 !important;
+}
 
-  border-color: var(--och-red);
+.och-btn-outline:hover {
+  background: #E0F2FE !important;
+  color: #0369A1 !important;
+}
 
-  color: var(--och-red);
+.och-btn-sync {
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.82rem !important;
+  box-shadow: 2px 2px 0px #1E293B !important;
+  border-radius: 8px !important;
+}
 
-  transform: translateY(-1px);
+.och-btn-sync:hover {
+  background: #FFFBEB !important;
+  color: #B45309 !important;
+  box-shadow: 3px 3px 0px #1E293B !important;
+}
 
+.och-btn-simulator-direct {
+  background: #D50032 !important;
+  color: #FFFFFF !important;
+  padding: 0.65rem 1rem !important;
+  font-size: 0.86rem !important;
+  width: 100% !important;
+}
+
+.och-btn-simulator-direct:hover {
+  background: #B8002B !important;
+  color: #FFFFFF !important;
+}
+
+.och-vk-id-btn {
+  background: #0077FF !important;
+  color: #FFFFFF !important;
+}
+
+.och-vk-id-btn:hover {
+  background: #0066DD !important;
+  color: #FFFFFF !important;
 }
 
 
@@ -1862,53 +1888,7 @@ a {
 
 
 
-.och-btn-sync {
-
-  background: #FFFFFF;
-
-  border: 1px solid var(--och-border-strong);
-
-  color: var(--och-text);
-
-  padding: 0.45rem 0.85rem;
-
-  border-radius: var(--radius-sm);
-
-  font-size: 0.82rem;
-
-  font-weight: 700;
-
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 0.45rem;
-
-  cursor: pointer;
-
-  transition: all var(--transition-fast);
-
-  white-space: nowrap;
-
-  flex-shrink: 0;
-
-  box-sizing: border-box;
-
-}
-
-
-
-.och-btn-sync:hover {
-
-  background: #F8FAFC;
-
-  border-color: var(--och-gold);
-
-  color: var(--och-gold-light);
-
-}
+/* .och-btn-sync styled in unified button system */
 
 
 
@@ -1965,59 +1945,34 @@ a {
 
 
 .och-filter-switch-btn {
-
   background: #FFFFFF;
-
-  border: 1px solid var(--och-border-strong);
-
-  color: var(--och-text-muted);
-
-  padding: 0.75rem 1.25rem;
-
-  border-radius: var(--radius-md);
-
+  border: 2px solid #1E293B !important;
+  color: #1E293B !important;
+  padding: 0.65rem 1.15rem;
+  border-radius: 8px !important;
   font-size: 0.88rem;
-
-  font-weight: 700;
-
+  font-weight: 800;
   display: inline-flex;
-
   align-items: center;
-
   gap: 0.6rem;
-
   cursor: pointer;
-
-  transition: all var(--transition-fast);
-
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
   user-select: none;
-
-  box-shadow: var(--shadow-sm);
-
+  box-shadow: 2.5px 2.5px 0px #1E293B !important;
 }
-
-
 
 .och-filter-switch-btn:hover {
-
-  border-color: var(--och-red);
-
-  color: var(--och-red);
-
+  transform: translate(-1px, -1px);
+  box-shadow: 3.5px 3.5px 0px #1E293B !important;
+  background: #F8FAFC;
+  color: #D50032 !important;
 }
 
-
-
 .och-filter-switch-btn.active {
-
-  background: var(--och-red-subtle);
-
-  border-color: var(--och-red);
-
-  color: var(--och-red);
-
-  box-shadow: 0 0 12px var(--och-red-glow);
-
+  background: #D50032 !important;
+  border-color: #1E293B !important;
+  color: #FFFFFF !important;
+  box-shadow: 3px 3px 0px #1E293B !important;
 }
 
 
@@ -2090,51 +2045,7 @@ a {
 
 
 
-.och-btn-simulator-direct {
-
-  background: var(--och-red);
-
-  color: #ffffff !important;
-
-  padding: 0.65rem 1rem;
-
-  border-radius: var(--radius-sm);
-
-  font-size: 0.84rem;
-
-  font-weight: 700;
-
-  text-decoration: none !important;
-
-  display: flex;
-
-  justify-content: center;
-
-  align-items: center;
-
-  gap: 0.5rem;
-
-  width: 100%;
-
-  box-sizing: border-box;
-
-  transition: all var(--transition-fast);
-
-  box-shadow: 0 4px 10px var(--och-red-glow);
-
-  text-align: center;
-
-}
-
-
-
-.och-btn-simulator-direct:hover {
-
-  background: var(--och-red-hover);
-
-  transform: translateY(-1px);
-
-}
+/* .och-btn-simulator-direct styled in unified button system */
 
 
 
@@ -10085,18 +9996,7 @@ select.och-text-input::-ms-expand {
 }
 
 .och-mic-tap-hint {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 0.35rem !important;
-  font-size: 0.74rem !important;
-  font-weight: 800 !important;
-  color: #991B1B !important;
-  background: #FECACA !important;
-  border: 1.5px solid #1E293B !important;
-  border-radius: 6px !important;
-  padding: 0.2rem 0.55rem !important;
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
+  display: none !important;
 }
 
 /* Пульсирующая анимация кнопки микрофона во время активной записи */
@@ -10119,6 +10019,60 @@ select.och-text-input::-ms-expand {
   100% {
     box-shadow: 0 0 0 0 rgba(213, 0, 50, 0);
   }
+}
+
+
+/* Живая спектрограмма звука и измеритель входящей громкости */
+.och-mic-spectrogram-box {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  background: #0F172A !important;
+  padding: 0.2rem 0.5rem !important;
+  border: 1.5px solid #1E293B !important;
+  border-radius: 6px !important;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.4) !important;
+  flex-shrink: 0 !important;
+}
+
+.och-mic-spectrum-canvas {
+  width: 120px !important;
+  height: 22px !important;
+  display: block !important;
+  border-radius: 4px !important;
+}
+
+.och-mic-level-pill {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-width: 44px !important;
+  gap: 2px !important;
+}
+
+#och-mic-db-text {
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+  color: #94A3B8 !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1 !important;
+}
+
+.och-mic-level-track {
+  width: 42px !important;
+  height: 5px !important;
+  background: #334155 !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  border: 0.5px solid #475569 !important;
+}
+
+.och-mic-level-bar {
+  width: 0% !important;
+  height: 100% !important;
+  background: #10B981 !important;
+  transition: width 0.05s ease-out, background 0.1s ease !important;
 }
 
 /* Адаптив шапки на ноутбуках (1121px - 1320px) */

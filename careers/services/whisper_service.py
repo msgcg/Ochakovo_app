@@ -178,6 +178,37 @@ class WhisperVulkanService:
 
 
     @classmethod
+    def is_audio_silent(cls, wav_path: Path, min_rms: float = 160.0, min_peak: int = 400) -> bool:
+        """
+        Проверяет, содержит ли аудиозапись реальный слышимый сигнал/голос,
+        или это цифровая тишина / тихий фоновый шум микрофона.
+        Предотвращает галлюцинации Whisper (например, «Что происходит?» на тишине).
+        """
+        try:
+            import wave
+            import struct
+            import math
+            with wave.open(str(wav_path), 'rb') as wf:
+                n_frames = wf.getnframes()
+                if n_frames == 0:
+                    return True
+                # Считываем до 15 секунд аудио (16kHz 16-bit)
+                max_read = min(n_frames, 16000 * 15)
+                frames = wf.readframes(max_read)
+                sample_count = len(frames) // 2
+                if sample_count == 0:
+                    return True
+                samples = struct.unpack(f"<{sample_count}h", frames)
+                peak = max(abs(s) for s in samples)
+                if peak < min_peak:
+                    return True
+                sum_sq = sum(s * s for s in samples)
+                rms = math.sqrt(sum_sq / sample_count)
+                return rms < min_rms
+        except Exception:
+            return False
+
+    @classmethod
     def transcribe(cls, audio_bytes: bytes, language: str = "ru") -> dict:
         """
         Транскрибирует аудиозапись речи стажёра в цеху в русский текст.
@@ -214,20 +245,33 @@ class WhisperVulkanService:
         uid = uuid.uuid4().hex[:10]
         wav_path = temp_dir / f"och_rec_{uid}.wav"
 
-        # Безопасные 8.3 пути для устранения сбоев на путях с кириллицей в Windows C++ (в Linux - стандартные)
-        bin_safe = to_short_path(bin_path)
-        model_safe = to_short_path(model_path)
-        wav_safe = to_short_path(wav_path)
-
         exec_cwd = str(bin_path.parent) if sys.platform == "win32" else str(cls._BASE_DIR)
         sub_env = os.environ.copy()
         if sys.platform != "win32":
             current_ld = sub_env.get("LD_LIBRARY_PATH", "")
             sub_env["LD_LIBRARY_PATH"] = f"/usr/local/lib:{current_ld}" if current_ld else "/usr/local/lib"
 
+        # Безопасные пути для устранения сбоев на путях с кириллицей в Windows C++ (в Linux - стандартные)
+        if sys.platform == "win32":
+            try:
+                model_safe = os.path.relpath(model_path, exec_cwd)
+            except Exception:
+                model_safe = to_short_path(model_path)
+            try:
+                wav_safe = os.path.relpath(wav_path, exec_cwd)
+            except Exception:
+                wav_safe = to_short_path(wav_path)
+            bin_safe = str(bin_path.resolve())
+            ffmpeg_raw = cls.get_ffmpeg_bin()
+            ffmpeg_bin = str(Path(ffmpeg_raw).resolve()) if Path(ffmpeg_raw).exists() else ffmpeg_raw
+        else:
+            bin_safe = to_short_path(bin_path)
+            model_safe = to_short_path(model_path)
+            wav_safe = to_short_path(wav_path)
+            ffmpeg_bin = cls.get_ffmpeg_bin()
+
         try:
             # 1. Конвертация в 16kHz mono WAV через FFmpeg
-            ffmpeg_bin = cls.get_ffmpeg_bin()
             ffmpeg_cmd = [
                 ffmpeg_bin, "-hide_banner", "-loglevel", "error",
                 "-i", "pipe:0",
@@ -262,10 +306,18 @@ class WhisperVulkanService:
             mode, fallback_enabled = cls.get_acceleration_config()
             cpu_threads = min(os.cpu_count() or 4, 8)
             ochakovo_prompt = "Очаково, квас, брожение, сусло, наставник, Михалыч, ЦКТ, температура, закваска, гликоль, Krones, конвейер, робот, лаборатория, кислотность, pH-метр, паллета."
-            
             run_mode = "vulkan" if mode in ("vulkan", "auto") else "cpu"
             executed_engine = f"whisper_{run_mode}_{model_tag}"
 
+            # 3. Проверка уровня звука (VAD) для мгновенного отсечения тишины без галлюцинаций
+            if cls.is_audio_silent(wav_path):
+                return {
+                    "ok": True,
+                    "text": "",
+                    "silence": True,
+                    "engine": executed_engine,
+                    "model": model_tag
+                }
             if run_mode == "cpu":
                 # Принудительный режим CPU без обращения к Vulkan GPU
                 whisper_cmd = [
@@ -279,6 +331,7 @@ class WhisperVulkanService:
                     "-bs", "2",
                     "-bo", "2",
                     "-sns",
+                    "-nth", "0.65",
                     "-t", str(cpu_threads)
                 ]
                 proc_w = subprocess.Popen(
@@ -308,6 +361,7 @@ class WhisperVulkanService:
                     "-bs", "2",
                     "-bo", "2",
                     "-sns",
+                    "-nth", "0.65",
                     "-t", str(cpu_threads)
                 ]
                 proc_w = subprocess.Popen(
@@ -374,8 +428,15 @@ class WhisperVulkanService:
 
             cleaned = re.sub(r'\[.*?\]', '', raw_text)
             cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-            # Очищаем галлюцинации Whisper при тишине (эмодзи, спецсимволы, ноты)
-            if not re.search(r'[\w\dа-яА-ЯёЁa-zA-Z]', cleaned):
+            # Очищаем галлюцинации Whisper при тишине (эмодзи, спецсимволы, ноты, известные ложные фразы)
+            norm_check = re.sub(r'[^\w\s]', '', cleaned).strip().lower()
+            silence_hallucinations = {
+                "что происходит", "что происхожит", "что это", "что тут происходит",
+                "субтитры", "субтитры сделал", "субтитры создавал", "редактор субтитров",
+                "продолжение следует", "спасибо за просмотр", "подписывайтесь на канал",
+                "ставьте лайки", "до скорой встречи", "переведено и озвучено", "всем пока"
+            }
+            if norm_check in silence_hallucinations or not re.search(r'[\w\dа-яА-ЯёЁa-zA-Z]', cleaned):
                 cleaned = ""
 
             return {
