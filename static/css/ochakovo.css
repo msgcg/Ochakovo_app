@@ -9862,56 +9862,123 @@ select.och-text-input::-ms-expand {
   white-space: nowrap;
 }
 
-.och-nav-stand-btn {
-  background: #F0F9FF;
-  border: 2px solid #1E293B;
-  box-shadow: 2px 2px 0px #1E293B;
-  border-radius: var(--radius-sm);
-  padding: 0.32rem 0.65rem;
-  font-size: 0.78rem;
-  font-weight: 900;
-  color: #0284C7;
-  cursor: pointer;
-  display: inline-flex;
+/* ==========================================================================
+   ЕДИНЫЙ СТИЛЬ И ОДИН РАЗМЕР ЭЛЕМЕНТОВ В ШАПКЕ САЙТА (НЕО-БРУТАЛИЗМ)
+   Черная рамка 2px solid #1E293B, жесткая тень 2px 2px 0px #1E293B, высота 36px
+   ========================================================================== */
+
+.och-nav-wrapper {
+  display: flex;
   align-items: center;
-  gap: 0.35rem;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+  min-width: 0;
+}
+
+.och-nav-list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0.45rem !important;
+}
+
+/* Все элементы и кнопки в шапке одного размера и с одинаковой черной рамкой */
+.och-nav-link,
+.och-nav-install-btn,
+.och-nav-stand-btn,
+.och-nav-vk-btn,
+.och-nav-cta {
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.38rem !important;
+  padding: 0 0.72rem !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+  border: 2px solid #1E293B !important;
+  box-shadow: 2px 2px 0px #1E293B !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, color 0.12s ease !important;
+}
+
+/* Интерактивное поведение кнопок при наведении и нажатии */
+.och-nav-link:hover,
+.och-nav-install-btn:hover,
+.och-nav-stand-btn:hover,
+.och-nav-vk-btn:hover,
+.och-nav-cta:hover,
+.och-burger-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 3px 3px 0px #1E293B !important;
+}
+
+.och-nav-link:active,
+.och-nav-install-btn:active,
+.och-nav-stand-btn:active,
+.och-nav-vk-btn:active,
+.och-nav-cta:active,
+.och-burger-btn:active {
+  transform: translateY(1px) !important;
+  box-shadow: 1px 1px 0px #1E293B !important;
+}
+
+/* Цветовые темы элементов навигации */
+.och-nav-link {
+  background: #FFFFFF !important;
+  color: #1E293B !important;
+}
+
+.och-nav-link:hover {
+  background: #F8FAFC !important;
+  color: #D50032 !important;
+}
+
+.och-nav-link.active {
+  background: #FEF2F2 !important;
+  color: #D50032 !important;
+}
+
+.och-nav-install-btn {
+  background: #FFFFFF !important;
+  color: #1E293B !important;
+}
+
+.och-nav-install-btn:hover {
+  background: #FFFBEB !important;
+  color: #B45309 !important;
+}
+
+.och-nav-stand-btn {
+  background: #F0F9FF !important;
+  color: #0284C7 !important;
 }
 
 .och-nav-stand-btn:hover {
-  background: #E0F2FE;
-  transform: translateY(-1px);
-  box-shadow: 3px 3px 0px #1E293B;
+  background: #E0F2FE !important;
+  color: #0369A1 !important;
 }
 
 .och-nav-vk-btn {
-  background: #0077FF;
+  background: #0077FF !important;
   color: #FFFFFF !important;
-  border: 2px solid #1E293B;
-  box-shadow: 2px 2px 0px #1E293B;
-  border-radius: var(--radius-sm);
-  padding: 0.32rem 0.65rem;
-  font-size: 0.78rem;
-  font-weight: 900;
-  text-decoration: none !important;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
 }
 
 .och-nav-vk-btn:hover {
-  background: #0066DD;
-  transform: translateY(-1px);
-  box-shadow: 3px 3px 0px #1E293B;
+  background: #0066DD !important;
+  color: #FFFFFF !important;
 }
 
 .och-nav-vk-logged {
-  background: #F0FDF4;
+  background: #F0FDF4 !important;
   color: #15803D !important;
 }
 
@@ -9920,26 +9987,201 @@ select.och-text-input::-ms-expand {
   height: 8px;
   border-radius: 50%;
   background: #16A34A;
-  box-shadow: 0 0 6px rgba(22, 163, 74, 0.6);
+  border: 1.5px solid #1E293B;
+  box-shadow: 0 0 4px rgba(22, 163, 74, 0.6);
   flex-shrink: 0;
 }
 
+.och-nav-cta {
+  background: #D50032 !important;
+  color: #FFFFFF !important;
+}
 
+.och-nav-cta:hover {
+  background: #B8002B !important;
+  color: #FFFFFF !important;
+}
+
+/* Счетчики и бейджики внутри навигационных кнопок */
+.och-nav-counter {
+  background: #FEE2E2 !important;
+  color: #D50032 !important;
+  border: 1.5px solid #1E293B !important;
+  border-radius: 999px !important;
+  padding: 0.05rem 0.4rem !important;
+  font-size: 0.7rem !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+.och-nav-xp-badge {
+  background: #FEF3C7 !important;
+  color: #92400E !important;
+  border: 1.5px solid #1E293B !important;
+  border-radius: 999px !important;
+  padding: 0.05rem 0.45rem !important;
+  font-size: 0.7rem !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+}
+
+/* Логотип-бейдж и мобильная кнопка меню (бургер) */
+.och-logo-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 24px !important;
+  background: #D50032 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #1E293B !important;
+  box-shadow: 2px 2px 0px #1E293B !important;
+  border-radius: 6px !important;
+  padding: 0 0.55rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.5px !important;
+}
+
+.och-burger-btn {
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  padding: 0 !important;
+  display: none;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #FFFFFF !important;
+  border: 2px solid #1E293B !important;
+  box-shadow: 2px 2px 0px #1E293B !important;
+  border-radius: 8px !important;
+  color: #1E293B !important;
+  cursor: pointer !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+/* ==========================================================================
+   СТИЛИ РАСПОЗНАВАТЕЛЯ РЕЧИ (PTT) БЕЗ КНОПКИ ЗАВЕРШИТЬ (КАК В СОЦСЕТЯХ)
+   ========================================================================== */
+.och-mic-banner {
+  background: #FFF5F5 !important;
+  border: 2px solid #1E293B !important;
+  box-shadow: 2.5px 2.5px 0px #1E293B !important;
+  border-radius: 10px !important;
+  padding: 0.55rem 0.95rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  transition: background 0.12s ease, transform 0.12s ease !important;
+}
+
+.och-mic-banner:hover {
+  background: #FEE2E2 !important;
+}
+
+.och-mic-tap-hint {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+  color: #991B1B !important;
+  background: #FECACA !important;
+  border: 1.5px solid #1E293B !important;
+  border-radius: 6px !important;
+  padding: 0.2rem 0.55rem !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* Пульсирующая анимация кнопки микрофона во время активной записи */
+.och-ptt-mini-btn.recording {
+  background: #D50032 !important;
+  color: #FFFFFF !important;
+  border: 2.5px solid #1E293B !important;
+  box-shadow: 0px 0px 0px #1E293B !important;
+  transform: translate(2px, 2px) !important;
+  animation: ochMicPulse 1.2s infinite ease-in-out !important;
+}
+
+@keyframes ochMicPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(213, 0, 50, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(213, 0, 50, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(213, 0, 50, 0);
+  }
+}
+
+/* Адаптив шапки на ноутбуках (1121px - 1320px) */
 @media (max-width: 1320px) and (min-width: 1121px) {
   .och-pwa-btn-label {
     display: none !important;
   }
-  .och-nav-install-btn {
-    padding: 0 0.55rem !important;
-  }
   .och-nav-list {
-    gap: clamp(0.25rem, 0.5vw, 0.6rem) !important;
+    gap: 0.3rem !important;
   }
-  .och-nav-link {
-    font-size: 0.82rem !important;
+  .och-nav-link,
+  .och-nav-install-btn,
+  .och-nav-stand-btn,
+  .och-nav-vk-btn,
+  .och-nav-cta {
+    padding: 0 0.5rem !important;
+    font-size: 0.78rem !important;
     gap: 0.25rem !important;
   }
   .och-header-inner {
     gap: 0.4rem !important;
+  }
+}
+
+/* Мобильный вид шапки (<= 1120px) */
+@media (max-width: 1120px) {
+  .och-burger-btn {
+    display: flex !important;
+  }
+  .och-nav-list {
+    display: none !important;
+    flex-direction: column !important;
+    position: absolute !important;
+    top: 68px !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: #FFFFFF !important;
+    padding: 1rem !important;
+    border-bottom: 2.5px solid #1E293B !important;
+    box-shadow: 0 8px 0px rgba(30, 41, 59, 0.15) !important;
+    gap: 0.6rem !important;
+    z-index: 1000 !important;
+  }
+  .och-nav-list.mobile-open {
+    display: flex !important;
+  }
+  .och-nav-list li {
+    width: 100% !important;
+  }
+  .och-nav-link,
+  .och-nav-install-btn,
+  .och-nav-stand-btn,
+  .och-nav-vk-btn,
+  .och-nav-cta {
+    width: 100% !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    font-size: 0.9rem !important;
+    justify-content: flex-start !important;
+    padding: 0 1rem !important;
+  }
+  .och-nav-cta {
+    justify-content: center !important;
   }
 }

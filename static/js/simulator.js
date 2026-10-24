@@ -180,9 +180,9 @@ window.simulator = (function () {
         recognition.onresult = function (event) {
           let interim = '';
           let final = '';
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
+          for (let i = 0; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
-              final += event.results[i][0].transcript;
+              final += event.results[i][0].transcript + ' ';
             } else {
               interim += event.results[i][0].transcript;
             }
@@ -193,6 +193,10 @@ window.simulator = (function () {
             const textInput = document.getElementById('och-sim-text-input');
             if (textInput) {
               textInput.value = recognized;
+            }
+            const bannerText = document.getElementById('och-mic-banner-text');
+            if (bannerText && isRecording) {
+              bannerText.innerText = 'Слышу: «' + (recognized.length > 32 ? '...' + recognized.slice(-32) : recognized) + '»';
             }
           }
         };
@@ -289,6 +293,10 @@ window.simulator = (function () {
     const micBtn = document.getElementById('och-mic-btn');
 
     recognizedSpeechText = '';
+    const textInput = document.getElementById('och-sim-text-input');
+    if (textInput) {
+      textInput.value = '';
+    }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       alert('Микрофон не поддерживается этим браузером или требуется защищенное соединение (localhost / HTTPS).');
@@ -303,11 +311,11 @@ window.simulator = (function () {
 
       if (micBtn) {
         micBtn.classList.add('recording');
-        micBtn.title = 'Идет запись... Нажмите для завершения';
+        micBtn.title = 'Идет запись... Повторный тап на микрофон — стоп';
       }
       if (banner) {
         banner.style.display = 'flex';
-        if (bannerText) bannerText.innerText = 'Рация мастера активна... Говорите в микрофон';
+        if (bannerText) bannerText.innerText = 'Идет запись речи... Говорите в микрофон (тап на микрофон — стоп)';
       }
 
       // 2. Запуск визуализатора частот звука
@@ -387,7 +395,8 @@ window.simulator = (function () {
 
         if (bannerText) bannerText.innerText = 'Распознавание речи через Whisper Vulkan GPU...';
 
-        let finalSpeech = '';
+        // Базовый текст речи из Web Speech API для мгновенной работы в Windows отладке
+        let finalSpeech = (textInput?.value || recognizedSpeechText || '').trim();
 
         try {
           const formData = new FormData();

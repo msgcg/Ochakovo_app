@@ -285,11 +285,12 @@
           </div>
 
           <div style="display: flex; gap: 0.5rem; border-top: 2px solid #E2E8F0; padding-top: 0.85rem;">
-            <button type="button" onclick="openProgressApplyModal('{{ rec.slug }}', '{{ rec.title|escapejs }}')" style="flex: 1; background: #D50032; color: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2.5px 2.5px 0px #1E293B; border-radius: 8px; padding: 0.6rem; font-size: 0.82rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+            <button type="button" onclick="openProgressApplyModal('{{ rec.slug }}', '{{ rec.title|escapejs }}')" style="flex: 1; background: #D50032; color: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2.5px 2.5px 0px #1E293B; border-radius: 8px; padding: 0.6rem; font-size: 0.82rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.45rem;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
               <span>Откликнуться с моим счётом</span>
             </button>
-            <a href="{{ rec.hh_url }}" target="_blank" rel="noopener" style="background: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; padding: 0.6rem 0.85rem; font-size: 0.82rem; font-weight: 800; color: #1E293B; text-decoration: none; display: flex; align-items: center; justify-content: center;" title="Смотреть на hh.ru">
-              <i data-lucide="external-link" style="width: 15px; height: 15px;"></i>
+            <a href="{{ rec.hh_url }}" target="_blank" rel="noopener" style="background: #FFFFFF; border: 2px solid #1E293B; box-shadow: 2px 2px 0px #1E293B; border-radius: 8px; padding: 0.6rem 0.85rem; font-size: 0.82rem; font-weight: 800; color: #1E293B; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: transform 0.12s, box-shadow 0.12s, background 0.12s;" title="Смотреть вакансию на hh.ru" onmouseover="this.style.background='#F8FAFC';this.style.transform='translateY(-1px)';this.style.boxShadow='3px 3px 0px #1E293B';" onmouseout="this.style.background='#FFFFFF';this.style.transform='none';this.style.boxShadow='2px 2px 0px #1E293B';">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block; flex-shrink: 0;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
             </a>
           </div>
         </div>

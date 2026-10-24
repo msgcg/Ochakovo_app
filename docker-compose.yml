@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
       args:
         - WHISPER_MODELS=base
+    image: makushimu11/ochakovo-career-app:latest
     container_name: ochakovo_career_app
     restart: unless-stopped
     ports:

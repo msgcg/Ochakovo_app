@@ -78,6 +78,21 @@ class WhisperVulkanService:
         return None
 
     @classmethod
+    def get_ffmpeg_bin(cls) -> str:
+        """Поиск бинарника FFmpeg для транскодирования аудио (Windows, Linux, Docker)"""
+        found = shutil.which("ffmpeg")
+        if found:
+            return found
+        if sys.platform == "win32":
+            for cand in [
+                cls._BASE_DIR / "bin" / "ffmpeg.exe",
+                cls._BASE_DIR / "bin" / "whisper_vulkan" / "ffmpeg.exe",
+            ]:
+                if cand.exists():
+                    return to_short_path(cand)
+        return "ffmpeg"
+
+    @classmethod
     def get_model_path(cls) -> Path | None:
         """Поиск ggml-моделей (приоритет: small -> base -> любая bin) под Windows и Linux/Docker"""
         env_model = os.environ.get("WHISPER_MODEL_PATH")
@@ -212,8 +227,9 @@ class WhisperVulkanService:
 
         try:
             # 1. Конвертация в 16kHz mono WAV через FFmpeg
+            ffmpeg_bin = cls.get_ffmpeg_bin()
             ffmpeg_cmd = [
-                "ffmpeg", "-hide_banner", "-loglevel", "error",
+                ffmpeg_bin, "-hide_banner", "-loglevel", "error",
                 "-i", "pipe:0",
                 "-ar", "16000",
                 "-ac", "1",

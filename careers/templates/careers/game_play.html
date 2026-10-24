@@ -692,7 +692,7 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 <!-- Нижняя панель ввода стажёра -->
 <div class="och-sim-input-bar">
 <!-- Баннер активной голосовой записи / рации -->
-<div id="och-mic-banner" class="och-mic-banner" style="display: none;">
+<div id="och-mic-banner" class="och-mic-banner" style="display: none;" onclick="simulator.toggleVoiceRecording()" title="Нажмите для завершения записи (или повторно тапните на микрофон)">
 <div class="och-mic-banner-left">
 <div class="och-mic-pulse-dot"></div>
 <div class="och-mic-waves">
@@ -703,9 +703,10 @@ data-has-credentials="{{ has_gigachat_credentials|yesno:'true,false' }}">
 </div>
 <span id="och-mic-banner-text">Рация мастера активна... Говорите в микрофон</span>
 </div>
-<button type="button" class="och-mic-banner-btn" onclick="simulator.stopVoiceRecording()">
-<span>Завершить</span>
-</button>
+<div class="och-mic-tap-hint">
+<i data-lucide="mic-off" style="width: 13px; height: 13px;"></i>
+<span>Тап на микрофон — стоп</span>
+</div>
 </div>
 <div class="och-sim-input-row">
 <button type="button" id="och-mic-btn" class="och-ptt-mini-btn" onclick="simulator.toggleVoiceRecording()" title="Нажмите для голосовой передачи (Push-to-Talk)">
