@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.http import HttpResponse
 import csv
 from datetime import datetime
@@ -102,7 +103,7 @@ class JobApplicationAdmin(admin.ModelAdmin):
             links.append(f'<a href="{obj.vk_url}" target="_blank" style="color:#0077FF; font-weight:700;">🌐 {vk_display}</a>')
         elif obj.email:
             links.append(f'<span style="color:#64748B;">✉️ {obj.email}</span>')
-        return format_html("<br>".join(links) or "—")
+        return mark_safe("<br>".join(links)) if links else "—"
 
     @admin.display(description="Скор (XP)", ordering='cumulative_score')
     def score_badge(self, obj):
